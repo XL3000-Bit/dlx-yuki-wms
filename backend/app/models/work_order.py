@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, SmallInteger, String, Text
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin
 
@@ -19,6 +19,7 @@ class WorkOrder(TimestampMixin, Base):
     outbound_id: Mapped[int|None] = mapped_column(ForeignKey('outbound_orders.id', ondelete='SET NULL'), index=True)
     picking_list_id: Mapped[int|None] = mapped_column(ForeignKey('picking_lists.id', ondelete='SET NULL'), index=True)
     container_tracking_id: Mapped[int|None] = mapped_column(ForeignKey('container_trackings.id', ondelete='SET NULL'), index=True)
+    operational_exception_id: Mapped[int|None] = mapped_column(ForeignKey('operational_exceptions.id', ondelete='SET NULL'), index=True)
     priority: Mapped[WorkOrderPriority] = mapped_column(Enum(WorkOrderPriority, name='work_order_priority'), default=WorkOrderPriority.NORMAL, index=True)
     assigned_to: Mapped[int|None] = mapped_column(ForeignKey('users.id', ondelete='SET NULL'), index=True)
     assigned_team: Mapped[str|None] = mapped_column(String(100))
@@ -28,5 +29,6 @@ class WorkOrder(TimestampMixin, Base):
     notes: Mapped[str|None] = mapped_column(Text)
     created_by: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'), index=True)
     warehouse=relationship('Warehouse'); load=relationship('Load', back_populates='work_orders'); outbound=relationship('OutboundOrder', back_populates='work_orders'); picking_list=relationship('PickingList'); container_tracking=relationship('ContainerTracking'); assignee=relationship('User', foreign_keys=[assigned_to]); creator=relationship('User', foreign_keys=[created_by])
+    operational_exception=relationship('OperationalException', back_populates='work_orders')
     events=relationship('WorkOrderEvent', back_populates='work_order', cascade='all, delete-orphan', order_by='WorkOrderEvent.created_at.desc()')
     __table_args__=(Index('ix_work_orders_warehouse_status','warehouse_id','status'),)
