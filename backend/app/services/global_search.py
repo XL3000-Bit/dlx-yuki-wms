@@ -3,14 +3,16 @@ from dataclasses import dataclass
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import joinedload
 
-from app.models import BOL, ContainerTracking, FBAShipment, Load, OutboundOrder, PickingList, WorkOrder
+from app.models import BOL, ContainerTracking, FBAShipment, Load, OperationalException, OutboundOrder, PickingList, WorkOrder
 from app.models.bol import BOLStatus
 from app.models.container_tracking import TrackingStatus
 from app.models.fba import FBAStatus
+from app.models.operational_exception import ExceptionStatus
 from app.models.outbound import OBStatus
 from app.models.picking import PickingStatus
 from app.models.load import LoadStatus
 from app.models.work_order import WorkOrderStatus
+from app.services.access import get_access_scope
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,7 @@ SPECS = (
     SearchSpec("BOL", BOL, (BOL.bol_no,), "/outbound/bol", BOLStatus, "bol_no", None, (joinedload(BOL.warehouse), joinedload(BOL.customer), joinedload(BOL.outbound))),
     SearchSpec("LOAD", Load, (Load.load_no,), "/loads", LoadStatus, "load_no", None, (joinedload(Load.warehouse),)),
     SearchSpec("WORK_ORDER", WorkOrder, (WorkOrder.work_order_no,), "/work-orders", WorkOrderStatus, "work_order_no", None, (joinedload(WorkOrder.warehouse),)),
+    SearchSpec("EXCEPTION", OperationalException, (OperationalException.exception_no, OperationalException.title), "/trouble-shoot", ExceptionStatus, "exception_no", "title", (joinedload(OperationalException.warehouse),)),
 )
 
 
@@ -54,11 +57,24 @@ def _rank(record, fields: tuple, needle: str) -> int:
     return 3
 
 
-def search(db, query: str, limit: int) -> dict:
+def _warehouse_id(record) -> int | None:
+    if getattr(record, "warehouse_id", None):
+        return record.warehouse_id
+    parent = getattr(record, "outbound", None)
+    return getattr(parent, "warehouse_id", None)
+
+
+def _customer_id(record) -> int | None:
+    if getattr(record, "customer_id", None):
+        return record.customer_id
+    parent = getattr(record, "outbound", None)
+    return getattr(parent, "customer_id", None)
+
+
+def search(db, query: str, limit: int, user=None) -> dict:
+    scope = get_access_scope(db, user) if user is not None else None
     needle = query.casefold()
     candidates = []
-    # Each entity query is bounded. This keeps contains matching predictable even
-    # on databases where a leading-wildcard LIKE cannot use a normal b-tree index.
     per_entity_cap = min(max(limit * 3, 20), 150)
     for spec_order, spec in enumerate(SPECS):
         pattern = f"%{query}%"
@@ -66,6 +82,11 @@ def search(db, query: str, limit: int) -> dict:
         for option in spec.options:
             stmt = stmt.options(option)
         for record in db.scalars(stmt).unique():
+            if scope is not None:
+                if not scope.allows_warehouse(_warehouse_id(record)):
+                    continue
+                if spec.type in {"OUTBOUND", "FBA", "PICKING", "BOL"} and not scope.allows_customer(_customer_id(record)):
+                    continue
             candidates.append((_rank(record, spec.fields, needle), spec_order, record.id, spec, record))
 
     candidates.sort(key=lambda row: (row[0], row[1], row[2]))
@@ -81,12 +102,13 @@ def search(db, query: str, limit: int) -> dict:
             customer = getattr(record, "customer", None) or getattr(parent, "customer", None)
             params = "selected_ob" if spec.type == "OUTBOUND" else "selected"
             route = spec.route
-            if spec.type in {"CONTAINER", "OUTBOUND", "FBA", "LOAD", "WORK_ORDER"}:
-                if spec.type == "WORK_ORDER": params = "selected"
+            if spec.type in {"CONTAINER", "OUTBOUND", "FBA", "LOAD", "WORK_ORDER", "EXCEPTION"}:
                 route = f"{route}?{params}={record.id}"
             secondary = getattr(record, spec.secondary) if spec.secondary else getattr(parent, "ob_no", None)
-            if spec.type == "LOAD": secondary = f"{len(record.outbounds)} outbounds"
-            if spec.type == "WORK_ORDER": secondary = record.work_order_type.value
+            if spec.type == "LOAD":
+                secondary = f"{len(record.outbounds)} outbounds"
+            if spec.type == "WORK_ORDER":
+                secondary = record.work_order_type.value
             items.append({
                 "type": spec.type,
                 "id": record.id,
