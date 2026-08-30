@@ -1,5 +1,14 @@
 # Changelog
 
+## PHASE 10.6 — Operations KPI & Command Dashboard
+
+- Adds Operations Command Center at `/` with scoped warehouse + business-date filters.
+- Single aggregation API `GET /api/v1/dashboard/operations` (summary, loads, work orders, exceptions, aging, warehouse breakdown, attention, recent activity).
+- Snapshot metrics stay current; period presets apply to created/completed counts only.
+- Average exception resolution returns null when there are no resolved samples.
+- Dashboard numbers click through to existing Loads / Work Orders / Trouble Shoot URL filters.
+- No new chart library and no employee scorecards.
+
 ## PHASE 9.5 — FBA / Outbound Dispatch Intelligence
 
 - Derives each source container's earliest outbound date from the minimum `schedule_pickup_at` of active outbound allocations.
