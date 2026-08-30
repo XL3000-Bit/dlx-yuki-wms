@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from app.models.user import UserRole
+from app.models.user import ScopeMode, UserRole
 from app.schemas.common import Timestamped
 
 
@@ -17,6 +17,17 @@ class UserRead(Timestamped):
     email: EmailStr
     role: UserRole
     is_active: bool
+    warehouse_scope_mode: ScopeMode = ScopeMode.ALL
+    customer_scope_mode: ScopeMode = ScopeMode.ALL
+    warehouse_ids: list[int] = []
+    customer_ids: list[int] = []
+
+
+class UserScopeUpdate(BaseModel):
+    warehouse_scope_mode: ScopeMode
+    warehouse_ids: list[int] = []
+    customer_scope_mode: ScopeMode = ScopeMode.ALL
+    customer_ids: list[int] = []
 
 
 class LoginRequest(BaseModel):
