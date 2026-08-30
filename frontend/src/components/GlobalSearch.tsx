@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { globalSearch } from '../api/search'
 
-const labels: Record<string, string> = { CONTAINER: 'Containers', OUTBOUND: 'Outbound Orders', FBA: 'FBA', PICKING: 'Picking', BOL: 'BOL', LOAD: 'Loads' }
+const labels: Record<string, string> = { CONTAINER: 'Containers', OUTBOUND: 'Outbound Orders', FBA: 'FBA', PICKING: 'Picking', BOL: 'BOL', LOAD: 'Loads', EXCEPTION: 'Exceptions' }
 
 export function GlobalSearch() {
   const navigate = useNavigate()

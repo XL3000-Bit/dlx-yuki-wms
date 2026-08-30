@@ -14,15 +14,15 @@ Migration `20260829_0014_work_orders` creates `work_orders` with explicit foreig
 
 ## API
 
-`GET /api/v1/work-orders` supports query, status, type, warehouse, priority and assignee filters. Detail, create, patch and status-transition endpoints are available at `/api/v1/work-orders/{id}`. Writes use existing warehouse-write permission; reads use authenticated read access.
+`GET /api/v1/work-orders` supports query, status, type, warehouse, priority and assignee filters. Detail, create and patch endpoints are available at `/api/v1/work-orders/{id}`; assignment uses `POST /api/v1/work-orders/{id}/assign` and status changes use `POST /api/v1/work-orders/{id}/status`. Writes use existing warehouse-write permission; reads use authenticated read access.
 
 ## UI
 
-Operations → Work Orders provides a compact Ant Design list, filters, create modal, detail drawer, and state-aware execution buttons. Detail sections cover Overview, Related Objects, Execution, Notes and a truthful History placeholder.
+Operations → Work Orders provides a compact Ant Design list, filters (including assignee), create modal, assignment control, detail drawer, and state-aware execution buttons. Detail sections cover Overview, Related Objects, Execution, Notes and a truthful History placeholder.
 
 ## Load, Outbound and Picking integration
 
-Load detail now exposes Work Orders with number, type, status, priority, assignment and timestamps. Work orders may be load-level, outbound-level, or linked to a PickingList; existing Picking remains the source of item-level execution detail. Related Load/Outbound warehouse mismatches and terminal Load/Outbound references are rejected.
+Load detail now exposes Work Orders with number, type, status, priority, assignment and created/started/completed timestamps, plus a manual Create Work Order action. Work orders may be load-level, outbound-level, or linked to a PickingList; existing Picking remains the source of item-level execution detail. Related Load/Outbound warehouse mismatches and terminal Load/Outbound references are rejected.
 
 ## Global Search
 

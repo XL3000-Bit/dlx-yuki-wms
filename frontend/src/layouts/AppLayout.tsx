@@ -51,6 +51,7 @@ export function AppLayout() {
             { key: "/outbound/bol", icon: <TruckOutlined />, label: "BOL" },
             { key: "/loads", icon: <TruckOutlined />, label: "Loads" },
             { key: "/work-orders", icon: <HistoryOutlined />, label: "Work Orders" },
+            { key: "/trouble-shoot", icon: <HistoryOutlined />, label: "Trouble Shoot" },
             {
               key: "/import-history",
               icon: <HistoryOutlined />,
