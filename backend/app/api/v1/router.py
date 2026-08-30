@@ -1,0 +1,9 @@
+from fastapi import APIRouter
+from app.api.v1.endpoints import auth, fba, inbound, imports, inventory, masters, users, outbound, picking_bol, container_tracking, search, loads, work_orders
+api_router=APIRouter();api_router.include_router(auth.router);api_router.include_router(users.router);api_router.include_router(masters.router);api_router.include_router(inbound.files_router);api_router.include_router(inbound.router);api_router.include_router(imports.router);api_router.include_router(inventory.files_router);api_router.include_router(inventory.router);api_router.include_router(fba.files_router);api_router.include_router(fba.router)
+api_router.include_router(outbound.files_router);api_router.include_router(outbound.router)
+api_router.include_router(picking_bol.router)
+api_router.include_router(container_tracking.router)
+api_router.include_router(search.router)
+api_router.include_router(loads.router)
+api_router.include_router(work_orders.router)

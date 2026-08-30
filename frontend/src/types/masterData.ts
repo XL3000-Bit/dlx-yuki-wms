@@ -1,0 +1,3 @@
+export interface MasterItem{id:number;is_active:boolean;[key:string]:string|number|boolean|null}export interface Warehouse extends MasterItem{warehouse_code:string;warehouse_name:string}export interface Customer extends MasterItem{customer_code:string;customer_name:string}export interface Location extends MasterItem{warehouse_id:number;area_id:number;location_code:string;location_name:string}
+export interface Carrier extends MasterItem{carrier_code:string;carrier_name:string}
+export interface AmazonFC extends MasterItem{fc_code:string;fc_name:string;address_line1:string;address_line2:string|null;city:string;state:string;zip_code:string;country:string}

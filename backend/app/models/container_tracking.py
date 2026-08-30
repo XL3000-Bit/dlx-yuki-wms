@@ -1,0 +1,13 @@
+import enum
+from datetime import datetime
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.db.base import Base
+class TrackingStatus(str, enum.Enum):
+ PLANNED='PLANNED'; IN_TRANSIT='IN_TRANSIT'; DELIVERY_SCHEDULED='DELIVERY_SCHEDULED'; DELIVERED='DELIVERED'; WAREHOUSE_RECEIVED='WAREHOUSE_RECEIVED'; EMPTY='EMPTY'; COMPLETED='COMPLETED'
+class ContainerTracking(Base):
+ __tablename__='container_trackings'
+ id:Mapped[int]=mapped_column(primary_key=True)
+ container_number:Mapped[str]=mapped_column(String(32),index=True);mbl_number:Mapped[str|None]=mapped_column(String(100),index=True);hbl_number:Mapped[str|None]=mapped_column(String(100));filing_number:Mapped[str|None]=mapped_column(String(100));container_attributes:Mapped[str|None]=mapped_column(Text);container_remark:Mapped[str|None]=mapped_column(Text);customer_reference:Mapped[str|None]=mapped_column(String(200));pod_eta:Mapped[datetime|None]=mapped_column(DateTime(timezone=True),index=True);ir_eta:Mapped[datetime|None]=mapped_column(DateTime(timezone=True));pod:Mapped[str|None]=mapped_column(String(200));delivery_location:Mapped[str|None]=mapped_column(String(200));final_destination:Mapped[str|None]=mapped_column(String(200));delivery_warehouse_raw:Mapped[str|None]=mapped_column(String(200));warehouse_id:Mapped[int|None]=mapped_column(ForeignKey('warehouses.id'),index=True);scheduled_delivery_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True),index=True);actual_delivery_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True),index=True);wa_received_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True),index=True);wa_empty_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True));wa_complete_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True),index=True);tracking_status:Mapped[TrackingStatus]=mapped_column(Enum(TrackingStatus,name='tracking_status'),index=True,default=TrackingStatus.PLANNED);source_type:Mapped[str]=mapped_column(String(50),default='SHIPMENT_EXPORT');source_file_name:Mapped[str|None]=mapped_column(String(255));source_row_number:Mapped[int|None]=mapped_column();import_job_id:Mapped[int|None]=mapped_column(ForeignKey('import_jobs.id'));source_fingerprint:Mapped[str]=mapped_column(String(64),unique=True,index=True);created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now());updated_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
+ warehouse=relationship('Warehouse')
+ __table_args__=(Index('ix_container_tracking_cycle','container_number','mbl_number','pod_eta'),)
