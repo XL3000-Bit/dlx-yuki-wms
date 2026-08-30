@@ -75,7 +75,6 @@ def create_work_order(db, p, user_id):
     _add_event(db, wo, "WORK_ORDER_CREATED", user_id, new_value=wo.work_order_no,
         message=f"Work order {wo.work_order_no} created", assigned_to_after=wo.assigned_to,
         assigned_team_after=wo.assigned_team, priority_after=wo.priority.value, note=wo.notes)
-    sync_work_order_notifications(db, wo)
     sync_work_order_notifications(db, wo); db.commit(); return get_work_order(db, wo.id)
 
 

@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -19,7 +19,7 @@ class DocumentStatus(str, enum.Enum):
 class OperationalDocument(TimestampMixin, Base):
     __tablename__ = "operational_documents"
     id: Mapped[int] = mapped_column(primary_key=True)
-    document_no: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    document_no: Mapped[str] = mapped_column(String(40))
     document_type: Mapped[DocumentType] = mapped_column(Enum(DocumentType, name="operational_document_type"), index=True)
     status: Mapped[DocumentStatus] = mapped_column(Enum(DocumentStatus, name="operational_document_status"), default=DocumentStatus.DRAFT, index=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
@@ -47,9 +47,11 @@ class OperationalDocument(TimestampMixin, Base):
     operational_exception = relationship("OperationalException"); container_tracking = relationship("ContainerTracking")
     creator = relationship("User", foreign_keys=[created_by]); events = relationship("DocumentEvent", back_populates="document", order_by="DocumentEvent.created_at.desc()", cascade="all, delete-orphan")
     __table_args__ = (
+        UniqueConstraint("document_no"),
         CheckConstraint("version >= 1", name="version_positive"),
         CheckConstraint("load_id IS NOT NULL OR outbound_id IS NOT NULL OR bol_id IS NOT NULL OR work_order_id IS NOT NULL OR operational_exception_id IS NOT NULL OR container_tracking_id IS NOT NULL", name="business_link_required"),
         Index("ix_operational_documents_scope_status", "warehouse_id", "status", "document_type"),
+        Index("ix_operational_documents_document_no", "document_no"),
     )
 
 

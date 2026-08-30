@@ -11,13 +11,13 @@ class WorkOrderEvent(Base):
     # legacy status transition fields
     from_status:Mapped[str|None]=mapped_column(String(24)); to_status:Mapped[str|None]=mapped_column(String(24))
     actor_user_id:Mapped[int|None]=mapped_column(ForeignKey('users.id',ondelete='SET NULL'),index=True)
-    assigned_to_before:Mapped[int|None]=mapped_column(ForeignKey('users.id',ondelete='SET NULL')); assigned_to_after:Mapped[int|None]=mapped_column(ForeignKey('users.id',ondelete='SET NULL'))
+    assigned_to_before:Mapped[int|None]=mapped_column(ForeignKey('users.id',ondelete='SET NULL'),index=True); assigned_to_after:Mapped[int|None]=mapped_column(ForeignKey('users.id',ondelete='SET NULL'),index=True)
     assigned_team_before:Mapped[str|None]=mapped_column(String(100)); assigned_team_after:Mapped[str|None]=mapped_column(String(100))
     priority_before:Mapped[str|None]=mapped_column(String(16)); priority_after:Mapped[str|None]=mapped_column(String(16))
     note:Mapped[str|None]=mapped_column(Text)
     metadata_json:Mapped[dict|None]=mapped_column(JSON)
     # new authoritative fields
-    field_name:Mapped[str|None]=mapped_column(String(64),index=True)
+    field_name:Mapped[str|None]=mapped_column(String(64))
     old_value:Mapped[str|None]=mapped_column(Text)
     new_value:Mapped[str|None]=mapped_column(Text)
     message:Mapped[str|None]=mapped_column(Text)

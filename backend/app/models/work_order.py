@@ -23,7 +23,7 @@ class WorkOrder(TimestampMixin, Base):
     priority: Mapped[WorkOrderPriority] = mapped_column(Enum(WorkOrderPriority, name='work_order_priority'), default=WorkOrderPriority.NORMAL, index=True)
     assigned_to: Mapped[int|None] = mapped_column(ForeignKey('users.id', ondelete='SET NULL'), index=True)
     assigned_team: Mapped[str|None] = mapped_column(String(100))
-    scheduled_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), index=True)
+    scheduled_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True))
     started_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True))
     notes: Mapped[str|None] = mapped_column(Text)
