@@ -6,6 +6,7 @@ from app.api.deps import CurrentUser,DbSession,require_outbound_write
 from app.models import User,PickingList,BOL
 from app.schemas.picking_bol import BOLRead,PickComplete,PickingRead
 from app.services.picking_bol import bol_pdf,bol_read,bol_xlsx,complete_picking,generate_bol,generate_picking,picking_read
+from app.services.operational_document import register_generated_bol
 router=APIRouter(tags=['Picking and BOL']);Writer=Depends(require_outbound_write)
 @router.post('/outbounds/{ob_id}/picking-lists',response_model=PickingRead)
 def create_picking(ob_id:int,db:DbSession,user:User=Writer):return picking_read(generate_picking(db,ob_id,user.id))
@@ -21,7 +22,13 @@ def picking_excel(pid:int,db:DbSession,_:CurrentUser):
  for i in p.items:ws.append([p.picking_no,p.outbound_order_id,i.sequence_no,i.location.location_code if i.location else '',i.container_number,i.fc_code,i.marking,i.planned_pallet_qty,i.planned_carton_qty,i.planned_weight_lbs,i.planned_cbm])
  s=BytesIO();wb.save(s);s.seek(0);return StreamingResponse(s,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename={p.picking_no}.xlsx'})
 @router.post('/outbounds/{ob_id}/bol',response_model=BOLRead)
-def create_bol(ob_id:int,db:DbSession,user:User=Writer):return bol_read(generate_bol(db,ob_id,user.id))
+def create_bol(ob_id:int,db:DbSession,user:User=Writer):
+ b=generate_bol(db,ob_id,user.id)
+ try:
+  register_generated_bol(db,b,user.id,bol_pdf(b))
+ except Exception:
+  pass
+ return bol_read(b)
 @router.get('/bols',response_model=list[BOLRead])
 def bols(db:DbSession,_:CurrentUser):return[bol_read(x) for x in db.query(BOL).order_by(BOL.id.desc()).limit(200)]
 @router.get('/bols/{bid}',response_model=BOLRead)
