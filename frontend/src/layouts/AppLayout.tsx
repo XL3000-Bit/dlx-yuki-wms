@@ -1,5 +1,6 @@
 import {
   DashboardOutlined,
+  FileOutlined,
   HistoryOutlined,
   DatabaseOutlined,
   TruckOutlined,
@@ -23,57 +24,29 @@ export function AppLayout() {
   const selected = loc.pathname === "/" ? "/" : loc.pathname;
   return (
     <Layout className="app-layout">
-      <Sider
-        width={212}
-        collapsedWidth={60}
-        collapsed={collapsed}
-        className="brand-sider"
-      >
+      <Sider width={212} collapsedWidth={60} collapsed={collapsed} className="brand-sider">
         <div className="brand">
           <b>DLX</b>
-          {!collapsed && (
-            <span>
-              Yuki WMS <small>VERSION 3</small>
-            </span>
-          )}
+          {!collapsed && (<span>Yuki WMS <small>VERSION 3</small></span>)}
         </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[selected]}
-          onClick={(e) => nav(e.key)}
-          items={[
-            { key: "/", icon: <DashboardOutlined />, label: "Operations" },
-            { key: "/inbound", icon: <ImportOutlined />, label: "Inbound" },
-            { key: "/container-tracking", icon: <ImportOutlined />, label: "Container Tracking" },
-            { key: "/inventory", icon: <DatabaseOutlined />, label: "Inventory" },
-            { key: "/fba", icon: <TruckOutlined />, label: "FBA" },
-            { key: "/outbound/dispatch", icon: <TruckOutlined />, label: "Outbound Dispatch" },
-            { key: "/outbound/picking", icon: <TruckOutlined />, label: "Picking List" },
-            { key: "/outbound/picking-history", icon: <HistoryOutlined />, label: "Picking History" },
-            { key: "/outbound/bol", icon: <TruckOutlined />, label: "BOL" },
-            { key: "/loads", icon: <TruckOutlined />, label: "Loads" },
-            { key: "/work-orders", icon: <HistoryOutlined />, label: "Work Orders" },
-            { key: "/trouble-shoot", icon: <HistoryOutlined />, label: "Trouble Shoot" },
-            {
-              key: "/import-history",
-              icon: <HistoryOutlined />,
-              label: "Import History",
-            },
-            {
-              key: "settings",
-              icon: <SettingOutlined />,
-              label: "Settings",
-              disabled: true,
-            },
-          ]}
-        />
-        <Button
-          className="sider-toggle"
-          type="text"
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={() => setCollapsed(!collapsed)}
-        >
+        <Menu theme="dark" mode="inline" selectedKeys={[selected]} onClick={(e) => nav(e.key)} items={[
+          { key: "/", icon: <DashboardOutlined />, label: "Operations" },
+          { key: "/inbound", icon: <ImportOutlined />, label: "Inbound" },
+          { key: "/container-tracking", icon: <ImportOutlined />, label: "Container Tracking" },
+          { key: "/inventory", icon: <DatabaseOutlined />, label: "Inventory" },
+          { key: "/fba", icon: <TruckOutlined />, label: "FBA" },
+          { key: "/outbound/dispatch", icon: <TruckOutlined />, label: "Outbound Dispatch" },
+          { key: "/outbound/picking", icon: <TruckOutlined />, label: "Picking List" },
+          { key: "/outbound/picking-history", icon: <HistoryOutlined />, label: "Picking History" },
+          { key: "/outbound/bol", icon: <TruckOutlined />, label: "BOL" },
+          { key: "/loads", icon: <TruckOutlined />, label: "Loads" },
+          { key: "/work-orders", icon: <HistoryOutlined />, label: "Work Orders" },
+          { key: "/trouble-shoot", icon: <HistoryOutlined />, label: "Trouble Shoot" },
+          { key: "/documents", icon: <FileOutlined />, label: "Documents" },
+          { key: "/import-history", icon: <HistoryOutlined />, label: "Import History" },
+          { key: "settings", icon: <SettingOutlined />, label: "Settings", disabled: true },
+        ]} />
+        <Button className="sider-toggle" type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)}>
           {!collapsed && "Collapse"}
         </Button>
       </Sider>
@@ -81,9 +54,7 @@ export function AppLayout() {
         <Header className="topbar">
           <Typography.Text strong>Warehouse Operations</Typography.Text>
           <GlobalSearch />
-          <Button icon={<LogoutOutlined />} onClick={logout}>
-            Sign Out
-          </Button>
+          <Button icon={<LogoutOutlined />} onClick={logout}>Sign Out</Button>
         </Header>
         <Content className={`content ${loc.pathname === "/outbound/dispatch" ? "content-workbench" : ""}`}>
           <Outlet />
