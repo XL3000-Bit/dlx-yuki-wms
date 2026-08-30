@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173"]
     trailer_default_pallet_capacity: int = Field(default=26, ge=1, le=100)
     business_timezone: str = "America/Los_Angeles"
+    document_storage_dir: str = "./storage/documents"
+    document_max_bytes: int = 15 * 1024 * 1024
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

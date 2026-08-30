@@ -18,6 +18,7 @@ from app.models.work_order_event import WorkOrderEvent
 from app.models.operational_exception import (
     ExceptionSeverity, ExceptionStatus, ExceptionType, OperationalException, OperationalExceptionEvent,
 )
+from app.models.operational_document import DocumentEvent, DocumentStatus, DocumentType, OperationalDocument
 
 __all__ = [
     "AmazonFCAddress", "Carrier", "Customer", "User", "UserRole", "ScopeMode",
@@ -30,4 +31,5 @@ __all__ = [
     "ContainerTracking", "TrackingStatus", "Load", "LoadStatus",
     "WorkOrder", "WorkOrderType", "WorkOrderStatus", "WorkOrderPriority", "WorkOrderEvent",
     "ExceptionType", "ExceptionSeverity", "ExceptionStatus", "OperationalException", "OperationalExceptionEvent",
+    "OperationalDocument", "DocumentEvent", "DocumentType", "DocumentStatus",
 ]
