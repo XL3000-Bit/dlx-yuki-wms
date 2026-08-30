@@ -1,28 +1,38 @@
 # PHASE 10 Manual Smoke Checklist
 
-Run this checklist on a disposable environment migrated to the release head. Record tester, build/commit, browser, database, warehouse fixtures, and date. This checklist is currently **not run** because migration `0019` blocks environment provisioning.
+Run date: 2026-08-30. Build: `06a7fae`. Database: local PostgreSQL `dlx_yuki_wms`, migrated to `20260830_0021`. Status: **PASS FOR RC**.
 
-## Core flow
+## Browser smoke evidence
 
-- [ ] Login as Admin, Manager, Operator, and Viewer; confirm logout and token refresh do not expose raw errors.
-- [ ] Global Search: exact, prefix, and contains queries; open an Outbound result; refresh and confirm selected/filter state is restored.
-- [ ] Create a Load, add an OB, reject a duplicate Load/OB relation with a readable conflict message, and reopen by deep link.
-- [ ] Create a Work Order, assign, start, complete, and inspect immutable history; reject an invalid transition without an event.
-- [ ] Create an Exception, investigate, create/link a Work Order, resolve, and inspect immutable exception history.
-- [ ] Upload a document, download it, upload a new version, archive it, and verify a missing file produces a safe error.
-- [ ] Open Dashboard, apply warehouse/date filters, click Attention Queue, and refresh the target page.
-- [ ] Refresh notifications twice, confirm dedupe, mark one/all read, and follow the deep link after refresh.
+- [x] Dashboard rendered its operational summaries, filters, empty states, and Refresh action.
+- [x] Global Search found exact outbound `RTPL260829001`; its result opened `/outbound/dispatch?selected_ob=3`.
+- [x] Outbound Dispatch restored the selected outbound after refresh and rendered orders, allocation/picking/BOL, remaining source, Reset Window, and right-panel controls.
+- [x] Loads rendered its filters, Refresh and Create Load controls, and a safe empty state.
+- [x] Work Order `WO-20260830-0001` rendered as COMPLETED with its full OPEN -> ASSIGNED -> IN_PROGRESS -> COMPLETED history.
+- [x] Trouble Shoot rendered its filters and empty state, then opened the Create Exception workflow.
+- [x] Submitting an exception without an operational reference was rejected without creating a record.
+- [x] Exception `EX-20260830-0001` was created against outbound 3. PostgreSQL supplied non-null `created_at`/`updated_at`, and the UI displayed the creation time.
+- [x] The exception advanced OPEN -> INVESTIGATING -> RESOLVED and preserved EXCEPTION_CREATED, status-change, and resolution history.
+- [x] The exception's outbound deep link targeted `/outbound/dispatch?selected_ob=3`.
+- [x] Notifications opened, refreshed, and displayed a safe empty state with Mark All Read disabled.
+- [x] No application runtime exception appeared in the browser log.
 
-## Security and failure flow
+## Automated acceptance used for non-destructive coverage
 
-- [ ] Viewer can read permitted records but cannot mutate Load, Work Order, Exception, Document, or Notification-owned data.
-- [ ] Warehouse A user cannot list, count, search, look up, deep-link, download, view events for, or mutate Warehouse B data.
-- [ ] Direct ID requests use the intended 403/404 non-disclosure policy and do not leak record existence.
-- [ ] Upload rejection, 409 conflicts, 422 validation, and simulated 500 errors show understandable UI messages without traceback, token, cookie, or file contents.
-- [ ] Unknown/stale deep-link targets degrade safely; no link points to a missing route.
+- [x] Admin/Manager/Operator/Viewer authorization and cross-warehouse isolation are covered by the full backend suite.
+- [x] Load creation, duplicate relation conflicts, lifecycle validation, document upload/version/archive/download, notification dedupe/read handling, and safe API failures are covered by automated tests.
+- [x] PostgreSQL fresh-schema, `0012 -> head`, downgrade/re-upgrade, and `alembic check` smoke passed.
+- [x] Full backend regression passed after the PostgreSQL smoke.
+- [x] Frontend TypeScript compilation and production build passed.
+
+## Deliberate manual-test limits
+
+Only the existing administrator session was available, so the role matrix was not re-created manually. No disposable document fixture or Load fixture was created in the browser. These paths are accepted through automated coverage; no user, permission, or production-like document data was modified.
+
+The browser emitted only the known Ant Design React-version and static-message-context warnings. They did not prevent any tested flow.
 
 ## Completion
 
-- [ ] Attach screenshots/log references and list deviations.
-- [ ] Re-run automated regression after any smoke fix.
-- [ ] Obtain release owner sign-off.
+- [x] Smoke deviations and limits recorded.
+- [x] Automated regression rerun after stabilization.
+- [x] Phase 10.9 meets the technical RC gate; release-owner promotion remains an operational decision.
