@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dlx_yuki_wms}
+      POSTGRES_USER: ${POSTGRES_USER:-dlx_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dlx_user} -d ${POSTGRES_DB:-dlx_yuki_wms}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - dlx_net
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./deploy/oracle/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dlx_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-dlx_yuki_wms}
+      ENVIRONMENT: production
+      DEBUG: "false"
+      BUSINESS_TIMEZONE: America/Los_Angeles
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - document_data:/app/data/documents
+      - backup_data:/app/backups
+    networks:
+      - dlx_net
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "80:80"
+    networks:
+      - dlx_net
+
+volumes:
+  postgres_data:
+  document_data:
+  backup_data:
+
+networks:
+  dlx_net:
+    driver: bridge
