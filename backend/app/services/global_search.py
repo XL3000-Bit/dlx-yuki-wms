@@ -3,10 +3,11 @@ from dataclasses import dataclass
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import joinedload
 
-from app.models import BOL, ContainerTracking, FBAShipment, Load, OperationalException, OutboundOrder, PickingList, WorkOrder
+from app.models import BOL, ContainerTracking, FBAShipment, Load, OperationalDocument, OperationalException, OutboundOrder, PickingList, WorkOrder
 from app.models.bol import BOLStatus
 from app.models.container_tracking import TrackingStatus
 from app.models.fba import FBAStatus
+from app.models.operational_document import DocumentStatus
 from app.models.operational_exception import ExceptionStatus
 from app.models.outbound import OBStatus
 from app.models.picking import PickingStatus
@@ -36,6 +37,7 @@ SPECS = (
     SearchSpec("LOAD", Load, (Load.load_no,), "/loads", LoadStatus, "load_no", None, (joinedload(Load.warehouse),)),
     SearchSpec("WORK_ORDER", WorkOrder, (WorkOrder.work_order_no,), "/work-orders", WorkOrderStatus, "work_order_no", None, (joinedload(WorkOrder.warehouse),)),
     SearchSpec("EXCEPTION", OperationalException, (OperationalException.exception_no, OperationalException.title), "/trouble-shoot", ExceptionStatus, "exception_no", "title", (joinedload(OperationalException.warehouse),)),
+    SearchSpec("DOCUMENT", OperationalDocument, (OperationalDocument.document_no, OperationalDocument.file_name, OperationalDocument.original_file_name), "/documents", DocumentStatus, "document_no", "file_name", (joinedload(OperationalDocument.warehouse), joinedload(OperationalDocument.bol))),
 )
 
 
@@ -50,6 +52,8 @@ def _status_name(enum_type: type, value) -> str:
 
 def _rank(record, fields: tuple, needle: str) -> int:
     values = [str(getattr(record, field.key) or "").casefold() for field in fields]
+    if hasattr(record, "bol") and getattr(record, "bol", None):
+        values.append(str(record.bol.bol_no or "").casefold())
     if needle in values:
         return 1
     if any(value.startswith(needle) for value in values):
@@ -78,7 +82,12 @@ def search(db, query: str, limit: int, user=None) -> dict:
     per_entity_cap = min(max(limit * 3, 20), 150)
     for spec_order, spec in enumerate(SPECS):
         pattern = f"%{query}%"
-        stmt = select(spec.model).where(or_(*(func.lower(field).like(pattern.casefold()) for field in spec.fields))).limit(per_entity_cap)
+        clauses = [func.lower(field).like(pattern.casefold()) for field in spec.fields]
+        stmt = select(spec.model)
+        if spec.type == "DOCUMENT":
+            stmt = stmt.outerjoin(BOL, BOL.id == OperationalDocument.bol_id)
+            clauses.append(func.lower(BOL.bol_no).like(pattern.casefold()))
+        stmt = stmt.where(or_(*clauses)).limit(per_entity_cap)
         for option in spec.options:
             stmt = stmt.options(option)
         for record in db.scalars(stmt).unique():
@@ -102,13 +111,15 @@ def search(db, query: str, limit: int, user=None) -> dict:
             customer = getattr(record, "customer", None) or getattr(parent, "customer", None)
             params = "selected_ob" if spec.type == "OUTBOUND" else "selected"
             route = spec.route
-            if spec.type in {"CONTAINER", "OUTBOUND", "FBA", "LOAD", "WORK_ORDER", "EXCEPTION"}:
+            if spec.type in {"CONTAINER", "OUTBOUND", "FBA", "LOAD", "WORK_ORDER", "EXCEPTION", "DOCUMENT"}:
                 route = f"{route}?{params}={record.id}"
             secondary = getattr(record, spec.secondary) if spec.secondary else getattr(parent, "ob_no", None)
             if spec.type == "LOAD":
                 secondary = f"{len(record.outbounds)} outbounds"
             if spec.type == "WORK_ORDER":
                 secondary = record.work_order_type.value
+            if spec.type == "DOCUMENT":
+                secondary = record.document_type.value
             items.append({
                 "type": spec.type,
                 "id": record.id,

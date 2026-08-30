@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session,sessionmaker
 from sqlalchemy.pool import StaticPool
 from app.api.deps import get_db
+from app.core.config import settings
 from app.core.security import create_access_token,hash_password
 from app.db.base import Base
 from app.main import app
@@ -21,6 +22,11 @@ def database()->Generator[None,None,None]:
         session.add_all([InventoryPriorityRule(min_days=0,max_days=7,priority_level="GREEN",priority_label="New",sort_order=1),InventoryPriorityRule(min_days=8,max_days=14,priority_level="YELLOW",priority_label="Attention",sort_order=2),InventoryPriorityRule(min_days=15,max_days=21,priority_level="ORANGE",priority_label="High Priority",sort_order=3),InventoryPriorityRule(min_days=22,max_days=None,priority_level="RED",priority_label="Process First",sort_order=4)]);session.commit()
     yield
     app.dependency_overrides.clear()
+
+@pytest.fixture(autouse=True)
+def isolate_document_storage(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "document_storage_dir", str(tmp_path / "documents"))
+    monkeypatch.setattr(settings, "document_max_bytes", 15 * 1024 * 1024)
 
 @pytest.fixture
 def db()->Generator[Session,None,None]:
