@@ -7,6 +7,7 @@ from app.db.base import Base
 from app.models import AmazonFCAddress, Carrier, Customer, User, Warehouse, WarehouseArea, WarehouseLocation
 from app.repositories.base import Repository
 from app.schemas.masters import AreaCreate, AreaRead, CarrierCreate, CarrierRead, CustomerCreate, CustomerRead, FCAddressCreate, FCAddressRead, LocationCreate, LocationRead, WarehouseCreate, WarehouseRead
+from app.services.access import apply_customer_scope, apply_warehouse_scope, get_access_scope
 
 router = APIRouter(prefix="/master-data", tags=["Master Data"])
 Admin = Annotated[User, Depends(require_admin)]
@@ -22,26 +23,33 @@ def create(db: DbSession, model: type[T], payload: Any) -> T:
 
 
 @router.get("/customers", response_model=list[CustomerRead])
-def customers(db: DbSession, _: CurrentUser): return Repository(Customer).list(db)
+def customers(db: DbSession, user: CurrentUser):
+    scope = get_access_scope(db, user)
+    return list(db.scalars(apply_customer_scope(select(Customer), Customer.id, scope).order_by(Customer.id)).all())
 
 @router.post("/customers", response_model=CustomerRead, status_code=201)
 def add_customer(payload: CustomerCreate, db: DbSession, _: Admin): return create(db, Customer, payload)
 
 @router.get("/warehouses", response_model=list[WarehouseRead])
-def warehouses(db: DbSession, _: CurrentUser): return Repository(Warehouse).list(db)
+def warehouses(db: DbSession, user: CurrentUser):
+    scope = get_access_scope(db, user)
+    return list(db.scalars(apply_warehouse_scope(select(Warehouse), Warehouse.id, scope).order_by(Warehouse.id)).all())
 
 @router.post("/warehouses", response_model=WarehouseRead, status_code=201)
 def add_warehouse(payload: WarehouseCreate, db: DbSession, _: Admin): return create(db, Warehouse, payload)
 
 @router.get("/warehouse-areas", response_model=list[AreaRead])
-def areas(db: DbSession, _: CurrentUser): return Repository(WarehouseArea).list(db)
+def areas(db: DbSession, user: CurrentUser):
+    scope = get_access_scope(db, user)
+    return list(db.scalars(apply_warehouse_scope(select(WarehouseArea), WarehouseArea.warehouse_id, scope)).all())
 
 @router.post("/warehouse-areas", response_model=AreaRead, status_code=201)
 def add_area(payload: AreaCreate, db: DbSession, _: Admin): return create(db, WarehouseArea, payload)
 
 @router.get("/warehouse-locations", response_model=list[LocationRead])
-def locations(db: DbSession, _: CurrentUser, location_code: str | None = Query(None)):
-    query = select(WarehouseLocation)
+def locations(db: DbSession, user: CurrentUser, location_code: str | None = Query(None)):
+    scope = get_access_scope(db, user)
+    query = apply_warehouse_scope(select(WarehouseLocation), WarehouseLocation.warehouse_id, scope)
     if location_code: query = query.where(WarehouseLocation.location_code.ilike(f"%{location_code}%"))
     return list(db.scalars(query).all())
 
