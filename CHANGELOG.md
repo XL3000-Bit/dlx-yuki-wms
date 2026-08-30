@@ -1,5 +1,14 @@
 # Changelog
 
+## PHASE 10.7 — Document & POD Center Foundation
+
+- Adds OperationalDocument + append-only document events and a local filesystem storage abstraction.
+- Controlled upload/download/archive APIs with extension, size, and path-traversal guards.
+- POD upload marks Received without completing the Load.
+- Generated BOL PDF is registered as a document without replacing the existing BOL model.
+- Documents page plus Load / Work Order / Exception document panels.
+- Global Search DOCUMENT type. Viewer can download; cannot upload.
+
 ## PHASE 10.6 — Operations KPI & Command Dashboard
 
 - Adds Operations Command Center at `/` with scoped warehouse + business-date filters.

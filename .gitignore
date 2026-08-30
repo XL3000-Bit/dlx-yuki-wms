@@ -9,6 +9,8 @@ node_modules/
 dist/
 backups/
 backend/data/imports/
+backend/storage/
+storage/
 .idea/
 .vscode/
 *.log
