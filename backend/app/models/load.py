@@ -38,4 +38,5 @@ class Load(TimestampMixin, Base):
     creator = relationship("User")
     outbounds = relationship("OutboundOrder", back_populates="load")
     work_orders = relationship("WorkOrder", back_populates="load")
+    operational_exceptions = relationship("OperationalException", back_populates="load")
     __table_args__ = (Index("ix_loads_status_warehouse", "status", "warehouse_id"),)
