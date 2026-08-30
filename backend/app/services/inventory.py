@@ -6,7 +6,8 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func,or_,select,text
 from sqlalchemy.orm import Session,joinedload
-from app.models import AuditLog,InboundRecord,InventoryLot,InventoryPriorityRule,InventoryTransaction,WarehouseLocation
+from app.models import AuditLog,InboundRecord,InventoryLot,InventoryPriorityRule,InventoryTransaction,User,WarehouseLocation
+from app.services.access_policy import customer_clause,warehouse_clause
 from app.models.inventory import InventoryStatus,TransactionType
 from app.schemas.inbound import NamedRef,PaginationMeta,UserRef
 from app.schemas.inventory import AdjustmentRequest,HoldRequest,InventoryListResponse,InventoryRead,MoveRequest,TransactionRead
@@ -37,8 +38,10 @@ def read_inventory(db:Session,lot:InventoryLot)->InventoryRead:
     aging=max(0,(get_business_today()-lot.inbound_date).days) if lot.inbound_date else None;level,label=_priority(db,aging)
     return InventoryRead.model_validate({**lot.__dict__,"customer":_named(lot.customer,"customer"),"warehouse":_named(lot.warehouse,"warehouse"),"location":_named(lot.location,"location"),"aging_days":aging,"priority_level":level,"priority_label":label,"status_name":InventoryStatus(lot.status).name.replace("_"," ").title()})
 def _base_query():return select(InventoryLot).options(joinedload(InventoryLot.customer),joinedload(InventoryLot.warehouse),joinedload(InventoryLot.location),joinedload(InventoryLot.creator))
-def get_lot(db:Session,lot_id:int,lock:bool=False)->InventoryLot:
-    query=select(InventoryLot).where(InventoryLot.id==lot_id).with_for_update() if lock else _base_query().where(InventoryLot.id==lot_id)
+def get_lot(db:Session,lot_id:int,lock:bool=False,user:User|None=None)->InventoryLot:
+    filters=[InventoryLot.id==lot_id]
+    if user:filters.extend(x for x in (warehouse_clause(user,InventoryLot.warehouse_id),customer_clause(user,InventoryLot.customer_id)) if x is not None)
+    query=select(InventoryLot).where(*filters).with_for_update() if lock else _base_query().where(*filters)
     lot=db.scalar(query)
     if lot is None:raise HTTPException(404,"Inventory lot not found")
     return lot
@@ -51,8 +54,9 @@ def receive_inbound(db:Session,inbound_id:int,user_id:int,commit:bool=True)->Inv
     lot=InventoryLot(lot_no=generate_lot_no(db),customer_id=inbound.customer_id,warehouse_id=inbound.warehouse_id,source_inbound_id=inbound.id,container_number=inbound.container_number,fc_code=inbound.fc_code,marking=inbound.marking,location_id=inbound.location_id,raw_location_text=inbound.raw_location_text,import_row_id=inbound.import_row_id,original_pallet_qty=p,original_carton_qty=c,original_weight_lbs=w,original_cbm=v,available_pallet_qty=p,available_carton_qty=c,available_weight_lbs=w,available_cbm=v,allocated_pallet_qty=ZERO,allocated_carton_qty=ZERO,allocated_weight_lbs=ZERO,allocated_cbm=ZERO,hold_pallet_qty=ZERO,hold_carton_qty=ZERO,inbound_date=inbound.received_date or inbound.unload_date,status=InventoryStatus.AVAILABLE,remark=inbound.remark,created_by=user_id);db.add(lot);db.flush();after=snapshot(lot);db.add(InventoryTransaction(inventory_lot_id=lot.id,transaction_type=TransactionType.INBOUND,pallet_delta=p,carton_delta=c,weight_delta=w,cbm_delta=v,to_location_id=lot.location_id,reference_type="INBOUND",reference_id=inbound.id,after_snapshot=after,remark="Received from inbound",created_by=user_id));db.add(AuditLog(user_id=user_id,action="CREATE_INVENTORY_FROM_INBOUND",entity_type="INVENTORY",entity_id=lot.id,after_data=after));
     if commit:db.commit();return get_lot(db,lot.id)
     return lot
-def list_inventory(db:Session,*,page:int=1,per_page:int=20,q:str|None=None,container_number:str|None=None,fc_code:str|None=None,customer_id:int|None=None,warehouse_id:int|None=None,location_id:int|None=None,status:int|None=None,priority_level:str|None=None,inbound_date_from:date|None=None,inbound_date_to:date|None=None,aging_min:int|None=None,aging_max:int|None=None,has_available:bool|None=None,sort_by:str="id",sort_order:str="desc")->InventoryListResponse:
+def list_inventory(db:Session,*,page:int=1,per_page:int=20,q:str|None=None,container_number:str|None=None,fc_code:str|None=None,customer_id:int|None=None,warehouse_id:int|None=None,location_id:int|None=None,status:int|None=None,priority_level:str|None=None,inbound_date_from:date|None=None,inbound_date_to:date|None=None,aging_min:int|None=None,aging_max:int|None=None,has_available:bool|None=None,sort_by:str="id",sort_order:str="desc",user:User|None=None)->InventoryListResponse:
     filters=[]
+    if user:filters.extend(x for x in (warehouse_clause(user,InventoryLot.warehouse_id),customer_clause(user,InventoryLot.customer_id)) if x is not None)
     if q:
         term=f"%{q}%";filters.append(or_(InventoryLot.lot_no.ilike(term),InventoryLot.container_number.ilike(term),InventoryLot.fc_code.ilike(term),InventoryLot.marking.ilike(term),InventoryLot.remark.ilike(term)))
     for val,col in ((container_number,InventoryLot.container_number),(fc_code,InventoryLot.fc_code),(customer_id,InventoryLot.customer_id),(warehouse_id,InventoryLot.warehouse_id),(location_id,InventoryLot.location_id),(status,InventoryLot.status)):

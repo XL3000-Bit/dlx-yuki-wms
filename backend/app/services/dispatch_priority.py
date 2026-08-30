@@ -5,8 +5,9 @@ from enum import StrEnum
 
 from sqlalchemy import case, func, select
 
-from app.models import InventoryLot, OutboundInventoryAllocation, OutboundOrder
+from app.models import InventoryLot, OutboundInventoryAllocation, OutboundOrder, User
 from app.models.outbound import OBStatus
+from app.services.access_policy import customer_clause, warehouse_clause
 from app.utils.business_time import get_business_today, to_business_date
 
 
@@ -81,9 +82,9 @@ def calculate_dispatch_readiness(
     return DispatchReadiness.READY
 
 
-def container_dispatch_aggregate():
+def container_dispatch_aggregate(user: User | None = None):
     """One grouped query for pending dispatch data by source container."""
-    return (
+    query = (
         select(
             InventoryLot.container_number.label("container_number"),
             func.min(OutboundOrder.schedule_pickup_at).label("earliest_outbound_at"),
@@ -98,9 +99,17 @@ def container_dispatch_aggregate():
             OutboundOrder.schedule_pickup_at.is_not(None),
             OutboundInventoryAllocation.allocated_pallet_qty > OutboundInventoryAllocation.completed_pallet_qty,
         )
-        .group_by(InventoryLot.container_number)
-        .subquery("container_dispatch")
     )
+    if user is not None:
+        for clause in (
+            warehouse_clause(user, OutboundOrder.warehouse_id),
+            customer_clause(user, OutboundOrder.customer_id),
+            warehouse_clause(user, InventoryLot.warehouse_id),
+            customer_clause(user, InventoryLot.customer_id),
+        ):
+            if clause is not None:
+                query = query.where(clause)
+    return query.group_by(InventoryLot.container_number).subquery("container_dispatch")
 
 
 def dispatch_fields(earliest: date | datetime | None, inbound_date: date | None = None) -> dict:

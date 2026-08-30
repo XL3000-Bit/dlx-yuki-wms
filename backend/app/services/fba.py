@@ -7,12 +7,13 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func,or_,select,text
 from sqlalchemy.orm import Session,joinedload,selectinload
-from app.models import AmazonFCAddress,AuditLog,Carrier,Customer,FBAInventoryAllocation,FBAShipment,InventoryLot,Warehouse
+from app.models import AmazonFCAddress,AuditLog,Carrier,Customer,FBAInventoryAllocation,FBAShipment,InventoryLot,User,Warehouse
 from app.models.fba import FBAStatus
 from app.models.inventory import TransactionType
 from app.schemas.fba import AllocateRequest,AllocationRead,FBACreate,FBAListResponse,FBARead,FBAUpdate,ReleaseRequest
 from app.schemas.inbound import NamedRef,PaginationMeta,UserRef
 from app.services.inventory import ZERO,_priority,_tx,derive_status,get_lot,snapshot
+from app.services.access_policy import customer_clause,warehouse_clause
 from app.utils.business_time import get_business_today,to_business_datetime
 
 STATUS_NAMES={x.value:x.name.replace("_"," ").title()for x in FBAStatus};PRIORITY_RANK={"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
@@ -24,8 +25,11 @@ def _named(obj:Any,kind:str)->NamedRef|None:
     if obj is None:return None
     return NamedRef(id=obj.id,code=getattr(obj,f"{kind}_code"),name=getattr(obj,f"{kind}_name"))
 def _query():return select(FBAShipment).options(joinedload(FBAShipment.customer),joinedload(FBAShipment.warehouse),joinedload(FBAShipment.amazon_fc_address),joinedload(FBAShipment.carrier),joinedload(FBAShipment.creator),selectinload(FBAShipment.allocations).joinedload(FBAInventoryAllocation.inventory_lot))
-def get_fba(db:Session,fba_id:int,lock:bool=False)->FBAShipment:
+def get_fba(db:Session,fba_id:int,lock:bool=False,user:User|None=None)->FBAShipment:
     q=(select(FBAShipment).where(FBAShipment.id==fba_id).with_for_update()) if lock else _query().where(FBAShipment.id==fba_id)
+    if user:
+        clauses=(warehouse_clause(user,FBAShipment.warehouse_id),customer_clause(user,FBAShipment.customer_id))
+        q=q.where(*(clause for clause in clauses if clause is not None))
     shipment=db.scalar(q)
     if shipment is None:raise HTTPException(404,"FBA shipment not found")
     return shipment
@@ -76,8 +80,9 @@ def release(db:Session,fba_id:int,allocation_id:int,p:ReleaseRequest,user_id:int
     return a
 def allocation_list(db:Session,s:FBAShipment)->list[AllocationRead]:
     rows=db.scalars(select(FBAInventoryAllocation).options(joinedload(FBAInventoryAllocation.inventory_lot).joinedload(InventoryLot.location),joinedload(FBAInventoryAllocation.creator)).where(FBAInventoryAllocation.fba_shipment_id==s.id).order_by(FBAInventoryAllocation.id)).all();return[allocation_read(db,s,a)for a in rows]
-def list_fba(db:Session,*,page=1,per_page=20,q=None,fba_no=None,customer_id=None,warehouse_id=None,amazon_fc_code=None,carrier_id=None,status=None,container_number=None,location_id=None,priority_level=None,aging_min=None,aging_max=None,appointment_from=None,appointment_to=None,sort_by="id",sort_order="desc")->FBAListResponse:
+def list_fba(db:Session,*,page=1,per_page=20,q=None,fba_no=None,customer_id=None,warehouse_id=None,amazon_fc_code=None,carrier_id=None,status=None,container_number=None,location_id=None,priority_level=None,aging_min=None,aging_max=None,appointment_from=None,appointment_to=None,sort_by="id",sort_order="desc",user:User|None=None)->FBAListResponse:
     filters=[]
+    if user:filters.extend(x for x in (warehouse_clause(user,FBAShipment.warehouse_id),customer_clause(user,FBAShipment.customer_id)) if x is not None)
     if q:
         term=f"%{q}%";filters.append(or_(FBAShipment.fba_no.ilike(term),FBAShipment.amazon_fc_code.ilike(term),FBAShipment.reference_no.ilike(term),FBAShipment.shipment_id.ilike(term),FBAShipment.st_number.ilike(term),FBAShipment.remark.ilike(term),FBAShipment.allocations.any(FBAInventoryAllocation.inventory_lot.has(or_(InventoryLot.container_number.ilike(term),InventoryLot.lot_no.ilike(term))))))
     for val,col in((fba_no,FBAShipment.fba_no),(customer_id,FBAShipment.customer_id),(warehouse_id,FBAShipment.warehouse_id),(amazon_fc_code,FBAShipment.amazon_fc_code),(carrier_id,FBAShipment.carrier_id),(status,FBAShipment.status)):

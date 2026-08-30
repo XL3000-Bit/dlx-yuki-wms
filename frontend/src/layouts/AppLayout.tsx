@@ -7,12 +7,15 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
+  DashboardOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { Button, Layout, Menu, Typography } from "antd";
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/auth";
 import { GlobalSearch } from "../components/GlobalSearch";
+import { NotificationCenter } from "../components/NotificationCenter";
 const { Header, Sider, Content } = Layout;
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -41,6 +44,7 @@ export function AppLayout() {
           selectedKeys={[loc.pathname]}
           onClick={(e) => nav(e.key)}
           items={[
+            { key: "/dashboard", icon: <DashboardOutlined />, label: "Operations Dashboard" },
             { key: "/inbound", icon: <ImportOutlined />, label: "Inbound" },
             { key: "/container-tracking", icon: <ImportOutlined />, label: "Container Tracking" },
             { key: "/inventory", icon: <DatabaseOutlined />, label: "Inventory" },
@@ -52,6 +56,7 @@ export function AppLayout() {
             { key: "/loads", icon: <TruckOutlined />, label: "Loads" },
             { key: "/work-orders", icon: <HistoryOutlined />, label: "Work Orders" },
             { key: "/trouble-shoot", icon: <HistoryOutlined />, label: "Trouble Shoot" },
+            { key: "/documents", icon: <FileTextOutlined />, label: "Documents & POD" },
             {
               key: "/import-history",
               icon: <HistoryOutlined />,
@@ -78,6 +83,7 @@ export function AppLayout() {
         <Header className="topbar">
           <Typography.Text strong>Warehouse Operations</Typography.Text>
           <GlobalSearch />
+          <NotificationCenter />
           <Button icon={<LogoutOutlined />} onClick={logout}>
             Sign Out
           </Button>

@@ -44,4 +44,7 @@ class LoadRead(BaseModel):
     driver_name: str | None = None; driver_phone: str | None = None; tractor_no: str | None = None; trailer_no: str | None = None; seal_no: str | None = None; notes: str | None = None
     outbound_count: int = 0; total_pallet_qty: Decimal = Decimal("0"); total_carton_qty: Decimal = Decimal("0"); total_weight_lbs: Decimal = Decimal("0"); total_cbm: Decimal = Decimal("0")
     outbounds: list[dict] = []
+    work_orders: list[dict] = []
+    active_exception_count: int = 0
+    active_exceptions: list[dict] = Field(default_factory=list)
     created_at: datetime; updated_at: datetime

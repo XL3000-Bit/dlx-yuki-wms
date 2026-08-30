@@ -8,13 +8,16 @@ from app.models import BOL,ContainerTracking,InboundRecord,InventoryLot,Outbound
 from app.models.outbound import OBStatus
 from app.services.container_tracking import import_csv
 from app.services.dispatch_priority import ACTIVE_OUTBOUND_STATUSES,container_dispatch_aggregate,dispatch_fields,calculate_dispatch_readiness
+from app.services.access_policy import customer_clause, warehouse_clause
 from app.utils.business_time import business_day_range,get_business_today,to_business_date
 router=APIRouter(prefix='/container-tracking',tags=['Container Tracking']);Writer=Annotated[User,Depends(require_warehouse_write)]
 @router.post('/import')
-async def import_tracking(db:DbSession,user:Writer,file:UploadFile=File(...)):return import_csv(db,await file.read(),file.filename or 'shipmentexport.csv',user.id)
+async def import_tracking(db:DbSession,user:Writer,file:UploadFile=File(...)):return import_csv(db,await file.read(),file.filename or 'shipmentexport.csv',user)
 @router.get('')
-def listing(db:DbSession,_:CurrentUser,page:int=Query(1,ge=1),per_page:int=Query(20,ge=1,le=100),q:str|None=None,status:str|None=None,warehouse_id:int|None=None,outbound_window:str|None=None,outbound_from:date|None=None,outbound_to:date|None=None,dispatch_priority:str|None=None,sort_by:str='pod_eta',sort_order:str='desc'):
- agg=container_dispatch_aggregate();query=select(ContainerTracking,agg).outerjoin(agg,func.upper(agg.c.container_number)==func.upper(ContainerTracking.container_number));filters=[]
+def listing(db:DbSession,user:CurrentUser,page:int=Query(1,ge=1),per_page:int=Query(20,ge=1,le=100),q:str|None=None,status:str|None=None,warehouse_id:int|None=None,outbound_window:str|None=None,outbound_from:date|None=None,outbound_to:date|None=None,dispatch_priority:str|None=None,sort_by:str='pod_eta',sort_order:str='desc'):
+ agg=container_dispatch_aggregate(user);query=select(ContainerTracking,agg).outerjoin(agg,func.upper(agg.c.container_number)==func.upper(ContainerTracking.container_number));filters=[]
+ scope=warehouse_clause(user,ContainerTracking.warehouse_id)
+ if scope is not None:filters.append(scope)
  if q:
   t=f'%{q}%';filters.append(or_(ContainerTracking.container_number.ilike(t),ContainerTracking.mbl_number.ilike(t),ContainerTracking.hbl_number.ilike(t),ContainerTracking.customer_reference.ilike(t),ContainerTracking.delivery_warehouse_raw.ilike(t)))
  if status:filters.append(ContainerTracking.tracking_status==status)
@@ -36,12 +39,21 @@ def listing(db:DbSession,_:CurrentUser,page:int=Query(1,ge=1),per_page:int=Query
  return {'data':items,'meta':{'page':page,'per_page':per_page,'total':total,'total_pages':(total+per_page-1)//per_page}}
 def row(r,earliest=None,inbound_date=None):return {'id':r.id,'container_number':r.container_number,'mbl_number':r.mbl_number,'hbl_number':r.hbl_number,'pod_eta':r.pod_eta,'ir_eta':r.ir_eta,'pod':r.pod,'delivery_location':r.delivery_location,'delivery_warehouse_raw':r.delivery_warehouse_raw,'scheduled_delivery_at':r.scheduled_delivery_at,'actual_delivery_at':r.actual_delivery_at,'wa_received_at':r.wa_received_at,'wa_empty_at':r.wa_empty_at,'wa_complete_at':r.wa_complete_at,'tracking_status':r.tracking_status.value,'is_received':r.wa_received_at is not None,'is_empty':r.wa_empty_at is not None,'is_complete':r.wa_complete_at is not None,'anomalies':[],'source_file_name':r.source_file_name,'source_row_number':r.source_row_number,**dispatch_fields(earliest,inbound_date)}
 @router.get('/{tracking_id}')
-def detail(tracking_id:int,db:DbSession,_:CurrentUser):
- r=db.get(ContainerTracking,tracking_id)
+def detail(tracking_id:int,db:DbSession,user:CurrentUser):
+ stmt=select(ContainerTracking).where(ContainerTracking.id==tracking_id);scope=warehouse_clause(user,ContainerTracking.warehouse_id)
+ r=db.scalar(stmt.where(scope) if scope is not None else stmt)
  if not r:raise HTTPException(404,'Container tracking not found')
- links=list(db.scalars(select(InboundRecord).where(func.upper(InboundRecord.container_number)==r.container_number.upper())).all());agg=container_dispatch_aggregate();d=db.execute(select(agg).where(func.upper(agg.c.container_number)==r.container_number.upper())).first();earliest=d.earliest_outbound_at if d else None;inbound=d.inbound_date if d else min((x.received_date or x.unload_date for x in links if x.received_date or x.unload_date),default=None)
- lots=list(db.scalars(select(InventoryLot).where(func.upper(InventoryLot.container_number)==r.container_number.upper())).all())
- tasks=db.execute(select(OutboundOrder,OutboundInventoryAllocation,InventoryLot).join(OutboundInventoryAllocation,OutboundInventoryAllocation.outbound_order_id==OutboundOrder.id).join(InventoryLot,InventoryLot.id==OutboundInventoryAllocation.inventory_lot_id).where(func.upper(InventoryLot.container_number)==r.container_number.upper(),OutboundOrder.status!=OBStatus.CANCELED).order_by(OutboundOrder.schedule_pickup_at.asc().nullslast())).all();related=[]
+ link_stmt=select(InboundRecord).where(func.upper(InboundRecord.container_number)==r.container_number.upper());lot_stmt=select(InventoryLot).where(func.upper(InventoryLot.container_number)==r.container_number.upper())
+ for scope in (warehouse_clause(user,InboundRecord.warehouse_id),customer_clause(user,InboundRecord.customer_id)):
+  if scope is not None:link_stmt=link_stmt.where(scope)
+ for scope in (warehouse_clause(user,InventoryLot.warehouse_id),customer_clause(user,InventoryLot.customer_id)):
+  if scope is not None:lot_stmt=lot_stmt.where(scope)
+ links=list(db.scalars(link_stmt).all());agg=container_dispatch_aggregate(user);d=db.execute(select(agg).where(func.upper(agg.c.container_number)==r.container_number.upper())).first();earliest=d.earliest_outbound_at if d else None;inbound=d.inbound_date if d else min((x.received_date or x.unload_date for x in links if x.received_date or x.unload_date),default=None)
+ lots=list(db.scalars(lot_stmt).all())
+ task_stmt=select(OutboundOrder,OutboundInventoryAllocation,InventoryLot).join(OutboundInventoryAllocation,OutboundInventoryAllocation.outbound_order_id==OutboundOrder.id).join(InventoryLot,InventoryLot.id==OutboundInventoryAllocation.inventory_lot_id).where(func.upper(InventoryLot.container_number)==r.container_number.upper(),OutboundOrder.status!=OBStatus.CANCELED)
+ for scope in (warehouse_clause(user,OutboundOrder.warehouse_id),customer_clause(user,OutboundOrder.customer_id)):
+  if scope is not None:task_stmt=task_stmt.where(scope)
+ tasks=db.execute(task_stmt.order_by(OutboundOrder.schedule_pickup_at.asc().nullslast())).all();related=[]
  order_ids={o.id for o,_,_ in tasks};pickings=list(db.scalars(select(PickingList).where(PickingList.outbound_order_id.in_(order_ids)).order_by(PickingList.id)).all()) if order_ids else[];bols=list(db.scalars(select(BOL).where(BOL.outbound_order_id.in_(order_ids)).order_by(BOL.id)).all()) if order_ids else[];picking_by_order={x.outbound_order_id:x for x in pickings};bol_by_order={x.outbound_order_id:x for x in bols}
  for o,a,l in tasks:
   picking=picking_by_order.get(o.id);bol=bol_by_order.get(o.id);related.append({'outbound_id':o.id,'ob_no':o.ob_no,'fc_code':o.fc_code or l.fc_code,'outbound_date':to_business_date(o.schedule_pickup_at),'pallet_qty':a.allocated_pallet_qty,'completed_pallet_qty':a.completed_pallet_qty,'status':o.status,'status_name':OBStatus(o.status).name,'picking_status':picking.status if picking else None,'bol_id':bol.id if bol else None,'bol_no':bol.bol_no if bol else None,'bol_status':bol.status if bol else None})

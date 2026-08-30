@@ -4,7 +4,8 @@ from fastapi import HTTPException,status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import String, cast, func, or_, select, text
 from sqlalchemy.orm import Session, joinedload
-from app.models import AuditLog, Customer, InboundRecord, Warehouse, WarehouseLocation
+from app.models import AuditLog, Customer, InboundRecord, User, Warehouse, WarehouseLocation
+from app.services.access_policy import customer_clause, warehouse_clause
 from app.schemas.inbound import InboundCreate,InboundListParams,InboundListResponse,InboundRead,InboundUpdate,NamedRef,PaginationMeta,UserRef
 from app.utils.business_time import get_business_today
 
@@ -26,12 +27,16 @@ def create_inbound(db:Session,payload:InboundCreate,user_id:int,import_job_id:in
     _validate_refs(db,payload);record=InboundRecord(**payload.model_dump(mode="python"),inbound_no=generate_inbound_no(db),created_by=user_id,import_job_id=import_job_id);db.add(record);db.flush();db.add(AuditLog(user_id=user_id,action="CREATE",entity_type="INBOUND",entity_id=record.id,after_data=jsonable_encoder(payload)))
     if commit:db.commit();db.refresh(record)
     return record
-def get_inbound(db:Session,record_id:int)->InboundRecord:
-    row=db.scalar(select(InboundRecord).options(joinedload(InboundRecord.customer),joinedload(InboundRecord.warehouse),joinedload(InboundRecord.location),joinedload(InboundRecord.creator),joinedload(InboundRecord.inventory_lot)).where(InboundRecord.id==record_id))
+def get_inbound(db:Session,record_id:int,user:User|None=None)->InboundRecord:
+    filters=[InboundRecord.id==record_id]
+    if user:
+        filters.extend(x for x in (warehouse_clause(user,InboundRecord.warehouse_id),customer_clause(user,InboundRecord.customer_id)) if x is not None)
+    row=db.scalar(select(InboundRecord).options(joinedload(InboundRecord.customer),joinedload(InboundRecord.warehouse),joinedload(InboundRecord.location),joinedload(InboundRecord.creator),joinedload(InboundRecord.inventory_lot)).where(*filters))
     if row is None:raise HTTPException(404,"Inbound record not found")
     return row
-def list_inbounds(db:Session,p:InboundListParams)->InboundListResponse:
+def list_inbounds(db:Session,p:InboundListParams,user:User|None=None)->InboundListResponse:
     filters=[]
+    if user:filters.extend(x for x in (warehouse_clause(user,InboundRecord.warehouse_id),customer_clause(user,InboundRecord.customer_id)) if x is not None)
     if p.q:
         term=f"%{p.q}%";filters.append(or_(InboundRecord.inbound_no.ilike(term),InboundRecord.container_number.ilike(term),InboundRecord.fc_code.ilike(term),InboundRecord.marking.ilike(term),InboundRecord.remark.ilike(term)))
     for value,column in [(p.container_number,InboundRecord.container_number),(p.customer_id,InboundRecord.customer_id),(p.warehouse_id,InboundRecord.warehouse_id),(p.fc_code,InboundRecord.fc_code),(p.location_id,InboundRecord.location_id),(p.status,InboundRecord.status)]:

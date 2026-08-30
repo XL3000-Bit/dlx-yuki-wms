@@ -6,12 +6,15 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func,or_,select
 from sqlalchemy.orm import Session,joinedload,selectinload
-from app.models import AuditLog,Carrier,Customer,FBAInventoryAllocation,FBAShipment,InventoryLot,InventoryTransaction,OutboundInventoryAllocation,OutboundOrder,Warehouse
+from app.models import AuditLog,Carrier,Customer,ExceptionSeverity,ExceptionStatus,ExceptionType,FBAInventoryAllocation,FBAShipment,InventoryLot,InventoryTransaction,OperationalException,OutboundInventoryAllocation,OutboundOrder,User,Warehouse
 from app.models.inventory import TransactionType
 from app.models.outbound import OBStatus
 from app.schemas.inbound import NamedRef,PaginationMeta
 from app.schemas.outbound import AllocateRequest,AllocationRead,CompleteRequest,ExceptionRequest,OBCreate,OBRead,OBUpdate,ReleaseRequest
 from app.services.inventory import ZERO,_tx,derive_status,get_lot,snapshot
+from app.schemas.operational_exception import ExceptionCreate
+from app.services.operational_exception import create_exception,transition_exception
+from app.services.access_policy import customer_clause,warehouse_clause
 from app.utils.business_time import get_business_today,to_business_datetime
 STATUS={x.value:x.name.replace('_',' ').title() for x in OBStatus}
 TRANS={0:{1,2,3,6,7},1:{2,3,6,7},2:{3,6,7},3:{4,6,7},4:{5},7:{3,6}}
@@ -19,8 +22,12 @@ def generate_ob_no(db:Session,today:date|None=None)->str:
  d=today or get_business_today();prefix=f'OB{d:%y%m%d}';last=db.scalar(select(func.max(OutboundOrder.ob_no)).where(OutboundOrder.ob_no.like(prefix+'%')));return f'{prefix}{(int(last[-4:])+1 if last else 1):04d}'
 def named(o:Any,kind:str):return NamedRef(id=o.id,code=getattr(o,f'{kind}_code'),name=getattr(o,f'{kind}_name')) if o else None
 def query():return select(OutboundOrder).options(joinedload(OutboundOrder.customer),joinedload(OutboundOrder.warehouse),joinedload(OutboundOrder.carrier),joinedload(OutboundOrder.fba_shipment),selectinload(OutboundOrder.allocations).joinedload(OutboundInventoryAllocation.inventory_lot))
-def get_ob(db:Session,id:int,lock=False):
- q=select(OutboundOrder).where(OutboundOrder.id==id).with_for_update() if lock else query().where(OutboundOrder.id==id);o=db.scalar(q)
+def get_ob(db:Session,id:int,lock=False,user:User|None=None):
+ q=select(OutboundOrder).where(OutboundOrder.id==id).with_for_update() if lock else query().where(OutboundOrder.id==id)
+ if user:
+  clauses=(warehouse_clause(user,OutboundOrder.warehouse_id),customer_clause(user,OutboundOrder.customer_id))
+  q=q.where(*(clause for clause in clauses if clause is not None))
+ o=db.scalar(q)
  if not o:raise HTTPException(404,'Outbound order not found')
  return o
 FIELDS={'pallet':'pallet_qty','carton':'carton_qty','weight_lbs':'weight_lbs','cbm':'cbm'}
@@ -84,6 +91,11 @@ def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionReques
  if target==OBStatus.CONFIRMED:o.confirmed_at=now;o.confirmed_by=user_id
  if target==OBStatus.DISPATCHED:o.dispatched_at=now;o.dispatched_by=user_id
  if target==OBStatus.EXCEPTION:o.exception_reason=exception.reason if exception else 'Exception';o.remark=exception.remark if exception else o.remark
+ if target==OBStatus.EXCEPTION:
+  create_exception(db,ExceptionCreate(exception_type=ExceptionType.OUTBOUND,severity=ExceptionSeverity.MEDIUM,title=f'Outbound {o.ob_no}: {o.exception_reason}'[:200],description=o.remark or o.exception_reason,warehouse_id=o.warehouse_id,outbound_id=o.id,load_id=o.load_id),user_id,commit=False)
+ if before==OBStatus.EXCEPTION and target==OBStatus.CONFIRMED:
+  for incident in db.scalars(select(OperationalException).where(OperationalException.outbound_id==o.id,OperationalException.exception_type==ExceptionType.OUTBOUND,OperationalException.status.in_((ExceptionStatus.OPEN,ExceptionStatus.INVESTIGATING))).with_for_update()).all():
+   transition_exception(db,incident,ExceptionStatus.RESOLVED,user_id,'Resolved through Outbound action',commit=False)
  if target==OBStatus.COMPLETED:complete_all(db,o,user_id);o.completed_at=now;o.completed_by=user_id
  if target==OBStatus.CANCELED:
   for a in list(o.allocations):
@@ -110,7 +122,8 @@ def complete_partial(db,o,user_id,req):
   f=db.scalar(select(FBAInventoryAllocation).where(FBAInventoryAllocation.id==a.fba_allocation_id).with_for_update());f.allocated_pallet_qty=max(ZERO,f.allocated_pallet_qty-vals[0]);f.allocated_carton_qty=max(ZERO,f.allocated_carton_qty-vals[1]);f.allocated_weight_lbs=max(ZERO,f.allocated_weight_lbs-vals[2]);f.allocated_cbm=max(ZERO,f.allocated_cbm-vals[3])
  db.add(AuditLog(user_id=user_id,action='COMPLETE_OUTBOUND_PARTIAL',entity_type='OUTBOUND',entity_id=o.id,after_data={'allocation_id':a.id,'quantities':list(map(str,vals))}));db.flush()
 def list_outbounds(db:Session,**kw):
- page=kw.pop('page',1);per=kw.pop('per_page',20);q=kw.pop('q',None);filters=[]
+ page=kw.pop('page',1);per=kw.pop('per_page',20);q=kw.pop('q',None);user=kw.pop('user',None);filters=[]
+ if user:filters.extend(x for x in (warehouse_clause(user,OutboundOrder.warehouse_id),customer_clause(user,OutboundOrder.customer_id)) if x is not None)
  if q:
   t=f'%{q}%';filters.append(or_(OutboundOrder.ob_no.ilike(t),OutboundOrder.reference_no.ilike(t),OutboundOrder.fc_code.ilike(t),OutboundOrder.del_code.ilike(t),OutboundOrder.agent_code.ilike(t),OutboundOrder.truck_number.ilike(t),OutboundOrder.trailer_number.ilike(t),OutboundOrder.driver_name.ilike(t),OutboundOrder.remark.ilike(t)))
  for key,col in [('ob_no',OutboundOrder.ob_no),('status',OutboundOrder.status),('ob_type',OutboundOrder.ob_type),('customer_id',OutboundOrder.customer_id),('warehouse_id',OutboundOrder.warehouse_id),('carrier_id',OutboundOrder.carrier_id),('fba_shipment_id',OutboundOrder.fba_shipment_id),('fc_code',OutboundOrder.fc_code),('del_code',OutboundOrder.del_code),('agent_code',OutboundOrder.agent_code)]:

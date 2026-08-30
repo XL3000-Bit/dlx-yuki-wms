@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import joinedload
 
-from app.models import BOL, ContainerTracking, FBAShipment, Load, OutboundOrder, PickingList, WorkOrder
+from app.models import BOL, ContainerTracking, DocumentStatus, ExceptionStatus, FBAShipment, Load, OperationalDocument, OperationalException, OutboundOrder, PickingList, WorkOrder
 from app.models.bol import BOLStatus
 from app.models.container_tracking import TrackingStatus
 from app.models.fba import FBAStatus
@@ -11,6 +11,8 @@ from app.models.outbound import OBStatus
 from app.models.picking import PickingStatus
 from app.models.load import LoadStatus
 from app.models.work_order import WorkOrderStatus
+from app.models.user import User
+from app.services.access_policy import customer_clause, warehouse_clause
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,8 @@ SPECS = (
     SearchSpec("BOL", BOL, (BOL.bol_no,), "/outbound/bol", BOLStatus, "bol_no", None, (joinedload(BOL.warehouse), joinedload(BOL.customer), joinedload(BOL.outbound))),
     SearchSpec("LOAD", Load, (Load.load_no,), "/loads", LoadStatus, "load_no", None, (joinedload(Load.warehouse),)),
     SearchSpec("WORK_ORDER", WorkOrder, (WorkOrder.work_order_no,), "/work-orders", WorkOrderStatus, "work_order_no", None, (joinedload(WorkOrder.warehouse),)),
+    SearchSpec("EXCEPTION", OperationalException, (OperationalException.exception_no,), "/trouble-shoot", ExceptionStatus, "exception_no", "title", (joinedload(OperationalException.warehouse),)),
+    SearchSpec("DOCUMENT", OperationalDocument, (OperationalDocument.document_no, OperationalDocument.original_filename, OperationalDocument.title), "/documents", DocumentStatus, "document_no", "original_filename", (joinedload(OperationalDocument.warehouse), joinedload(OperationalDocument.customer))),
 )
 
 
@@ -54,7 +58,25 @@ def _rank(record, fields: tuple, needle: str) -> int:
     return 3
 
 
-def search(db, query: str, limit: int) -> dict:
+def _scope_search(stmt, spec: SearchSpec, user: User):
+    model = spec.model
+    if model is PickingList:
+        warehouse = warehouse_clause(user, OutboundOrder.warehouse_id)
+        customer = customer_clause(user, OutboundOrder.customer_id)
+        visible = select(OutboundOrder.id)
+        if warehouse is not None: visible = visible.where(warehouse)
+        if customer is not None: visible = visible.where(customer)
+        return stmt.where(PickingList.outbound_order_id.in_(visible))
+    warehouse_col = getattr(model, "warehouse_id", None)
+    customer_col = getattr(model, "customer_id", None)
+    warehouse = warehouse_clause(user, warehouse_col) if warehouse_col is not None else None
+    customer = customer_clause(user, customer_col) if customer_col is not None else None
+    if warehouse is not None: stmt = stmt.where(warehouse)
+    if customer is not None: stmt = stmt.where(customer)
+    return stmt
+
+
+def search(db, query: str, limit: int, user: User) -> dict:
     needle = query.casefold()
     candidates = []
     # Each entity query is bounded. This keeps contains matching predictable even
@@ -62,7 +84,8 @@ def search(db, query: str, limit: int) -> dict:
     per_entity_cap = min(max(limit * 3, 20), 150)
     for spec_order, spec in enumerate(SPECS):
         pattern = f"%{query}%"
-        stmt = select(spec.model).where(or_(*(func.lower(field).like(pattern.casefold()) for field in spec.fields))).limit(per_entity_cap)
+        stmt = select(spec.model).where(or_(*(func.lower(field).like(pattern.casefold()) for field in spec.fields)))
+        stmt = _scope_search(stmt, spec, user).limit(per_entity_cap)
         for option in spec.options:
             stmt = stmt.options(option)
         for record in db.scalars(stmt).unique():
@@ -81,7 +104,7 @@ def search(db, query: str, limit: int) -> dict:
             customer = getattr(record, "customer", None) or getattr(parent, "customer", None)
             params = "selected_ob" if spec.type == "OUTBOUND" else "selected"
             route = spec.route
-            if spec.type in {"CONTAINER", "OUTBOUND", "FBA", "LOAD", "WORK_ORDER"}:
+            if spec.type in {"CONTAINER", "OUTBOUND", "FBA", "LOAD", "WORK_ORDER", "EXCEPTION", "DOCUMENT"}:
                 if spec.type == "WORK_ORDER": params = "selected"
                 route = f"{route}?{params}={record.id}"
             secondary = getattr(record, spec.secondary) if spec.secondary else getattr(parent, "ob_no", None)

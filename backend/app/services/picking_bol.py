@@ -35,13 +35,17 @@ def bol_read(b):
  return BOLRead.model_validate({**b.__dict__,'status_name':BOL_NAMES[b.status],'total_pallet_qty':sum((i.pallet_qty for i in b.items),Decimal(0)),'total_carton_qty':sum((i.carton_qty for i in b.items),Decimal(0)),'total_weight_lbs':sum((i.weight_lbs for i in b.items),Decimal(0)),'total_cbm':sum((i.cbm for i in b.items),Decimal(0)),'fc_address_missing':bool(b.amazon_fc_code and not b.ship_to_address)})
 def generate_bol(db:Session,ob_id,user_id):
  o=get_ob(db,ob_id);if_not= db.scalar(select(BOL).where(BOL.outbound_order_id==ob_id));
- if if_not:return if_not
+ if if_not:
+  from app.services.operational_document import register_generated_bol
+  if register_generated_bol(db,if_not,user_id):db.commit()
+  return if_not
  w=o.warehouse;address=', '.join(x for x in (w.address,w.city,w.state,w.zip_code,w.country) if x);fba=o.fba_shipment;fcaddr=None
  if fba:fcaddr=fba.amazon_fc_address
  b=BOL(bol_no=number(db,BOL,'BOL'),outbound_order_id=ob_id,fba_shipment_id=o.fba_shipment_id,customer_id=o.customer_id,warehouse_id=o.warehouse_id,carrier_id=o.carrier_id,ship_from_name=w.warehouse_name,ship_from_address=address,ship_to_name=fcaddr.fc_name if fcaddr else None,ship_to_address=', '.join(x for x in (fcaddr.address_line1,fcaddr.city,fcaddr.state,fcaddr.zip_code) if x) if fcaddr else None,amazon_fc_code=o.fc_code or (fba.amazon_fc_code if fba else None),pickup_date=to_business_date(o.schedule_pickup_at),appointment_time=str(o.delivery_appointment_time) if o.delivery_appointment_time else None,status=BOLStatus.GENERATED,created_by=user_id);db.add(b);db.flush()
  for a in o.allocations:
   l=a.inventory_lot;b.items.append(BOLItem(outbound_allocation_id=a.id,inventory_lot_id=l.id,container_number=l.container_number,fc_code=l.fc_code,marking=l.marking,pallet_qty=a.allocated_pallet_qty-a.completed_pallet_qty,carton_qty=a.allocated_carton_qty-a.completed_carton_qty,weight_lbs=a.allocated_weight_lbs-a.completed_weight_lbs,cbm=a.allocated_cbm-a.completed_cbm,description='Outbound cargo'))
- db.add(AuditLog(user_id=user_id,action='CREATE_BOL',entity_type='BOL',entity_id=b.id));db.commit();return b
+ from app.services.operational_document import register_generated_bol
+ register_generated_bol(db,b,user_id);db.add(AuditLog(user_id=user_id,action='CREATE_BOL',entity_type='BOL',entity_id=b.id));db.commit();return b
 def bol_xlsx(b):
  wb=Workbook();ws=wb.active;ws.append(['BOL No','Outbound No','Ship From','Ship To','FC','Container','Pallet','Carton','Weight LBS','CBM']);
  for i in b.items:ws.append([b.bol_no,b.outbound.ob_no,b.ship_from_address,b.ship_to_address or '',b.amazon_fc_code,i.container_number,i.pallet_qty,i.carton_qty,i.weight_lbs,i.cbm])

@@ -19,6 +19,7 @@ from app.schemas.outbound import OBCreate
 from app.models.bol import BOLStatus
 from app.services.dispatch_priority import ACTIVE_OUTBOUND_STATUSES, dispatch_fields
 from app.utils.business_time import get_business_today
+from app.services.access_policy import customer_clause, warehouse_clause
 
 ZERO=Decimal(0); STAGE_NAMES={"waiting_picking":"Waiting Picking","waiting_appointment":"Waiting Appointment","waiting_outbound":"Waiting Outbound","completed":"Completed","exception":"Exception"}
 
@@ -28,7 +29,7 @@ def batch_action(db:Session,user:User,action:str,fba_ids:list[int]):
     results=[]
     for fba_id in dict.fromkeys(fba_ids):
         try:
-            s=get_fba(db,fba_id)
+            s=get_fba(db,fba_id,user=user)
             if s.status in (FBAStatus.CANCELED,FBAStatus.COMPLETED):
                 results.append({'fba_id':fba_id,'status':'skipped','reason':'FBA is completed or canceled'});continue
             o=db.scalar(select(OutboundOrder).where(OutboundOrder.fba_shipment_id==fba_id,OutboundOrder.status.notin_([OBStatus.CANCELED,OBStatus.COMPLETED])).order_by(OutboundOrder.id.desc()))
@@ -67,7 +68,7 @@ def _priority(rules,aging):
             span=f"{r.min_days}d+" if r.max_days is None else f"{r.min_days}-{r.max_days}d";return r.priority_level,r.priority_label,span,r.sort_order
     return None,None,None,0
 
-def _base_rows(db:Session,**p):
+def _base_rows(db:Session,user:User,**p):
     alloc=select(FBAInventoryAllocation.fba_shipment_id.label('fid'),func.sum(FBAInventoryAllocation.allocated_pallet_qty).label('p'),func.sum(FBAInventoryAllocation.allocated_carton_qty).label('c'),func.sum(FBAInventoryAllocation.allocated_weight_lbs).label('w'),func.sum(FBAInventoryAllocation.allocated_cbm).label('v'),func.min(InventoryLot.inbound_date).label('oldest'),func.count(func.distinct(InventoryLot.container_number)).label('cc'),func.count(func.distinct(InventoryLot.location_id)).label('lc')).join(InventoryLot,InventoryLot.id==FBAInventoryAllocation.inventory_lot_id).group_by(FBAInventoryAllocation.fba_shipment_id).subquery()
     obmax=select(OutboundOrder.fba_shipment_id.label('fid'),func.max(OutboundOrder.id).label('oid')).where(OutboundOrder.fba_shipment_id.is_not(None)).group_by(OutboundOrder.fba_shipment_id).subquery()
     obdispatch=select(OutboundOrder.fba_shipment_id.label('fid'),func.min(OutboundOrder.schedule_pickup_at).label('earliest')).where(OutboundOrder.fba_shipment_id.is_not(None),OutboundOrder.status.in_(ACTIVE_OUTBOUND_STATUSES),OutboundOrder.schedule_pickup_at.is_not(None)).group_by(OutboundOrder.fba_shipment_id).subquery()
@@ -75,6 +76,8 @@ def _base_rows(db:Session,**p):
     bolmax=select(BOL.outbound_order_id.label('oid'),func.max(BOL.id).label('bid')).group_by(BOL.outbound_order_id).subquery()
     q=select(FBAShipment,Customer.customer_name,Warehouse.warehouse_code,AmazonFCAddress.fc_name,alloc,obdispatch.c.earliest,OutboundOrder,PickingList,pickmax.c.pc,BOL).join(Warehouse,Warehouse.id==FBAShipment.warehouse_id).outerjoin(Customer,Customer.id==FBAShipment.customer_id).outerjoin(AmazonFCAddress,AmazonFCAddress.id==FBAShipment.amazon_fc_address_id).outerjoin(alloc,alloc.c.fid==FBAShipment.id).outerjoin(obdispatch,obdispatch.c.fid==FBAShipment.id).outerjoin(obmax,obmax.c.fid==FBAShipment.id).outerjoin(OutboundOrder,OutboundOrder.id==obmax.c.oid).outerjoin(pickmax,pickmax.c.oid==OutboundOrder.id).outerjoin(PickingList,PickingList.id==pickmax.c.pid).outerjoin(bolmax,bolmax.c.oid==OutboundOrder.id).outerjoin(BOL,BOL.id==bolmax.c.bid)
     filters=[]
+    for scope in (warehouse_clause(user,FBAShipment.warehouse_id),customer_clause(user,FBAShipment.customer_id)):
+        if scope is not None:filters.append(scope)
     if p.get('warehouse_id'):filters.append(FBAShipment.warehouse_id==p['warehouse_id'])
     if p.get('fba_ids'):filters.append(FBAShipment.id.in_(p['fba_ids']))
     if p.get('customer_id'):filters.append(FBAShipment.customer_id==p['customer_id'])
@@ -107,7 +110,7 @@ def _base_rows(db:Session,**p):
 
 def list_workbench(db:Session,user:User,**p):
     rules=_rules(db);rows=[]
-    for s,customer,warehouse,fc_name,fid,pal,cart,weight,cbm,oldest,cc,lc,earliest,o,pk,pc,b in _base_rows(db,**p):
+    for s,customer,warehouse,fc_name,fid,pal,cart,weight,cbm,oldest,cc,lc,earliest,o,pk,pc,b in _base_rows(db,user,**p):
         aging=max(0,(get_business_today()-oldest).days)if oldest else None;level,label,span,rank=_priority(rules,aging);remaining=Decimal(pal or 0)
         stage=resolve_workbench_stage(fba_status=s.status,outbound_status=o.status if o else None,picking_status=pk.status if pk else None,has_picking=bool(pc),appointment_time=(o.delivery_appointment_time if o else s.appointment_time),remaining=remaining)
         rows.append(dict(id=s.id,fba_no=s.fba_no,shipment_id=s.shipment_id,st_number=s.st_number,po_number=s.po_number,reference_no=s.reference_no,customer_id=s.customer_id,customer=customer,warehouse_id=s.warehouse_id,warehouse=warehouse,carrier='',amazon_fc_code=s.amazon_fc_code,amazon_fc_name=fc_name,fc_address_missing=s.amazon_fc_address_id is None,container_count=cc or 0,containers_preview=[],location_count=lc or 0,locations_preview=[],total_pallet_qty=pal or ZERO,total_carton_qty=cart or ZERO,total_weight_lbs=weight or ZERO,total_cbm=cbm or ZERO,oldest_inbound_date=oldest,max_aging_days=aging,priority_level=level,priority_label=label,priority_range=span,priority_rank=rank,**dispatch_fields(earliest,oldest),appointment_time=o.delivery_appointment_time if o else s.appointment_time,scheduled_pickup_at=o.schedule_pickup_at if o else s.scheduled_pickup_at,picking_count=pc or 0,picking_id=pk.id if pk else None,picking_no=pk.picking_no if pk else None,picking_status=pk.status if pk else None,bol_id=b.id if b else None,bol_no=b.bol_no if b else None,bol_status=b.status if b else None,outbound_id=o.id if o else None,outbound_no=o.ob_no if o else None,outbound_status=o.status if o else None,workbench_stage=stage,workbench_stage_name=STAGE_NAMES[stage],has_exception=stage=='exception',status=s.status,created_at=s.created_at,updated_at=s.updated_at))
@@ -133,7 +136,7 @@ def list_workbench(db:Session,user:User,**p):
     return {'data':page_rows,'meta':{'page':page,'per_page':per,'total':total,'total_pages':ceil(total/per)if total else 0,'attention_threshold_days':attention,'trailer_default_pallet_capacity':settings.trailer_default_pallet_capacity},'summary':summary,'stage_counts':counts,'permissions':{'can_export':True,'can_operate':can_operate(user)}}
 
 def workbench_detail(db:Session,fba_id:int,user:User):
-    s=get_fba(db,fba_id);alloc=[x.model_dump(mode='json')for x in allocation_list(db,s)];o=db.scalar(select(OutboundOrder).options(joinedload(OutboundOrder.warehouse),joinedload(OutboundOrder.customer),joinedload(OutboundOrder.carrier),selectinload(OutboundOrder.allocations)).where(OutboundOrder.fba_shipment_id==fba_id).order_by(OutboundOrder.id.desc()).limit(1));picks=list(db.scalars(select(PickingList).options(selectinload(PickingList.items)).where(PickingList.outbound_order_id==o.id).order_by(PickingList.id.desc())).all())if o else[];bol=db.scalar(select(BOL).options(selectinload(BOL.items),joinedload(BOL.outbound)).where(BOL.outbound_order_id==o.id).order_by(BOL.id.desc()).limit(1))if o else None
+    s=get_fba(db,fba_id,user=user);alloc=[x.model_dump(mode='json')for x in allocation_list(db,s)];o=db.scalar(select(OutboundOrder).options(joinedload(OutboundOrder.warehouse),joinedload(OutboundOrder.customer),joinedload(OutboundOrder.carrier),selectinload(OutboundOrder.allocations)).where(OutboundOrder.fba_shipment_id==fba_id).order_by(OutboundOrder.id.desc()).limit(1));picks=list(db.scalars(select(PickingList).options(selectinload(PickingList.items)).where(PickingList.outbound_order_id==o.id).order_by(PickingList.id.desc())).all())if o else[];bol=db.scalar(select(BOL).options(selectinload(BOL.items),joinedload(BOL.outbound)).where(BOL.outbound_order_id==o.id).order_by(BOL.id.desc()).limit(1))if o else None
     stage=resolve_workbench_stage(fba_status=s.status,outbound_status=o.status if o else None,picking_status=picks[0].status if picks else None,has_picking=bool(picks),appointment_time=o.delivery_appointment_time if o else s.appointment_time,remaining=sum((a.allocated_pallet_qty for a in s.allocations),ZERO));ids=[fba_id]+([o.id]if o else[])+([x.id for x in picks])+([bol.id]if bol else[]);audits=db.execute(select(AuditLog,User.display_name).outerjoin(User,User.id==AuditLog.user_id).where(AuditLog.entity_id.in_(ids)).order_by(AuditLog.created_at.desc()).limit(100)).all()
     workflow=[{'key':'fba','label':'FBA Linked','status':'completed'},{'key':'picking','label':'Picking','status':'completed'if picks else('exception'if stage=='exception'else'current')},{'key':'bol','label':'BOL','status':'completed'if bol else('current'if picks else'pending')},{'key':'appointment','label':'Appointment','status':'completed'if(o and o.delivery_appointment_time)else('current'if bol else'pending')},{'key':'outbound','label':'Outbound','status':'completed'if(o and o.status==OBStatus.COMPLETED)else('current'if o and o.delivery_appointment_time else'pending')}]
     basic={'id':s.id,'fba_no':s.fba_no,'internal_fba_no':s.fba_no,'customer':s.customer.customer_name if s.customer else None,'warehouse':s.warehouse.warehouse_code,'amazon_fc_code':s.amazon_fc_code,'amazon_fc_name':s.amazon_fc_address.fc_name if s.amazon_fc_address else None,'amazon_fc_address':(', '.join(filter(None,[s.amazon_fc_address.address_line1,s.amazon_fc_address.city,s.amazon_fc_address.state,s.amazon_fc_address.zip_code]))if s.amazon_fc_address else None),'fc_address_missing':s.amazon_fc_address is None,'shipment_id':s.shipment_id,'st_number':s.st_number,'po_number':s.po_number,'reference_no':s.reference_no,'scheduled_pickup_at':o.schedule_pickup_at if o else s.scheduled_pickup_at,'appointment_time':o.delivery_appointment_time if o else s.appointment_time,'carrier':(o.carrier.carrier_name if o and o.carrier else(s.carrier.carrier_name if s.carrier else None)),'status':s.status,'status_name':STATUS_NAMES[s.status],'workbench_stage':stage,'workbench_stage_name':STAGE_NAMES[stage],'created_by':s.creator.display_name,'created_at':s.created_at,'remark':s.remark}

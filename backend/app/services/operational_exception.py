@@ -8,6 +8,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from app.models import (BOL, ContainerTracking, ExceptionSeverity, ExceptionStatus, ExceptionType, Load,
     OperationalException, OperationalExceptionEvent, OutboundOrder, PickingList, User, Warehouse, WorkOrder)
 from app.utils.business_time import get_business_today
+from app.services.operational_notification import sync_exception_notification
 
 TRANSITIONS = {ExceptionStatus.OPEN: {ExceptionStatus.INVESTIGATING, ExceptionStatus.RESOLVED, ExceptionStatus.CANCELED},
     ExceptionStatus.INVESTIGATING: {ExceptionStatus.RESOLVED, ExceptionStatus.CANCELED}, ExceptionStatus.RESOLVED: set(), ExceptionStatus.CANCELED: set()}
@@ -103,6 +104,7 @@ def create_exception(db, payload, user_id, *, commit=True):
     if work_order: work_order.operational_exception_id = row.id
     _event(db, row, "EXCEPTION_CREATED", user_id, new=row.exception_no, message=f"Exception {row.exception_no} created")
     if row.assigned_to or row.assigned_team: _event(db, row, "ASSIGNED", user_id, field_name="assignment", new=json.dumps({"user_id": row.assigned_to, "team": row.assigned_team}))
+    sync_exception_notification(db, row)
     if commit: db.commit(); return get_exception(db, row.id)
     return row
 
@@ -115,7 +117,7 @@ def update_exception(db, row, payload, user_id):
     for field, value in data.items():
         old = getattr(row, field)
         if old != value: setattr(row, field, value); _event(db, row, mapping[field], user_id, field_name=field, old=old, new=value)
-    db.commit(); return get_exception(db, row.id)
+    sync_exception_notification(db, row); db.commit(); return get_exception(db, row.id)
 
 
 def assign_exception(db, row, payload, user_id):
@@ -126,7 +128,7 @@ def assign_exception(db, row, payload, user_id):
         row.assigned_to, row.assigned_team = new
         event = "UNASSIGNED" if new == (None, None) else "ASSIGNED" if old == (None, None) else "REASSIGNED"
         _event(db, row, event, user_id, field_name="assignment", old=json.dumps({"user_id": old[0], "team": old[1]}), new=json.dumps({"user_id": new[0], "team": new[1]}))
-    db.commit(); return get_exception(db, row.id)
+    sync_exception_notification(db, row); db.commit(); return get_exception(db, row.id)
 
 
 def transition_exception(db, row, target, user_id, resolution=None, *, commit=True):
@@ -138,6 +140,7 @@ def transition_exception(db, row, target, user_id, resolution=None, *, commit=Tr
         if row.resolution != resolution: _event(db, row, "RESOLUTION_UPDATED", user_id, field_name="resolution", old=row.resolution, new=resolution)
         row.resolution = resolution.strip(); row.resolved_at = datetime.now(timezone.utc); row.resolved_by = user_id
     _event(db, row, "STATUS_CHANGED", user_id, field_name="status", old=old, new=status)
+    sync_exception_notification(db, row)
     if commit: db.commit(); return get_exception(db, row.id)
     return row
 

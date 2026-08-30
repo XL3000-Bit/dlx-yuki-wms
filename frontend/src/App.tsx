@@ -12,6 +12,8 @@ const BOLPage = lazy(() => import("./pages/BOLPage").then(m => ({ default: m.BOL
 const LoadsPage = lazy(() => import("./pages/LoadsPage").then(m => ({ default: m.LoadsPage })));
 const WorkOrdersPage = lazy(() => import("./pages/WorkOrdersPage").then(m => ({ default: m.WorkOrdersPage })));
 const TroubleShootPage = lazy(() => import("./pages/TroubleShootPage").then(m => ({ default: m.TroubleShootPage })));
+const OperationsDashboardPage = lazy(() => import("./pages/OperationsDashboardPage").then(m => ({ default: m.OperationsDashboardPage })));
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage").then(m => ({ default: m.DocumentsPage })));
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
 import "./inventory.css";
@@ -23,7 +25,8 @@ export default function App() {
   return (
     <Suspense fallback={<div className="page-loading">Loading…</div>}><Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<Navigate to="/inbound" replace />} />
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<OperationsDashboardPage />} />
         <Route path="/inbound" element={<InboundPage />} />
         <Route path="/container-tracking" element={<ContainerTrackingPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
@@ -35,6 +38,7 @@ export default function App() {
         <Route path="/loads" element={<LoadsPage />} />
         <Route path="/work-orders" element={<WorkOrdersPage />} />
         <Route path="/trouble-shoot" element={<TroubleShootPage />} />
+        <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/import-history" element={<ImportHistoryPage />} />
         <Route path="*" element={<Navigate to="/inbound" replace />} />
       </Route>

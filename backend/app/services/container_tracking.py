@@ -2,7 +2,8 @@ import csv,hashlib,io
 from datetime import datetime,timezone
 from sqlalchemy import select,func
 from sqlalchemy.orm import Session
-from app.models import ContainerTracking,TrackingStatus,Warehouse,AuditLog
+from app.models import ContainerTracking,TrackingStatus,Warehouse,AuditLog,User
+from app.services.access_policy import assert_warehouse_access
 HEADERS={'MBL#':'mbl_number','HBL#':'hbl_number','Filling#':'filing_number','Container':'container_number','Container Attributes':'container_attributes','Container Remark':'container_remark','Customer Ref#':'customer_reference','POD ETA':'pod_eta','IR ETA':'ir_eta','POD':'pod','DEL(IR) Location':'delivery_location','F.DEST':'final_destination','DEL Warehouse':'delivery_warehouse_raw','Schedule Delivery Date':'scheduled_delivery_at','Actual Delivery Date':'actual_delivery_at','WA Received At':'wa_received_at','WA Empty At':'wa_empty_at','WA Complete At':'wa_complete_at'}
 def parse_dt(v):
  if not v:return None
@@ -22,7 +23,7 @@ def status(d):
 def anomalies(d):
  pairs=[('actual_delivery_at','scheduled_delivery_at','ACTUAL_DELIVERY_BEFORE_SCHEDULE'),('wa_received_at','actual_delivery_at','RECEIVED_BEFORE_ACTUAL_DELIVERY'),('wa_empty_at','wa_received_at','EMPTY_BEFORE_RECEIVED'),('wa_complete_at','wa_empty_at','COMPLETE_BEFORE_EMPTY')]
  return [c for l,e,c in pairs if d.get(l) and d.get(e) and d[l]<d[e]]
-def import_csv(db:Session,content:bytes,file_name:str,user_id:int,limit=None):
+def import_csv(db:Session,content:bytes,file_name:str,user:User,limit=None):
  rows=list(csv.DictReader(io.StringIO(content.decode('utf-8-sig'))));out={'rows':len(rows),'created':0,'updated':0,'warnings':0,'errors':0,'anomalies':0,'warehouse_unknown':0,'inventory_created':0}
  for idx,raw in enumerate(rows[:limit] if limit else rows,2):
   try:
@@ -30,6 +31,7 @@ def import_csv(db:Session,content:bytes,file_name:str,user_id:int,limit=None):
    if not d['container_number']:out['errors']+=1;continue
    d.update(source_fingerprint=fingerprint(d),source_file_name=file_name,source_row_number=idx,source_type='SHIPMENT_EXPORT',tracking_status=status(d))
    wh=db.scalar(select(Warehouse).where(func.upper(Warehouse.warehouse_code)==(d.get('delivery_warehouse_raw') or '').upper())) if d.get('delivery_warehouse_raw') else None;d['warehouse_id']=wh.id if wh else None
+   assert_warehouse_access(user,d['warehouse_id'])
    if d.get('delivery_warehouse_raw') and not wh:out['warehouse_unknown']+=1;out['warnings']+=1
    obj=db.scalar(select(ContainerTracking).where(ContainerTracking.source_fingerprint==d['source_fingerprint'])) or db.scalar(select(ContainerTracking).where(ContainerTracking.container_number==d['container_number'],ContainerTracking.mbl_number==d.get('mbl_number'),ContainerTracking.pod_eta==d.get('pod_eta')))
    if obj:
