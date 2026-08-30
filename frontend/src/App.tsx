@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AppLayout } from "./layouts/AppLayout";
+const DashboardPage = lazy(() => import("./pages/DashboardPage").then(m => ({ default: m.DashboardPage })));
 const InboundPage = lazy(() => import("./pages/InboundPage").then(m => ({ default: m.InboundPage })));
 const InventoryPage = lazy(() => import("./pages/InventoryPage").then(m => ({ default: m.InventoryPage })));
 const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage").then(m => ({ default: m.ImportHistoryPage })));
@@ -23,7 +24,7 @@ export default function App() {
   return (
     <Suspense fallback={<div className="page-loading">Loading…</div>}><Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<Navigate to="/inbound" replace />} />
+        <Route index element={<DashboardPage />} />
         <Route path="/inbound" element={<InboundPage />} />
         <Route path="/container-tracking" element={<ContainerTrackingPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
@@ -36,7 +37,7 @@ export default function App() {
         <Route path="/work-orders" element={<WorkOrdersPage />} />
         <Route path="/trouble-shoot" element={<TroubleShootPage />} />
         <Route path="/import-history" element={<ImportHistoryPage />} />
-        <Route path="*" element={<Navigate to="/inbound" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes></Suspense>
   );

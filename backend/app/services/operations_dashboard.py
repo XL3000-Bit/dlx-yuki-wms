@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
-from sqlalchemy import case, func, select
-from sqlalchemy.orm import aliased
+from sqlalchemy import func, select
 from app.models import Load, OperationalException, OperationalExceptionEvent, OutboundOrder, Warehouse, WorkOrder, WorkOrderEvent
 from app.models.load import LoadStatus
 from app.models.operational_exception import ExceptionSeverity, ExceptionStatus, ExceptionType
@@ -24,30 +23,46 @@ def _period(preset: str | None, date_from, date_to):
         return start, end, "custom"
     key = (preset or "today").lower()
     if key == "yesterday":
-        start, end = business_day_range(today - timedelta(days=1)); return start, end, "yesterday"
+        start, end = business_day_range(today - timedelta(days=1))
+        return start, end, "yesterday"
     if key == "last_7_days":
-        start, _ = business_day_range(today - timedelta(days=6)); _, end = business_day_range(today); return start, end, "last_7_days"
+        start, _ = business_day_range(today - timedelta(days=6))
+        _, end = business_day_range(today)
+        return start, end, "last_7_days"
     if key == "this_month":
-        start, _ = business_day_range(today.replace(day=1)); _, end = business_day_range(today); return start, end, "this_month"
+        start, _ = business_day_range(today.replace(day=1))
+        _, end = business_day_range(today)
+        return start, end, "this_month"
     start, end = business_day_range(today)
     return start, end, "today"
 
 
+def _key(value):
+    return value.value if hasattr(value, "value") else value
+
+
 def _count_map(db, stmt):
-    return {key: int(value) for key, value in db.execute(stmt).all()}
+    return {_key(key): int(value) for key, value in db.execute(stmt).all()}
 
 
 def _age_bucket(age: timedelta, kind: str) -> str:
     hours = age.total_seconds() / 3600
     if kind == "exception":
-        if hours < 4: return "lt_4h"
-        if hours < 12: return "h4_12"
-        if hours < 24: return "h12_24"
-        if hours < 72: return "d1_3"
+        if hours < 4:
+            return "lt_4h"
+        if hours < 12:
+            return "h4_12"
+        if hours < 24:
+            return "h12_24"
+        if hours < 72:
+            return "d1_3"
         return "gt_3d"
-    if hours < 4: return "lt_4h"
-    if hours < 12: return "h4_12"
-    if hours < 24: return "h12_24"
+    if hours < 4:
+        return "lt_4h"
+    if hours < 12:
+        return "h4_12"
+    if hours < 24:
+        return "h12_24"
     return "gt_24h"
 
 
@@ -79,14 +94,15 @@ def operations_dashboard(db, user, *, warehouse_id: int | None = None, preset: s
     loads_completed_period = db.scalar(scoped(select(func.count()), Load.warehouse_id).where(Load.status == LoadStatus.COMPLETED, Load.updated_at >= period_start, Load.updated_at < period_end)) or 0
     active_load_ids = scoped(select(Load.id), Load.warehouse_id).where(Load.status.in_(ACTIVE_LOADS))
     outbound_on_active = db.scalar(select(func.count()).select_from(OutboundOrder).where(OutboundOrder.load_id.in_(active_load_ids))) or 0
-    active_load_count = int(sum(load_status.get(status, 0) for status in ACTIVE_LOADS))
+    active_load_count = int(sum(load_status.get(status.value, 0) for status in ACTIVE_LOADS))
     avg_ob_per_load = (outbound_on_active / active_load_count) if active_load_count else None
 
     resolved_rows = list(db.execute(scoped(select(OperationalException.reported_at, OperationalException.resolved_at), OperationalException.warehouse_id).where(OperationalException.status == ExceptionStatus.RESOLVED, OperationalException.resolved_at.is_not(None))).all())
     if resolved_rows:
         seconds = []
         for reported, resolved in resolved_rows:
-            start = to_business_datetime(reported); end = to_business_datetime(resolved)
+            start = to_business_datetime(reported)
+            end = to_business_datetime(resolved)
             if start and end and end >= start:
                 seconds.append((end - start).total_seconds())
         avg_resolution_seconds = sum(seconds) / len(seconds) if seconds else None
@@ -105,21 +121,27 @@ def operations_dashboard(db, user, *, warehouse_id: int | None = None, preset: s
         bucket = _age_bucket(age, "exception")
         ex_aging[bucket] += 1
         score = 0
-        if row.severity == ExceptionSeverity.CRITICAL: score += 100
-        if age >= timedelta(hours=24): score += 40
-        if age >= timedelta(hours=72): score += 20
-        attention.append({"score": score, "kind": "EXCEPTION", "id": row.id, "reference": row.exception_no, "status": row.status.value, "severity_or_priority": row.severity.value, "age_hours": round(age.total_seconds() / 3600, 1), "title": row.title, "target_route": f"/trouble-shoot?selected={row.id}"})
+        if row.severity == ExceptionSeverity.CRITICAL:
+            score += 100
+        if age >= timedelta(hours=24):
+            score += 40
+        if age >= timedelta(hours=72):
+            score += 20
+        attention.append({"score": score, "kind": "EXCEPTION", "id": row.id, "reference": row.exception_no, "status": _key(row.status), "severity_or_priority": _key(row.severity), "age_hours": round(age.total_seconds() / 3600, 1), "title": row.title, "target_route": f"/trouble-shoot?selected={row.id}"})
     overdue_wo = 0
     for row in open_wos:
         created = to_business_datetime(row.created_at) or now
         age = now - created
         wo_aging[_age_bucket(age, "work_order")] += 1
-        if row.scheduled_at and to_business_datetime(row.scheduled_at) < now:
+        scheduled = to_business_datetime(row.scheduled_at)
+        if scheduled and scheduled < now:
             overdue_wo += 1
         score = 0
-        if row.priority == WorkOrderPriority.URGENT: score += 80
-        if age >= timedelta(hours=24): score += 30
-        attention.append({"score": score, "kind": "WORK_ORDER", "id": row.id, "reference": row.work_order_no, "status": row.status.value, "severity_or_priority": row.priority.value, "age_hours": round(age.total_seconds() / 3600, 1), "title": row.status.value, "target_route": f"/work-orders?selected={row.id}"})
+        if row.priority == WorkOrderPriority.URGENT:
+            score += 80
+        if age >= timedelta(hours=24):
+            score += 30
+        attention.append({"score": score, "kind": "WORK_ORDER", "id": row.id, "reference": row.work_order_no, "status": _key(row.status), "severity_or_priority": _key(row.priority), "age_hours": round(age.total_seconds() / 3600, 1), "title": _key(row.status), "target_route": f"/work-orders?selected={row.id}"})
     attention.sort(key=lambda item: (-item["score"], -item["age_hours"]))
     attention = [{k: v for k, v in item.items() if k != "score"} for item in attention[:20]]
 
@@ -138,8 +160,6 @@ def operations_dashboard(db, user, *, warehouse_id: int | None = None, preset: s
                 "critical_exceptions": db.scalar(select(func.count()).select_from(OperationalException).where(OperationalException.warehouse_id == warehouse.id, OperationalException.status.in_(OPEN_EX), OperationalException.severity == ExceptionSeverity.CRITICAL)) or 0,
             })
 
-    wo_actor = aliased(WorkOrderEvent)
-    ex_actor = aliased(OperationalExceptionEvent)
     wo_events = list(db.execute(scoped(select(WorkOrderEvent.created_at, WorkOrderEvent.event_type, WorkOrder.work_order_no, WorkOrderEvent.actor_user_id, WorkOrderEvent.note, WorkOrderEvent.message, WorkOrder.id), WorkOrder.warehouse_id).join(WorkOrder, WorkOrder.id == WorkOrderEvent.work_order_id).order_by(WorkOrderEvent.created_at.desc()).limit(20)).all())
     ex_events = list(db.execute(scoped(select(OperationalExceptionEvent.created_at, OperationalExceptionEvent.event_type, OperationalException.exception_no, OperationalExceptionEvent.actor_user_id, OperationalExceptionEvent.message, OperationalException.id), OperationalException.warehouse_id).join(OperationalException, OperationalException.id == OperationalExceptionEvent.operational_exception_id).order_by(OperationalExceptionEvent.created_at.desc()).limit(20)).all())
     recent = []
@@ -147,13 +167,13 @@ def operations_dashboard(db, user, *, warehouse_id: int | None = None, preset: s
         recent.append({"created_at": row[0], "kind": "WORK_ORDER", "event_type": row[1], "reference": row[2], "actor_user_id": row[3], "summary": row[5] or row[4] or row[1], "target_route": f"/work-orders?selected={row[6]}"})
     for row in ex_events:
         recent.append({"created_at": row[0], "kind": "EXCEPTION", "event_type": row[1], "reference": row[2], "actor_user_id": row[3], "summary": row[4] or row[1], "target_route": f"/trouble-shoot?selected={row[5]}"})
-    recent.sort(key=lambda item: item["created_at"] or datetime.min, reverse=True)
+    recent.sort(key=lambda item: item["created_at"] or datetime.min.replace(tzinfo=None), reverse=True)
     recent = recent[:15]
 
-    open_exceptions_count = int(sum(ex_status.get(status, 0) for status in OPEN_EX))
-    open_wo_count = int(sum(wo_status.get(status, 0) for status in OPEN_WO))
-    outbound_ready = int(sum(ob_status.get(status, 0) for status in READY_OB))
-    outbound_active = int(sum(ob_status.get(status, 0) for status in ACTIVE_OB))
+    open_exceptions_count = int(sum(ex_status.get(status.value, 0) for status in OPEN_EX))
+    open_wo_count = int(sum(wo_status.get(status.value, 0) for status in OPEN_WO))
+    outbound_ready = int(sum(ob_status.get(status.value, 0) for status in READY_OB))
+    outbound_active = int(sum(ob_status.get(status.value, 0) for status in ACTIVE_OB))
 
     return {
         "filters": {"warehouse_id": warehouse_id, "period": period_key, "period_start": period_start, "period_end": period_end},
@@ -164,35 +184,36 @@ def operations_dashboard(db, user, *, warehouse_id: int | None = None, preset: s
             "work_order_age_from": "created_at",
             "exception_age_from": "reported_at",
             "overdue_work_order": "scheduled_at present and scheduled_at < now",
+            "completed_today": "work_order.completed_at within America/Los_Angeles business day",
         },
         "summary": {
             "active_loads": {"value": active_load_count, "kind": "snapshot", "href": "/loads"},
             "outbound_ready_active": {"value": outbound_ready, "active": outbound_active, "kind": "snapshot", "href": "/outbound/dispatch"},
             "open_work_orders": {"value": open_wo_count, "kind": "snapshot", "href": "/work-orders?status=OPEN"},
             "open_exceptions": {"value": open_exceptions_count, "kind": "snapshot", "href": "/trouble-shoot?status=OPEN"},
-            "critical_exceptions": {"value": int(ex_sev.get(ExceptionSeverity.CRITICAL, 0)), "kind": "snapshot", "href": "/trouble-shoot?severity=CRITICAL"},
+            "critical_exceptions": {"value": int(ex_sev.get(ExceptionSeverity.CRITICAL.value, 0)), "kind": "snapshot", "href": "/trouble-shoot?severity=CRITICAL"},
             "completed_today": {"value": wo_completed_today, "kind": "period", "href": "/work-orders?status=COMPLETED"},
         },
         "loads": {
             "created_in_period": loads_created,
-            "status": {status.value: int(load_status.get(status, 0)) for status in LoadStatus},
+            "status": {status.value: int(load_status.get(status.value, 0)) for status in LoadStatus},
             "active": active_load_count,
             "completed_in_period": loads_completed_period,
             "average_outbounds_per_active_load": avg_ob_per_load,
         },
         "work_orders": {
-            "status": {status.value: int(wo_status.get(status, 0)) for status in WorkOrderStatus},
-            "priority_open": {status.value: int(wo_priority.get(status, 0)) for status in WorkOrderPriority},
+            "status": {status.value: int(wo_status.get(status.value, 0)) for status in WorkOrderStatus},
+            "priority_open": {status.value: int(wo_priority.get(status.value, 0)) for status in WorkOrderPriority},
             "completed_today": wo_completed_today,
             "completed_in_period": wo_completed_period,
             "overdue": overdue_wo,
             "aging": wo_aging,
-            "funnel": [{"key": status.value, "value": int(wo_status.get(status, 0))} for status in (WorkOrderStatus.OPEN, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS, WorkOrderStatus.COMPLETED)],
+            "funnel": [{"key": status.value, "value": int(wo_status.get(status.value, 0))} for status in (WorkOrderStatus.OPEN, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS, WorkOrderStatus.COMPLETED)],
         },
         "exceptions": {
-            "status": {status.value: int(ex_status.get(status, 0)) for status in ExceptionStatus},
-            "severity_open": {status.value: int(ex_sev.get(status, 0)) for status in ExceptionSeverity},
-            "types_open": sorted(({"type": key.value if hasattr(key, "value") else str(key), "count": int(value)} for key, value in ex_type.items()), key=lambda item: (-item["count"], item["type"])),
+            "status": {status.value: int(ex_status.get(status.value, 0)) for status in ExceptionStatus},
+            "severity_open": {status.value: int(ex_sev.get(status.value, 0)) for status in ExceptionSeverity},
+            "types_open": sorted(({"type": key, "count": int(value)} for key, value in ex_type.items()), key=lambda item: (-item["count"], item["type"])),
             "average_resolution_seconds": avg_resolution_seconds,
             "aging": ex_aging,
         },

@@ -1,4 +1,5 @@
 import {
+  DashboardOutlined,
   HistoryOutlined,
   DatabaseOutlined,
   TruckOutlined,
@@ -19,6 +20,7 @@ export function AppLayout() {
   const nav = useNavigate();
   const loc = useLocation();
   const logout = useAuthStore((s) => s.logout);
+  const selected = loc.pathname === "/" ? "/" : loc.pathname;
   return (
     <Layout className="app-layout">
       <Sider
@@ -38,9 +40,10 @@ export function AppLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[loc.pathname]}
+          selectedKeys={[selected]}
           onClick={(e) => nav(e.key)}
           items={[
+            { key: "/", icon: <DashboardOutlined />, label: "Operations" },
             { key: "/inbound", icon: <ImportOutlined />, label: "Inbound" },
             { key: "/container-tracking", icon: <ImportOutlined />, label: "Container Tracking" },
             { key: "/inventory", icon: <DatabaseOutlined />, label: "Inventory" },
