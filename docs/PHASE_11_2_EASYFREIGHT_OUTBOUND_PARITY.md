@@ -1,5 +1,17 @@
 # PHASE 11.2 — EasyFreight Outbound Parity Matrix
 
+> **Reference structure captured; functional parity not yet established.**
+
+**Implementation gate:** NOT READY FOR PARITY IMPLEMENTATION
+
+Controlled behavior-capture evidence:
+
+- [Action matrix](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_ACTION_MATRIX.md)
+- [Status matrix](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_STATUS_MATRIX.md)
+- [Sanitized API observations](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_API_OBSERVATIONS.md)
+- [Visual measurements](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_VISUAL_MEASUREMENTS.md)
+- [Gap analysis](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_GAP_ANALYSIS.md)
+
 ## Status and evidence boundary
 
 **Capture date:** 2026-08-30
@@ -13,7 +25,11 @@ dispatch, cancel, delete, export, or other business mutation was submitted. The
 Create Outbound form was opened without entering data and closed with its Cancel
 button.
 
-Evidence vocabulary:
+Evidence vocabulary in this baseline records source observations. Parity state in
+the controlled-capture documents is limited to MATCHED, PARTIAL, MISSING,
+BLOCKED, UNKNOWN, INTENTIONAL_DIFFERENCE, and NOT_APPLICABLE.
+
+Source-evidence vocabulary:
 
 - **CONFIRMED** — directly visible in the rendered page or control metadata.
 - **PARTIAL** — a comparable DLX capability exists, but fields or behavior differ.
@@ -28,10 +44,10 @@ The page is a three-zone outbound operations workbench rather than one flat list
 2. the selected OB's `OB BOL List`;
 3. a `Remaining BOL List` used as the unassigned candidate pool.
 
-The primary list reported 12,418 rows, the OB BOL list 8,192 rows, and the
-Remaining BOL list 340 rows at capture time. These are volatile source-system
-counts and are recorded only as evidence that all three areas paginate
-independently.
+During capture, the primary list count moved between 12,418 and 12,423 and the
+OB BOL count moved between 8,191 and 8,192; the Remaining BOL list showed 340.
+These are volatile source-system snapshots, not parity constants. They are
+recorded only as evidence that all three areas paginate independently.
 
 ## Primary OB list
 
@@ -44,9 +60,9 @@ independently.
 | Confirm OB | Visible | UNKNOWN; not invoked. |
 | Exception | Visible | UNKNOWN; not invoked. |
 | Create OB | Visible; form inspected | Form fields CONFIRMED; submission not invoked. |
-| Refresh | Visible | Not required for field capture. |
-| Reset Window | Visible | Not invoked. |
-| Hide OB BOL List | Visible | Confirms the lower-list visibility control. |
+| Refresh | Visible; invoked after a safe filter change | Retained the applied filtered result. |
+| Reset Window | Visible; invoked | Confirmed as a layout command rather than a filter reset; persistence remains UNKNOWN. |
+| Hide OB BOL List | Visible; hide/show invoked and restored | Confirms the right-side list visibility control. |
 
 ### Filters
 
