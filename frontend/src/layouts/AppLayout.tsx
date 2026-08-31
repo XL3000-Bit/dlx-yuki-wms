@@ -9,6 +9,7 @@ import {
   SettingOutlined,
   DashboardOutlined,
   FileTextOutlined,
+  ScanOutlined,
 } from "@ant-design/icons";
 import { Button, Layout, Menu, Typography } from "antd";
 import { useState } from "react";
@@ -57,6 +58,7 @@ export function AppLayout() {
             { key: "/work-orders", icon: <HistoryOutlined />, label: "Work Orders" },
             { key: "/trouble-shoot", icon: <HistoryOutlined />, label: "Trouble Shoot" },
             { key: "/documents", icon: <FileTextOutlined />, label: "Documents & POD" },
+            { key: "/scan-execution", icon: <ScanOutlined />, label: "Scan Execution" },
             {
               key: "/import-history",
               icon: <HistoryOutlined />,
