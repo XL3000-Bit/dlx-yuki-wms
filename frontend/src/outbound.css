@@ -70,6 +70,133 @@
   background: #f5f7fa;
 }
 
+.dispatch-page-scroll {
+  height: 100%;
+  overflow: auto;
+  padding: 0 10px 16px;
+}
+
+.dispatch-breadcrumb {
+  padding: 7px 2px;
+  color: #65707c;
+  font-size: 12px;
+}
+
+.dispatch-breadcrumb span {
+  padding: 0 7px;
+  color: #f57c00;
+}
+
+.dispatch-sticky-heading {
+  position: sticky;
+  z-index: 4;
+  top: 0;
+  margin: 0 -10px;
+  border-bottom: 1px solid #dfe3e8;
+  background: rgba(255, 255, 255, .97);
+  padding: 8px 10px;
+}
+
+.dispatch-batch-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dispatch-filter-card,
+.dispatch-section-card {
+  margin-top: 9px;
+  border: 1px solid #dfe3e8;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.dispatch-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(230px, 1.6fr) repeat(4, minmax(140px, 1fr)) auto;
+  align-items: end;
+  gap: 8px;
+  padding: 9px;
+}
+
+.dispatch-filter-grid label {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.dispatch-filter-grid label > span {
+  color: #65707c;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.dispatch-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.dispatch-page-scroll .dispatch-orders {
+  display: flex;
+  min-height: 455px;
+  flex: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dispatch-page-scroll .dispatch-orders-table-host {
+  min-height: 335px;
+}
+
+.dispatch-detail-stack {
+  display: grid;
+  gap: 9px;
+}
+
+.dispatch-page-scroll .dispatch-panel {
+  display: flex;
+  min-height: 310px;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-subtitle {
+  display: block;
+  margin-top: 1px;
+  color: #7a8490;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.dispatch-row-selected > td {
+  background: #fff7e8 !important;
+}
+
+.dispatch-page-scroll > .dispatch-empty {
+  min-height: 230px;
+  margin-top: 9px;
+}
+
+@media (max-width: 1450px) {
+  .dispatch-filter-grid {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dispatch-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dispatch-filter-grid label:first-child,
+  .dispatch-filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
 .outbound-split-layout {
   display: flex;
   width: 100%;
