@@ -46,6 +46,13 @@ Supported import formats: standard `.xlsx` files produced by Microsoft Excel or 
 
 Imports never insert during preview. Confirm revalidates the stored row snapshots and writes all accepted inbound records in one transaction. Duplicate handling supports `SKIP` (default) and `UPDATE`.
 
+West Coast 4.0 (`美西仓 - 4.0`) is detected when the workbook contains sheets `OL`, `DS`, and `出库`. Do not upload the full ~297 MB source file. Follow the operator guide and empty templates:
+
+- [West Coast 4.0 import console](docs/WEST_COAST_4_0_IMPORT_CONSOLE.md)
+- Templates: `docs/import-templates/`
+
+Order: master data → 提柜 / Container Tracking → OL → outbound + DS. Close 仓点 / customer gates and reconcile 5–10 containers before bulk load.
+
 ## PHASE 3: Inventory
 
 Inventory lots are created only through `POST /api/v1/inbound/{id}/receive-to-inventory` for Put Away or Completed inbound records. Open `/inventory` to search lots, inspect aging/priority and transaction history, or perform controlled Move, Adjustment, Hold and Release operations.
