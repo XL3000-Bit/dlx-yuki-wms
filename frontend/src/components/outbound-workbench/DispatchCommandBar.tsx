@@ -1,4 +1,5 @@
 import { Button, DatePicker, Input, Select, Space } from "antd";
+import "./dispatch-command.css";
 
 const STATUSES = ["New", "On Hold", "In Progress", "Confirmed", "Dispatched", "Completed", "Canceled", "Exception"];
 const TYPES = ["STANDARD", "FBA", "TRANSFER", "PICKUP", "OTHER"];
