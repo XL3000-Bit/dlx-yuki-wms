@@ -24,3 +24,15 @@
 .app-layout{--sider-w:220px}
 .app-layout.is-sider-collapsed{--sider-w:64px}
 .ant-table-tbody>tr:hover>td{background:#f5f8fd!important}
+.outbound-split-layout.is-dragging,
+.outbound-vertical-split.is-dragging{
+  cursor:col-resize;
+}
+.outbound-vertical-split.is-dragging{cursor:row-resize}
+.outbound-split-layout.is-dragging .outbound-split-left,
+.outbound-split-layout.is-dragging .outbound-split-right,
+.outbound-vertical-split.is-dragging .outbound-vertical-top,
+.outbound-vertical-split.is-dragging .outbound-vertical-bottom{
+  pointer-events:none;
+  user-select:none;
+}
