@@ -22,6 +22,7 @@ import { useCurrentUser } from "../hooks/usePermissions";
 import { GlobalSearch } from "../components/GlobalSearch";
 import { NotificationCenter } from "../components/NotificationCenter";
 import { CompanyMenu } from "../components/CompanyMenu";
+import dlxLogo from "../assets/dlx-logo.svg";
 
 const { Header, Sider, Content } = Layout;
 const SIDER_KEY = "dlx_wms:sider_collapsed";
@@ -58,11 +59,11 @@ export function AppLayout() {
     <Layout className={`app-layout ${collapsed ? "is-sider-collapsed" : ""}`}>
       <Sider width={220} collapsedWidth={64} collapsed={collapsed} collapsible trigger={null} className="brand-sider">
         <div className="brand">
-          <div className="brand-mark">Y</div>
+          <img className="brand-logo" src={dlxLogo} alt="DLX" />
           {!collapsed && (
             <span>
-              Yuki WMS
-              <small>DLX OPERATIONS</small>
+              DLX
+              <small>YUKI WMS</small>
             </span>
           )}
         </div>
