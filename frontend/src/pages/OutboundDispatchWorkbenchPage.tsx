@@ -620,7 +620,7 @@ export function OutboundDispatchWorkbenchPage() {
             />
           </div>
           <div className="dispatch-summary">Total {summary.ob_count || 0} OB <span>/</span> {n(summary.total_pallet_qty)} PLT <span>/</span> {n(summary.allocated_carton_qty)} CTN <span>/</span> {n(summary.allocated_weight_lbs)} LB <span>/</span> {n(summary.allocated_cbm)} CBM{selectedIds.length > 0 && <> <span>/</span> Selected {selectedIds.length} OB / {n(selectedPallets)} PLT</>}</div>
-          {selected && dispatchReadiness.data?.status === "BLOCKED" && (
+          {selected && dispatchReadiness.data?.status === "NOT_READY" && (
             <Alert
               type="warning"
               showIcon
