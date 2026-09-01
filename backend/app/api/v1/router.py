@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, dashboard, documents, fba, inbound, imports, inventory, masters, users, outbound, picking_bol, container_tracking, search, loads, work_orders, operational_exceptions, notifications
+from app.api.v1.endpoints import auth, dashboard, documents, fba, inbound, imports, inventory, masters, users, outbound, picking_bol, container_tracking, search, loads, work_orders, operational_exceptions, notifications, company_profile
 api_router=APIRouter();api_router.include_router(auth.router);api_router.include_router(users.router);api_router.include_router(masters.router);api_router.include_router(inbound.files_router);api_router.include_router(inbound.router);api_router.include_router(imports.router);api_router.include_router(inventory.files_router);api_router.include_router(inventory.router);api_router.include_router(fba.files_router);api_router.include_router(fba.router)
 api_router.include_router(outbound.files_router);api_router.include_router(outbound.router)
 api_router.include_router(picking_bol.router)
@@ -11,3 +11,4 @@ api_router.include_router(operational_exceptions.router)
 api_router.include_router(documents.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(notifications.router)
+api_router.include_router(company_profile.router)
