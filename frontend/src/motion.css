@@ -6,6 +6,18 @@
 .brand-sider .ant-menu-submenu-title:hover{
   background:#21467d!important;
 }
+.brand-logo{
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  flex:none;
+  display:block;
+  box-shadow:0 0 0 2px #f3c14e55;
+}
+.brand-sider.ant-layout-sider-collapsed .brand-logo{
+  width:36px;
+  height:36px;
+}
 .sider-rail{
   position:fixed;
   top:268px;
