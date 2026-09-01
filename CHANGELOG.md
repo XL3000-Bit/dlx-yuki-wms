@@ -1,5 +1,13 @@
 # Changelog
 
+## West Coast 4.0 import console (2026-09-01)
+
+- Adds operator guide `docs/WEST_COAST_4_0_IMPORT_CONSOLE.md` for the 297 MB 美西仓 4.0 workbook.
+- Documents the required import order: master data → 提柜 / Container Tracking → OL inbound → outbound + DS.
+- Records gates: 141 仓点 values, customer matching, one duplicate container, outbound linkage keys.
+- Adds empty UTF-8 templates under `docs/import-templates/` that match `WEST_COAST_4_0_*` profile headers.
+- Does not change import runtime, preview/confirm behavior, or write production data.
+
 ## PHASE 9.5 — FBA / Outbound Dispatch Intelligence
 
 - Derives each source container's earliest outbound date from the minimum `schedule_pickup_at` of active outbound allocations.
