@@ -4,8 +4,6 @@ import {
   TruckOutlined,
   ImportOutlined,
   LogoutOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   SettingOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -13,6 +11,8 @@ import {
   HomeOutlined,
   WarningOutlined,
   UserOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, Layout, Menu, Space } from "antd";
 import { useMemo, useState } from "react";
@@ -44,7 +44,7 @@ export function AppLayout() {
   const defaultOpen = useMemo(() => openKeysFor(loc.pathname), [loc.pathname]);
 
   return (
-    <Layout className="app-layout">
+    <Layout className={`app-layout ${collapsed ? "is-sider-collapsed" : ""}`}>
       <Sider width={220} collapsedWidth={64} collapsed={collapsed} className="brand-sider">
         <div className="brand">
           <div className="brand-mark">Y</div>
@@ -108,8 +108,16 @@ export function AppLayout() {
           <Button className="signout-btn" icon={<LogoutOutlined />} onClick={logout} block>
             {!collapsed && "Sign out"}
           </Button>
-          <Button className="sider-toggle" type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
         </div>
+        <button
+          type="button"
+          className="sider-rail"
+          aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+          title={collapsed ? "Expand menu" : "Collapse menu"}
+          onClick={() => setCollapsed((value) => !value)}
+        >
+          {collapsed ? <RightOutlined /> : <LeftOutlined />}
+        </button>
       </Sider>
       <Layout>
         <Header className="topbar">
