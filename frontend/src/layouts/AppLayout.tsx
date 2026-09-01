@@ -4,91 +4,137 @@ import {
   TruckOutlined,
   ImportOutlined,
   LogoutOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   SettingOutlined,
   DashboardOutlined,
   FileTextOutlined,
-  ScanOutlined,
+  CloudUploadOutlined,
+  HomeOutlined,
+  WarningOutlined,
+  UserOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
-import { Button, Layout, Menu, Typography } from "antd";
-import { useState } from "react";
+import { Avatar, Button, Layout, Menu, Space } from "antd";
+import { useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/auth";
+import { useCurrentUser } from "../hooks/usePermissions";
 import { GlobalSearch } from "../components/GlobalSearch";
 import { NotificationCenter } from "../components/NotificationCenter";
+import { CompanyMenu } from "../components/CompanyMenu";
+import dlxLogo from "../assets/dlx-logo.svg";
+
 const { Header, Sider, Content } = Layout;
+const SIDER_KEY = "dlx_wms:sider_collapsed";
+
+function openKeysFor(path: string) {
+  if (path.startsWith("/inbound") || path.startsWith("/container-tracking")) return ["inbound"];
+  if (path.startsWith("/inventory") || path.startsWith("/fba")) return ["warehouse"];
+  if (path.startsWith("/outbound") || path.startsWith("/loads")) return ["outbound"];
+  if (path.startsWith("/work-orders") || path.startsWith("/trouble-shoot") || path.startsWith("/documents")) return ["ops"];
+  if (path.startsWith("/import-history") || path.startsWith("/admin")) return ["tools"];
+  return [];
+}
+
 export function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDER_KEY) === "1");
   const nav = useNavigate();
   const loc = useLocation();
   const logout = useAuthStore((s) => s.logout);
+  const me = useCurrentUser();
+  const isAdmin = me.data?.role === "ADMIN";
+  const selected = loc.pathname;
+  const initialOpen = useMemo(() => openKeysFor(loc.pathname), [loc.pathname]);
+  const [openKeys, setOpenKeys] = useState<string[]>(initialOpen);
+
+  const toggleSider = () => {
+    setCollapsed((value) => {
+      const next = !value;
+      localStorage.setItem(SIDER_KEY, next ? "1" : "0");
+      return next;
+    });
+  };
+
   return (
-    <Layout className="app-layout">
-      <Sider
-        width={212}
-        collapsedWidth={60}
-        collapsed={collapsed}
-        className="brand-sider"
-      >
+    <Layout className={`app-layout ${collapsed ? "is-sider-collapsed" : ""}`}>
+      <Sider width={220} collapsedWidth={64} collapsed={collapsed} collapsible trigger={null} className="brand-sider">
         <div className="brand">
-          <b>DLX</b>
+          <img className="brand-logo" src={dlxLogo} alt="DLX" />
           {!collapsed && (
             <span>
-              Yuki WMS <small>VERSION 3</small>
+              DLX
+              <small>YUKI WMS</small>
             </span>
           )}
         </div>
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[loc.pathname]}
-          onClick={(e) => nav(e.key)}
+          inlineIndent={16}
+          selectedKeys={[selected]}
+          openKeys={collapsed ? [] : openKeys}
+          onOpenChange={setOpenKeys}
+          onClick={(e) => { if (!e.key.startsWith("g-")) nav(e.key); }}
           items={[
-            { key: "/dashboard", icon: <DashboardOutlined />, label: "Operations Dashboard" },
-            { key: "/inbound", icon: <ImportOutlined />, label: "Inbound" },
-            { key: "/container-tracking", icon: <ImportOutlined />, label: "Container Tracking" },
-            { key: "/inventory", icon: <DatabaseOutlined />, label: "Inventory" },
-            { key: "/fba", icon: <TruckOutlined />, label: "FBA" },
-            { key: "/outbound/dispatch", icon: <TruckOutlined />, label: "Outbound Dispatch" },
-            { key: "/outbound/picking", icon: <TruckOutlined />, label: "Picking List" },
-            { key: "/outbound/picking-history", icon: <HistoryOutlined />, label: "Picking History" },
-            { key: "/outbound/bol", icon: <TruckOutlined />, label: "BOL" },
-            { key: "/loads", icon: <TruckOutlined />, label: "Loads" },
-            { key: "/work-orders", icon: <HistoryOutlined />, label: "Work Orders" },
-            { key: "/trouble-shoot", icon: <HistoryOutlined />, label: "Trouble Shoot" },
-            { key: "/documents", icon: <FileTextOutlined />, label: "Documents & POD" },
-            { key: "/scan-execution", icon: <ScanOutlined />, label: "Scan Execution" },
+            { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
             {
-              key: "/import-history",
-              icon: <HistoryOutlined />,
-              label: "Import History",
+              key: "inbound", icon: <ImportOutlined />, label: "InBound",
+              children: [
+                { key: "/inbound", label: "Receiving" },
+                { key: "/container-tracking", label: "Container Tracking" },
+              ],
             },
             {
-              key: "settings",
-              icon: <SettingOutlined />,
-              label: "Settings",
-              disabled: true,
+              key: "warehouse", icon: <HomeOutlined />, label: "Warehouse",
+              children: [
+                { key: "/inventory", icon: <DatabaseOutlined />, label: "Inventory" },
+                { key: "/fba", icon: <TruckOutlined />, label: "FBA" },
+              ],
+            },
+            {
+              key: "outbound", icon: <TruckOutlined />, label: "OutBound",
+              children: [
+                { key: "/outbound/dispatch", label: "Dispatch" },
+                { key: "/outbound/picking", label: "Picking List" },
+                { key: "/outbound/picking-history", label: "Picking History" },
+                { key: "/outbound/bol", label: "BOL" },
+                { key: "/loads", label: "Loads" },
+              ],
+            },
+            {
+              key: "ops", icon: <WarningOutlined />, label: "Operations",
+              children: [
+                { key: "/work-orders", icon: <HistoryOutlined />, label: "Work Orders" },
+                { key: "/trouble-shoot", label: "Trouble Shoot" },
+                { key: "/documents", icon: <FileTextOutlined />, label: "Documents & POD" },
+              ],
+            },
+            {
+              key: "tools", icon: <SettingOutlined />, label: "Tools",
+              children: [
+                { key: "/import-history", icon: <HistoryOutlined />, label: "Import History" },
+                ...(isAdmin ? [{ key: "/admin/data-upload", icon: <CloudUploadOutlined />, label: "Data Upload" }] : []),
+              ],
             },
           ]}
         />
-        <Button
-          className="sider-toggle"
-          type="text"
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          {!collapsed && "Collapse"}
-        </Button>
+        <div className="sider-footer">
+          <Button className="signout-btn" icon={<LogoutOutlined />} onClick={logout} block>
+            {!collapsed && "Sign out"}
+          </Button>
+        </div>
+        <button type="button" className="sider-rail" aria-label={collapsed ? "Expand menu" : "Collapse menu"} title={collapsed ? "Expand menu" : "Collapse menu"} onClick={toggleSider}>
+          {collapsed ? <RightOutlined /> : <LeftOutlined />}
+        </button>
       </Sider>
       <Layout>
         <Header className="topbar">
-          <Typography.Text strong>Warehouse Operations</Typography.Text>
           <GlobalSearch />
-          <NotificationCenter />
-          <Button icon={<LogoutOutlined />} onClick={logout}>
-            Sign Out
-          </Button>
+          <Space size={8} className="topbar-actions">
+            <NotificationCenter />
+            <CompanyMenu />
+            <Avatar size={28} icon={<UserOutlined />} className="topbar-avatar" />
+          </Space>
         </Header>
         <Content className={`content ${loc.pathname === "/outbound/dispatch" ? "content-workbench" : ""}`}>
           <Outlet />

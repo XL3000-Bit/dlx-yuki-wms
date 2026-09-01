@@ -4,7 +4,19 @@ from sqlalchemy import select,func
 from sqlalchemy.orm import Session
 from app.models import ContainerTracking,TrackingStatus,Warehouse,AuditLog,User
 from app.services.access_policy import assert_warehouse_access
-HEADERS={'MBL#':'mbl_number','HBL#':'hbl_number','Filling#':'filing_number','Container':'container_number','Container Attributes':'container_attributes','Container Remark':'container_remark','Customer Ref#':'customer_reference','POD ETA':'pod_eta','IR ETA':'ir_eta','POD':'pod','DEL(IR) Location':'delivery_location','F.DEST':'final_destination','DEL Warehouse':'delivery_warehouse_raw','Schedule Delivery Date':'scheduled_delivery_at','Actual Delivery Date':'actual_delivery_at','WA Received At':'wa_received_at','WA Empty At':'wa_empty_at','WA Complete At':'wa_complete_at'}
+HEADERS={
+ 'MBL#':'mbl_number','HBL#':'hbl_number','Filling#':'filing_number','Container':'container_number',
+ 'Container Attributes':'container_attributes','Container Remark':'container_remark','Customer Ref#':'customer_reference',
+ 'POD ETA':'pod_eta','IR ETA':'ir_eta','POD':'pod','DEL(IR) Location':'delivery_location','F.DEST':'final_destination',
+ 'DEL Warehouse':'delivery_warehouse_raw','Schedule Delivery Date':'scheduled_delivery_at',
+ 'Actual Delivery Date':'actual_delivery_at','WA Received At':'wa_received_at','WA Empty At':'wa_empty_at',
+ 'WA Complete At':'wa_complete_at',
+ 'mbl_number':'mbl_number','hbl_number':'hbl_number','container_number':'container_number',
+ 'container_attributes':'container_attributes','container_remark':'container_remark',
+ 'customer_reference':'customer_reference','pod_eta':'pod_eta','ir_eta':'ir_eta',
+ 'actual_delivery_at':'actual_delivery_at','wa_received_at':'wa_received_at','wa_complete_at':'wa_complete_at',
+ '柜号':'container_number','客户':'customer_reference','ETA':'pod_eta',
+}
 def parse_dt(v):
  if not v:return None
  for f in ('%Y-%m-%d %H:%M:%S','%Y-%m-%d','%m/%d/%Y %H:%M','%m/%d/%Y'):
@@ -12,7 +24,13 @@ def parse_dt(v):
   except ValueError:pass
  raise ValueError('Invalid date')
 def normalize(raw):
- d={dst:((raw.get(src) or '').strip() or None) for src,dst in HEADERS.items()};d['container_number']=(d.get('container_number') or '').upper()
+ folded={str(k).strip():v for k,v in raw.items()}
+ d={}
+ for src,dst in HEADERS.items():
+  value=((folded.get(src) or '').strip() or None)
+  if value and not d.get(dst):d[dst]=value
+  elif dst not in d:d[dst]=value
+ d['container_number']=(d.get('container_number') or '').upper()
  for k in ('pod_eta','ir_eta','scheduled_delivery_at','actual_delivery_at','wa_received_at','wa_empty_at','wa_complete_at'):d[k]=parse_dt(d[k])
  return d
 def fingerprint(d):return hashlib.sha256('|'.join(str(d.get(k) or '') for k in ('container_number','mbl_number','pod_eta')).encode()).hexdigest()

@@ -5,7 +5,7 @@ from app.api.deps import CurrentUser, DbSession, require_admin
 from app.core.security import hash_password
 from app.models import Customer, Warehouse
 from app.models.user import User, UserRole
-from app.schemas.user import UserCreateInput, UserRead, UserScopeUpdate
+from app.schemas.user import UserCreateInput, UserRead, UserScopeUpdate, UserUpdateInput
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -37,6 +37,22 @@ def create_user(payload: UserCreateInput, db: DbSession, _: Annotated[User, Depe
 
 @router.get("", response_model=list[UserRead])
 def list_users(db: DbSession, _: Annotated[User, Depends(require_admin)]) -> list[User]: return list(db.scalars(select(User).order_by(User.id.desc())).all())
+
+@router.patch("/{user_id}", response_model=UserRead)
+def update_user(user_id: int, payload: UserUpdateInput, db: DbSession, actor: Annotated[User, Depends(require_admin)]) -> User:
+    user = db.get(User, user_id)
+    if user is None: raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    data = payload.model_dump(exclude_unset=True)
+    password = data.pop("password", None)
+    if data.get("role") and user.id == actor.id and data["role"] != UserRole.ADMIN:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Cannot remove your own admin role")
+    if data.get("is_active") is False and user.id == actor.id:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Cannot deactivate your own account")
+    for key, value in data.items():
+        setattr(user, key, value)
+    if password:
+        user.password_hash = hash_password(password)
+    db.commit(); db.refresh(user); return user
 
 @router.patch("/{user_id}/scope", response_model=UserRead)
 def update_scope(user_id: int, payload: UserScopeUpdate, db: DbSession, _: Annotated[User, Depends(require_admin)]) -> User:
