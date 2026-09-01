@@ -1,0 +1,8 @@
+package com.dlxyuki.wms.containertracking;
+import static org.assertj.core.api.Assertions.assertThat;import com.fasterxml.jackson.databind.*;import java.lang.reflect.*;import java.util.*;import org.junit.jupiter.api.Test;import org.springframework.web.bind.annotation.*;
+class ContainerTrackingReadContractTest{
+ @Test void exposesOnlySingularFastApiRoutes(){assertThat(ContainerTrackingController.class.getAnnotation(RequestMapping.class).value()).containsExactly("/api/v1/container-tracking");assertThat(path("list")).isEmpty();assertThat(path("detail")).containsExactly("/{tracking_id}");assertThat(Arrays.stream(ContainerTrackingController.class.getDeclaredMethods()).filter(m->m.isAnnotationPresent(GetMapping.class))).hasSize(2);}
+ @Test void listQueryMatchesFastApi(){assertThat(Arrays.stream(ContainerTrackingQuery.class.getRecordComponents()).map(RecordComponent::getName)).containsExactly("page","perPage","q","status","warehouseId","outboundWindow","outboundFrom","outboundTo","dispatchPriority","sortBy","sortOrder");}
+ @Test void quantitiesAreStrings()throws Exception{JsonNode j=new ObjectMapper().readTree("{\"inbound\":[{\"pallet_qty\":\"2.50\"}],\"inventory_lots\":[{\"available_pallet_qty\":\"1.25\"}],\"related_outbound_tasks\":[{\"completed_pallet_qty\":\"0.50\"}]}");assertThat(j.at("/inbound/0/pallet_qty").isTextual()).isTrue();assertThat(j.at("/inventory_lots/0/available_pallet_qty").isTextual()).isTrue();assertThat(j.at("/related_outbound_tasks/0/completed_pallet_qty").isTextual()).isTrue();}
+ private String[]path(String n){Method m=Arrays.stream(ContainerTrackingController.class.getDeclaredMethods()).filter(x->x.getName().equals(n)).findFirst().orElseThrow();return m.getAnnotation(GetMapping.class).value();}
+}

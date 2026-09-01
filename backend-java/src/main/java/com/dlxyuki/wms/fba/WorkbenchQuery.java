@@ -1,0 +1,2 @@
+package com.dlxyuki.wms.fba;
+record WorkbenchQuery(int page,int perPage,Long warehouseId,Long customerId,String q,String stage,String priority,boolean onlyOld,String unloadFrom,String unloadTo,Integer agingMin,Integer agingMax,String amazonFcCode,String containerNumber,Long locationId,Long carrierId,Integer fbaStatus,Integer outboundStatus,Integer pickingStatus,Integer bolStatus,String stNumber,String poNumber,String scheduledFrom,String scheduledTo,String appointmentFrom,String appointmentTo,String sortBy,String sortOrder) {}

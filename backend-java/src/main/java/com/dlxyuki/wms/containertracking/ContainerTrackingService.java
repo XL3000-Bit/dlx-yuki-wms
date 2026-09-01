@@ -1,0 +1,3 @@
+package com.dlxyuki.wms.containertracking;
+import com.dlxyuki.wms.config.ApiException;import com.dlxyuki.wms.user.UserAccount;import org.springframework.http.HttpStatus;import org.springframework.stereotype.Service;
+@Service class ContainerTrackingService{private final ContainerTrackingRepository repository;ContainerTrackingService(ContainerTrackingRepository r){repository=r;}Object list(ContainerTrackingQuery q,UserAccount u){return repository.list(q,u);}Object detail(long id,UserAccount u){return repository.detail(id,u).orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,"Container tracking not found"));}}
