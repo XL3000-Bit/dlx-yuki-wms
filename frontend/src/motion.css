@@ -25,9 +25,7 @@
 .app-layout.is-sider-collapsed{--sider-w:64px}
 .ant-table-tbody>tr:hover>td{background:#f5f8fd!important}
 .outbound-split-layout.is-dragging,
-.outbound-vertical-split.is-dragging{
-  cursor:col-resize;
-}
+.outbound-vertical-split.is-dragging{cursor:col-resize}
 .outbound-vertical-split.is-dragging{cursor:row-resize}
 .outbound-split-layout.is-dragging .outbound-split-left,
 .outbound-split-layout.is-dragging .outbound-split-right,
@@ -36,3 +34,41 @@
   pointer-events:none;
   user-select:none;
 }
+.topbar-actions .ant-btn{
+  width:32px;
+  height:32px;
+  border:0;
+  background:#17325d;
+  color:#fff;
+}
+.topbar-actions .ant-btn:hover{
+  background:#2f6bff!important;
+  color:#fff!important;
+}
+.company-mega{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(180px,1fr));
+  gap:8px 28px;
+  min-width:640px;
+  padding:18px 22px 16px;
+  background:#fff;
+  border:1px solid #e6ebf2;
+  border-radius:8px;
+  box-shadow:0 12px 32px #17325d24;
+}
+.company-mega h4{
+  margin:0 0 10px;
+  color:#17325d;
+  font-size:14px;
+}
+.company-mega button{
+  display:block;
+  width:100%;
+  padding:5px 0;
+  border:0;
+  background:transparent;
+  color:#3d4854;
+  text-align:left;
+  cursor:pointer;
+}
+.company-mega button:hover{color:#2f6bff}
