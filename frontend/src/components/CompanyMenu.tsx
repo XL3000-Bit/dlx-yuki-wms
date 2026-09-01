@@ -1,68 +1,87 @@
 import { SettingOutlined } from "@ant-design/icons";
-import { Button, Dropdown } from "antd";
+import { Button, Drawer, Dropdown, Grid } from "antd";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCurrentUser } from "../hooks/usePermissions";
+import { SETTINGS_GROUPS, type SettingsItem } from "../pages/companyCatalog";
 
-const groups = [
-  {
-    title: "My Company",
-    items: [
-      ["User Management", "/company/user-management"],
-      ["Company Profile", "/company/company-profile"],
-      ["Email Setting", "/company/email-setting"],
-      ["Access Control", "/company/access-control"],
-      ["Trade Party", "/company/trade-party"],
-      ["Area Group", "/company/area-group"],
-      ["Warehouse Point Group", "/company/warehouse-point-group"],
-      ["Zone", "/company/zone"],
-      ["Service Setting", "/company/service-setting"],
-      ["Commission Setting", "/company/commission-setting"],
-      ["Team Setting", "/company/team-setting"],
-      ["Company Code", "/company/company-code"],
-      ["Preference Setting", "/company/preference-setting"],
-    ],
-  },
-  {
-    title: "Entities",
-    items: [
-      ["Ocean Carrier", "/company/ocean-carrier"],
-      ["Terminals", "/company/terminals"],
-      ["Shipping Modes", "/company/shipping-modes"],
-      ["Force Majeure Events", "/company/force-majeure"],
-    ],
-  },
-  {
-    title: "Controller Tools",
-    items: [
-      ["General Ledger Codes", "/company/gl-codes"],
-      ["Billing Codes", "/company/billing-codes"],
-      ["Bank Account", "/company/bank-account"],
-      ["Account Block", "/company/account-block"],
-      ["Income Statement", "/company/income-statement"],
-      ["Balance Sheet", "/company/balance-sheet"],
-    ],
-  },
-];
+function MenuPanel({
+  itemsVisible,
+  onPick,
+}: {
+  itemsVisible: typeof SETTINGS_GROUPS;
+  onPick: (item: SettingsItem) => void;
+}) {
+  return (
+    <div className="company-mega">
+      {itemsVisible.map((group) => (
+        <section key={group.title}>
+          <h4>{group.title}</h4>
+          {group.items.map((item) => (
+            <button
+              key={item.slug}
+              type="button"
+              className={item.status === "soon" ? "is-soon" : "is-live"}
+              onClick={() => onPick(item)}
+            >
+              <span>{item.title}</span>
+              {item.status === "soon" && <em>Coming Soon</em>}
+            </button>
+          ))}
+        </section>
+      ))}
+    </div>
+  );
+}
 
 export function CompanyMenu() {
   const nav = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const compact = !screens.md;
+  const [open, setOpen] = useState(false);
+  const me = useCurrentUser();
+  const role = me.data?.role;
+  const hidden = role === "VIEWER";
+  const isAdmin = role === "ADMIN";
+
+  const itemsVisible = useMemo(
+    () =>
+      SETTINGS_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !item.adminOnly || isAdmin),
+      })),
+    [isAdmin],
+  );
+
+  const pick = (item: SettingsItem) => {
+    setOpen(false);
+    nav(item.path);
+  };
+
+  if (hidden) return null;
+
+  const trigger = (
+    <Button className="topbar-icon" shape="circle" icon={<SettingOutlined />} aria-label="System Settings" />
+  );
+
+  if (compact) {
+    return (
+      <>
+        <span onClick={() => setOpen(true)}>{trigger}</span>
+        <Drawer title="System Settings" open={open} onClose={() => setOpen(false)} width={360}>
+          <MenuPanel itemsVisible={itemsVisible} onPick={pick} />
+        </Drawer>
+      </>
+    );
+  }
+
   return (
     <Dropdown
       trigger={["click"]}
       placement="bottomRight"
-      popupRender={() => (
-        <div className="company-mega">
-          {groups.map((group) => (
-            <section key={group.title}>
-              <h4>{group.title}</h4>
-              {group.items.map(([label, path]) => (
-                <button key={path} type="button" onClick={() => nav(path)}>{label}</button>
-              ))}
-            </section>
-          ))}
-        </div>
-      )}
+      popupRender={() => <MenuPanel itemsVisible={itemsVisible} onPick={pick} />}
     >
-      <Button className="topbar-icon" shape="circle" icon={<SettingOutlined />} aria-label="Company menu" />
+      {trigger}
     </Dropdown>
   );
 }

@@ -14,6 +14,7 @@ const LoadsPage = lazy(() => import("./pages/LoadsPage").then(m => ({ default: m
 const WorkOrdersPage = lazy(() => import("./pages/WorkOrdersPage").then(m => ({ default: m.WorkOrdersPage })));
 const TroubleShootPage = lazy(() => import("./pages/TroubleShootPage").then(m => ({ default: m.TroubleShootPage })));
 const OperationsDashboardPage = lazy(() => import("./pages/OperationsDashboardPage").then(m => ({ default: m.OperationsDashboardPage })));
+const OperationsWallboardPage = lazy(() => import("./pages/OperationsWallboardPage").then(m => ({ default: m.OperationsWallboardPage })));
 const DocumentsPage = lazy(() => import("./pages/DocumentsPage").then(m => ({ default: m.DocumentsPage })));
 const CompanySettingsPage = lazy(() => import("./pages/CompanySettingsPage").then(m => ({ default: m.CompanySettingsPage })));
 import { LoginPage } from "./pages/LoginPage";
@@ -26,6 +27,7 @@ export default function App() {
   if (!token) return <LoginPage />;
   return (
     <Suspense fallback={<div className="page-loading">Loading…</div>}><Routes>
+      <Route path="/wallboard" element={<OperationsWallboardPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<OperationsDashboardPage />} />
@@ -43,6 +45,7 @@ export default function App() {
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/import-history" element={<ImportHistoryPage />} />
         <Route path="/admin/data-upload" element={<AdminDataUploadPage />} />
+        <Route path="/settings/:slug" element={<CompanySettingsPage />} />
         <Route path="/company/:slug" element={<CompanySettingsPage />} />
         <Route path="*" element={<Navigate to="/inbound" replace />} />
       </Route>

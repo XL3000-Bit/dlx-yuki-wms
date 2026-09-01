@@ -1,7 +1,7 @@
 import {
   Alert, Badge, Button, Card, Col, DatePicker, Empty, List, Progress, Row, Select, Space, Statistic, Table, Tag, Typography,
 } from 'antd'
-import { ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, FullscreenOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import dayjs, { Dayjs } from 'dayjs'
 import { useMemo, useState } from 'react'
@@ -60,6 +60,7 @@ export function OperationsDashboardPage() {
       </div>
       <Space>
         {data?.meta.generated_at && <Typography.Text type="secondary" className="dashboard-updated"><ClockCircleOutlined /> Updated {dayjs(data.meta.generated_at).format('MMM D, HH:mm:ss')}</Typography.Text>}
+        <Button icon={<FullscreenOutlined />} onClick={() => navigate('/wallboard')}>Wallboard</Button>
         <Button icon={<ReloadOutlined />} loading={query.isFetching} onClick={() => query.refetch()}>Refresh</Button>
       </Space>
     </div>

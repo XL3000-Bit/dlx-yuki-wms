@@ -11,7 +11,7 @@ from app.models.outbound import OBStatus, OBType, OutboundInventoryAllocation, O
 from app.models.picking import PickingList, PickingListItem, PickingStatus
 from app.models.bol import BOL, BOLItem, BOLStatus
 from app.models.container_tracking import ContainerTracking, TrackingStatus
-from app.models.load import Load, LoadStatus
+from app.models.load import Load, LoadStatus, LoadVerificationTransaction, StageTransaction
 from app.models.work_order import WorkOrder, WorkOrderType, WorkOrderStatus, WorkOrderPriority
 from app.models.work_order_event import WorkOrderEvent
 from app.models.operational_exception import ExceptionSeverity, ExceptionStatus, ExceptionType, OperationalException, OperationalExceptionEvent
@@ -29,4 +29,4 @@ __all__ += ["WorkOrderEvent"]
 __all__ += ["ExceptionSeverity", "ExceptionStatus", "ExceptionType", "OperationalException", "OperationalExceptionEvent"]
 __all__ += ["DocumentEvent", "DocumentStatus", "DocumentType", "OperationalDocument"]
 __all__ += ["NotificationSeverity", "NotificationType", "OperationalNotification"]
-__all__ += ["CompanyProfile"]
+__all__ += ["LoadVerificationTransaction", "StageTransaction", "CompanyProfile"]
