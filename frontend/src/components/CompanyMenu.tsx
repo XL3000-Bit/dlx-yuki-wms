@@ -1,41 +1,50 @@
 import { SettingOutlined } from "@ant-design/icons";
 import { Button, Dropdown } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useCurrentUser } from "../hooks/usePermissions";
 
 const groups = [
   {
     title: "My Company",
     items: [
-      { label: "Import History", path: "/import-history" },
-      { label: "Documents & POD", path: "/documents" },
-      { label: "Data Upload", path: "/admin/data-upload", admin: true },
+      ["User Management", "/company/user-management"],
+      ["Company Profile", "/company/company-profile"],
+      ["Email Setting", "/company/email-setting"],
+      ["Access Control", "/company/access-control"],
+      ["Trade Party", "/company/trade-party"],
+      ["Area Group", "/company/area-group"],
+      ["Warehouse Point Group", "/company/warehouse-point-group"],
+      ["Zone", "/company/zone"],
+      ["Service Setting", "/company/service-setting"],
+      ["Commission Setting", "/company/commission-setting"],
+      ["Team Setting", "/company/team-setting"],
+      ["Company Code", "/company/company-code"],
+      ["Preference Setting", "/company/preference-setting"],
     ],
   },
   {
     title: "Entities",
     items: [
-      { label: "Container Tracking", path: "/container-tracking" },
-      { label: "Inventory", path: "/inventory" },
-      { label: "FBA Shipments", path: "/fba" },
-      { label: "Loads", path: "/loads" },
+      ["Ocean Carrier", "/company/ocean-carrier"],
+      ["Terminals", "/company/terminals"],
+      ["Shipping Modes", "/company/shipping-modes"],
+      ["Force Majeure Events", "/company/force-majeure"],
     ],
   },
   {
     title: "Controller Tools",
     items: [
-      { label: "Operations Dashboard", path: "/dashboard" },
-      { label: "Work Orders", path: "/work-orders" },
-      { label: "Trouble Shoot", path: "/trouble-shoot" },
-      { label: "Outbound Dispatch", path: "/outbound/dispatch" },
+      ["General Ledger Codes", "/company/gl-codes"],
+      ["Billing Codes", "/company/billing-codes"],
+      ["Bank Account", "/company/bank-account"],
+      ["Account Block", "/company/account-block"],
+      ["Income Statement", "/company/income-statement"],
+      ["Balance Sheet", "/company/balance-sheet"],
     ],
   },
 ];
 
 export function CompanyMenu() {
   const nav = useNavigate();
-  const me = useCurrentUser();
-  const isAdmin = me.data?.role === "ADMIN";
   return (
     <Dropdown
       trigger={["click"]}
@@ -45,10 +54,8 @@ export function CompanyMenu() {
           {groups.map((group) => (
             <section key={group.title}>
               <h4>{group.title}</h4>
-              {group.items.filter((item) => !item.admin || isAdmin).map((item) => (
-                <button key={item.path} type="button" onClick={() => nav(item.path)}>
-                  {item.label}
-                </button>
+              {group.items.map(([label, path]) => (
+                <button key={path} type="button" onClick={() => nav(path)}>{label}</button>
               ))}
             </section>
           ))}
