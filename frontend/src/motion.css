@@ -1,0 +1,69 @@
+html{scroll-behavior:smooth}
+.app-layout .ant-layout-sider{
+  transition:width .22s cubic-bezier(.2,.7,.2,1),min-width .22s cubic-bezier(.2,.7,.2,1),flex .22s cubic-bezier(.2,.7,.2,1)!important;
+}
+.brand-sider .ant-menu-item,
+.brand-sider .ant-menu-submenu-title{
+  transition:background-color .16s ease,color .16s ease,padding .22s ease!important;
+}
+.brand-sider .ant-menu-item:hover,
+.brand-sider .ant-menu-submenu-title:hover{
+  background:#21467d!important;
+}
+.brand-sider .ant-menu-item-selected{
+  box-shadow:inset 3px 0 #8cb4ff;
+}
+.brand span,.signout-btn span{
+  transition:opacity .18s ease;
+}
+.is-sider-collapsed .brand span{
+  opacity:0;
+}
+.sider-rail{
+  transition:background .16s ease,transform .16s ease,right .22s ease;
+}
+.sider-rail:active{
+  transform:translateX(1px);
+}
+.topbar .ant-btn,
+.topbar-avatar{
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.topbar .ant-btn:hover,
+.topbar-avatar:hover{
+  transform:translateY(-1px);
+}
+.content{
+  animation:page-in .22s ease;
+}
+@keyframes page-in{
+  from{opacity:.65;transform:translateY(4px)}
+  to{opacity:1;transform:none}
+}
+.ant-btn{
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .12s ease!important;
+}
+.ant-btn:active{
+  transform:translateY(1px);
+}
+.ant-table-tbody>tr>td{
+  transition:background-color .14s ease!important;
+}
+.ant-table-tbody>tr:hover>td{
+  background:#f3f7ff!important;
+}
+.dispatch-command,
+.page .ant-card,
+.admin-upload-body{
+  transition:box-shadow .18s ease,transform .18s ease;
+}
+.page .ant-card:hover{
+  box-shadow:0 8px 20px #16325d12;
+}
+.global-search .ant-input-affix-wrapper{
+  transition:box-shadow .16s ease,background .16s ease;
+}
+.global-search .ant-input-affix-wrapper-focused{
+  background:#fff;
+  box-shadow:0 0 0 3px #2f6bff22;
+}
