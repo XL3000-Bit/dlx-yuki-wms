@@ -25,7 +25,7 @@ import {
   message,
 } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   allocateOutbound,
@@ -54,6 +54,10 @@ import {
   DispatchReadinessTag,
   OutboundDateCell,
 } from "../components/DispatchIndicators";
+import {
+  OutboundSplitLayout,
+  type OutboundSplitLayoutHandle,
+} from "../components/outbound-workbench/OutboundSplitLayout";
 
 const statuses = [
   "New",
@@ -90,6 +94,7 @@ export function OutboundDispatchWorkbenchPage() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [detailPanelsVisible, setDetailPanelsVisible] = useState(true);
+  const splitLayoutRef = useRef<OutboundSplitLayoutHandle>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const params = useMemo(
@@ -584,74 +589,85 @@ export function OutboundDispatchWorkbenchPage() {
           </div>
         </div>
 
-        <section className="dispatch-filter-card">
-          <div className="dispatch-filter-grid">
-            <label><span>Search</span><Input allowClear value={sp.get("q") || ""} placeholder="OB / BOL / Container / FBA / ST / PO / FC" onChange={(event) => patch({ q: event.target.value, page: 1 })} /></label>
-            <label><span>Status</span><Select allowClear value={params.status} placeholder="All statuses" onChange={(value) => patch({ status: value, page: 1 })} options={statuses.map((status, index) => ({ value: index, label: status }))} /></label>
-            <label><span>OB Type</span><Select allowClear value={params.ob_type} placeholder="All types" onChange={(value) => patch({ ob_type: value, page: 1 })} options={["STANDARD", "FBA", "TRANSFER", "PICKUP", "OTHER"].map((value) => ({ value, label: value }))} /></label>
-            <label><span>Warehouse</span><Select allowClear value={params.warehouse_id} placeholder="All warehouses" onChange={(value) => patch({ warehouse: value, page: 1 })} options={(warehouses.data || []).map((warehouse: any) => ({ value: warehouse.id, label: warehouse.warehouse_code }))} /></label>
-            <label><span>Carrier</span><Select showSearch optionFilterProp="label" allowClear value={params.carrier_id} placeholder="All carriers" onChange={(value) => patch({ carrier_id: value, page: 1 })} options={(carriers.data || []).map((carrier: any) => ({ value: carrier.id, label: carrier.carrier_name }))} /></label>
-            <div className="dispatch-filter-actions">
-              <Button icon={<ReloadOutlined />} onClick={() => refresh()}>Refresh</Button>
-              <Button onClick={() => setSp(new URLSearchParams())}>Reset</Button>
-              <Button icon={detailPanelsVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />} onClick={() => setDetailPanelsVisible((value) => !value)}>{detailPanelsVisible ? "Hide BOL Lists" : "Show BOL Lists"}</Button>
-            </div>
-          </div>
-        </section>
+        <OutboundSplitLayout
+          ref={splitLayoutRef}
+          onCollapsedChange={(collapsed) => setDetailPanelsVisible(!collapsed)}
+          left={(
+            <div className="dispatch-left-workspace">
+              <section className="dispatch-filter-card">
+                <div className="dispatch-filter-grid">
+                  <label><span>Search</span><Input allowClear value={sp.get("q") || ""} placeholder="OB / BOL / Container / FBA / ST / PO / FC" onChange={(event) => patch({ q: event.target.value, page: 1 })} /></label>
+                  <label><span>Status</span><Select allowClear value={params.status} placeholder="All statuses" onChange={(value) => patch({ status: value, page: 1 })} options={statuses.map((status, index) => ({ value: index, label: status }))} /></label>
+                  <label><span>OB Type</span><Select allowClear value={params.ob_type} placeholder="All types" onChange={(value) => patch({ ob_type: value, page: 1 })} options={["STANDARD", "FBA", "TRANSFER", "PICKUP", "OTHER"].map((value) => ({ value, label: value }))} /></label>
+                  <label><span>Warehouse</span><Select allowClear value={params.warehouse_id} placeholder="All warehouses" onChange={(value) => patch({ warehouse: value, page: 1 })} options={(warehouses.data || []).map((warehouse: any) => ({ value: warehouse.id, label: warehouse.warehouse_code }))} /></label>
+                  <label><span>Carrier</span><Select showSearch optionFilterProp="label" allowClear value={params.carrier_id} placeholder="All carriers" onChange={(value) => patch({ carrier_id: value, page: 1 })} options={(carriers.data || []).map((carrier: any) => ({ value: carrier.id, label: carrier.carrier_name }))} /></label>
+                  <div className="dispatch-filter-actions">
+                    <Button icon={<ReloadOutlined />} onClick={() => refresh()}>Refresh</Button>
+                    <Button onClick={() => setSp(new URLSearchParams())}>Reset</Button>
+                    <Button icon={detailPanelsVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />} onClick={() => splitLayoutRef.current?.toggleRight()}>{detailPanelsVisible ? "Hide BOL Lists" : "Show BOL Lists"}</Button>
+                  </div>
+                </div>
+              </section>
 
-        <section className="dispatch-orders dispatch-section-card">
-          <div className="panel-title">
-            <div><h3>Outbound Dispatch List</h3><span className="panel-subtitle">Select an OB number to load its allocated and remaining shipment pools</span></div>
-            <Space size={6} wrap>
-              <Button icon={<ReloadOutlined />} onClick={() => list.refetch()}>Refresh</Button>
-              <Button onClick={() => exportOutbounds(params)}>Export Filter</Button>
-              <Button icon={<DownloadOutlined />} disabled={!selectedIds.length} onClick={() => exportOutboundSelected(selectedIds)}>Export Selected</Button>
-              <Button icon={<UploadOutlined />} onClick={() => setImportOpen(true)}>Import Excel</Button>
-            </Space>
-          </div>
-          <div className="dispatch-table-host dispatch-orders-table-host">
-            <Table className="dispatch-dense-table" size="small" sticky scroll={{ x: 2280, y: 310 }} rowKey="id" loading={list.isLoading} dataSource={rows} columns={cols}
-              locale={{ emptyText: list.isError ? "Unable to load outbound orders" : "No outbound orders match the current filters" }}
-              rowClassName={(row: any) => row.id === selectedId ? "dispatch-row-selected" : ""}
-              onRow={(row: any) => ({ onClick: () => patch({ selected_ob: row.id }) })}
-              rowSelection={{ selectedRowKeys: selectedIds, onChange: (ids: any) => setSelectedIds(ids) }}
-              pagination={{ current: params.page, pageSize: params.per_page, total: list.data?.meta?.total, showSizeChanger: true, pageSizeOptions: [20, 50, 100], showTotal: (total) => `${total} OB` }}
-              onChange={(pagination: any, _: any, sorter: any) => patch({ page: pagination.current, per_page: pagination.pageSize, ...(sorter?.field ? { sort_by: sorter.field, sort_order: sorter.order === "ascend" ? "asc" : "desc" } : {}) })}
-            />
-          </div>
-          <div className="dispatch-summary">Total {summary.ob_count || 0} OB <span>/</span> {n(summary.total_pallet_qty)} PLT <span>/</span> {n(summary.allocated_carton_qty)} CTN <span>/</span> {n(summary.allocated_weight_lbs)} LB <span>/</span> {n(summary.allocated_cbm)} CBM{selectedIds.length > 0 && <> <span>/</span> Selected {selectedIds.length} OB / {n(selectedPallets)} PLT</>}</div>
-          {selected && dispatchReadiness.data?.status === "NOT_READY" && (
-            <Alert
-              type="warning"
-              showIcon
-              message="Dispatch blocked"
-              description={(
-                <Space direction="vertical" size={2}>
-                  {dispatchReadiness.data.checks.filter((check) => !check.passed).map((check) => (
-                    check.route ? (
-                      <Button key={check.key} type="link" size="small" onClick={() => navigate(check.route!)}>{check.reason}</Button>
-                    ) : (
-                      <Typography.Text key={check.key}>{check.reason}</Typography.Text>
-                    )
-                  ))}
-                </Space>
-              )}
-            />
+              <section className="dispatch-orders dispatch-section-card">
+                <div className="panel-title">
+                  <div><h3>Outbound Dispatch List</h3><span className="panel-subtitle">Select an OB number to load its allocated and remaining shipment pools</span></div>
+                  <Space size={6} wrap>
+                    <Button icon={<ReloadOutlined />} onClick={() => list.refetch()}>Refresh</Button>
+                    <Button onClick={() => exportOutbounds(params)}>Export Filter</Button>
+                    <Button icon={<DownloadOutlined />} disabled={!selectedIds.length} onClick={() => exportOutboundSelected(selectedIds)}>Export Selected</Button>
+                    <Button icon={<UploadOutlined />} onClick={() => setImportOpen(true)}>Import Excel</Button>
+                  </Space>
+                </div>
+                <div className="dispatch-table-host dispatch-orders-table-host">
+                  <Table className="dispatch-dense-table" size="small" sticky scroll={{ x: 2280, y: 310 }} rowKey="id" loading={list.isLoading} dataSource={rows} columns={cols}
+                    locale={{ emptyText: list.isError ? "Unable to load outbound orders" : "No outbound orders match the current filters" }}
+                    rowClassName={(row: any) => row.id === selectedId ? "dispatch-row-selected" : ""}
+                    onRow={(row: any) => ({ onClick: () => patch({ selected_ob: row.id }) })}
+                    rowSelection={{ selectedRowKeys: selectedIds, onChange: (ids: any) => setSelectedIds(ids) }}
+                    pagination={{ current: params.page, pageSize: params.per_page, total: list.data?.meta?.total, showSizeChanger: true, pageSizeOptions: [20, 50, 100], showTotal: (total) => `${total} OB` }}
+                    onChange={(pagination: any, _: any, sorter: any) => patch({ page: pagination.current, per_page: pagination.pageSize, ...(sorter?.field ? { sort_by: sorter.field, sort_order: sorter.order === "ascend" ? "asc" : "desc" } : {}) })}
+                  />
+                </div>
+                <div className="dispatch-summary">Total {summary.ob_count || 0} OB <span>/</span> {n(summary.total_pallet_qty)} PLT <span>/</span> {n(summary.allocated_carton_qty)} CTN <span>/</span> {n(summary.allocated_weight_lbs)} LB <span>/</span> {n(summary.allocated_cbm)} CBM{selectedIds.length > 0 && <> <span>/</span> Selected {selectedIds.length} OB / {n(selectedPallets)} PLT</>}</div>
+              </section>
+            </div>
           )}
-          <div className="dispatch-actions">
-            <div className="dispatch-lifecycle-buttons">
-              <Button disabled={!selected?.allowed_actions?.confirm} onClick={() => action.mutate({ name: "confirm", id: selected.id })}>Confirm</Button>
-              <Button disabled={!selected?.allowed_actions?.dispatch || dispatchReadiness.data?.status !== "READY"} onClick={() => action.mutate({ name: "dispatch", id: selected.id })}>Dispatch</Button>
-              <Button disabled={!selected?.allowed_actions?.complete} onClick={() => action.mutate({ name: "complete", id: selected.id })}>Complete</Button>
-              <Button danger disabled={!selected?.allowed_actions?.cancel} onClick={() => action.mutate({ name: "cancel", id: selected.id })}>Cancel</Button>
-              <Button disabled={!selected?.allowed_actions?.exception} onClick={() => setExceptionOpen(true)}>Exception</Button>
-              {selected?.status_name === "Exception" && <Button onClick={() => action.mutate({ name: "resolve", id: selected.id })}>Resolve Exception</Button>}
+          right={(
+            <div className="dispatch-right">
+              {selected && dispatchReadiness.data?.status === "NOT_READY" && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="Dispatch blocked"
+                  description={(
+                    <Space direction="vertical" size={2}>
+                      {dispatchReadiness.data.checks.filter((check) => !check.passed).map((check) => (
+                        check.route ? (
+                          <Button key={check.key} type="link" size="small" onClick={() => navigate(check.route!)}>{check.reason}</Button>
+                        ) : (
+                          <Typography.Text key={check.key}>{check.reason}</Typography.Text>
+                        )
+                      ))}
+                    </Space>
+                  )}
+                />
+              )}
+              <div className="dispatch-actions">
+                <div className="dispatch-lifecycle-buttons">
+                  <Button disabled={!selected?.allowed_actions?.confirm} onClick={() => action.mutate({ name: "confirm", id: selected.id })}>Confirm</Button>
+                  <Button disabled={!selected?.allowed_actions?.dispatch || dispatchReadiness.data?.status !== "READY"} onClick={() => action.mutate({ name: "dispatch", id: selected.id })}>Dispatch</Button>
+                  <Button disabled={!selected?.allowed_actions?.complete} onClick={() => action.mutate({ name: "complete", id: selected.id })}>Complete</Button>
+                  <Button danger disabled={!selected?.allowed_actions?.cancel} onClick={() => action.mutate({ name: "cancel", id: selected.id })}>Cancel</Button>
+                  <Button disabled={!selected?.allowed_actions?.exception} onClick={() => setExceptionOpen(true)}>Exception</Button>
+                  {selected?.status_name === "Exception" && <Button onClick={() => action.mutate({ name: "resolve", id: selected.id })}>Resolve Exception</Button>}
+                </div>
+                <span className="dispatch-stage">{selected ? `Selected ${selected.ob_no} · ${selected.status_name} · ${n(selected.allocated_pallet_qty)} PLT` : "Select an OB to enable lifecycle actions"}</span>
+              </div>
+              {selected ? <div className="dispatch-detail-stack">{upperPanel}{lowerPanel}</div> : <div className="dispatch-empty"><div><div className="empty-icon">&#9678;</div><h3>Select an outbound order</h3><p>Its allocated BOL/shipment list and remaining inventory will appear here.</p></div></div>}
             </div>
-            <span className="dispatch-stage">{selected ? `Selected ${selected.ob_no} · ${selected.status_name} · ${n(selected.allocated_pallet_qty)} PLT` : "Select an OB to enable lifecycle actions"}</span>
-          </div>
-        </section>
-
-        {detailPanelsVisible && (selected ? <div className="dispatch-detail-stack">{upperPanel}{lowerPanel}</div> : <div className="dispatch-empty"><div><div className="empty-icon">&#9678;</div><h3>Select an outbound order</h3><p>Its allocated BOL/shipment list and remaining inventory will appear here.</p></div></div>)}
+          )}
+        />
       </div>
       <ScheduleDrawer
         open={scheduleOpen}
