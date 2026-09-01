@@ -1,5 +1,12 @@
 # Changelog
 
+## West Coast 4.0 converter program (2026-09-01)
+
+- Adds offline program `tools/west_coast_import/convert_west_coast.py` and double-click launcher `CONVERT_WEST_COAST.bat`.
+- Inspects the source workbook and exports pilot or named-container CSVs plus `reconcile.json`.
+- Does not write to PostgreSQL or call the WMS API. Live system remains `START_DLX_WMS.bat`.
+- Guide: `docs/WEST_COAST_IMPORT_TOOL.md`.
+
 ## West Coast 4.0 import console (2026-09-01)
 
 - Adds operator guide `docs/WEST_COAST_4_0_IMPORT_CONSOLE.md` for the 297 MB 美西仓 4.0 workbook.
