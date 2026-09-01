@@ -4,6 +4,7 @@ import { AppLayout } from "./layouts/AppLayout";
 const InboundPage = lazy(() => import("./pages/InboundPage").then(m => ({ default: m.InboundPage })));
 const InventoryPage = lazy(() => import("./pages/InventoryPage").then(m => ({ default: m.InventoryPage })));
 const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage").then(m => ({ default: m.ImportHistoryPage })));
+const AdminDataUploadPage = lazy(() => import("./pages/AdminDataUploadPage").then(m => ({ default: m.AdminDataUploadPage })));
 const FBAPage = lazy(() => import("./pages/FBAPage").then(m => ({ default: m.FBAPage })));
 const OutboundDispatchPage = lazy(() => import("./pages/OutboundDispatchWorkbenchPage").then(m => ({ default: m.OutboundDispatchWorkbenchPage })));
 const ContainerTrackingPage = lazy(() => import("./pages/ContainerTrackingPage").then(m => ({ default: m.ContainerTrackingPage })));
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/trouble-shoot" element={<TroubleShootPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/import-history" element={<ImportHistoryPage />} />
+        <Route path="/admin/data-upload" element={<AdminDataUploadPage />} />
         <Route path="*" element={<Navigate to="/inbound" replace />} />
       </Route>
     </Routes></Suspense>
