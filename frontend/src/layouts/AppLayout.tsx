@@ -23,6 +23,7 @@ import { GlobalSearch } from "../components/GlobalSearch";
 import { NotificationCenter } from "../components/NotificationCenter";
 
 const { Header, Sider, Content } = Layout;
+const SIDER_KEY = "dlx_wms:sider_collapsed";
 
 function openKeysFor(path: string) {
   if (path.startsWith("/inbound") || path.startsWith("/container-tracking")) return ["inbound"];
@@ -34,18 +35,27 @@ function openKeysFor(path: string) {
 }
 
 export function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDER_KEY) === "1");
   const nav = useNavigate();
   const loc = useLocation();
   const logout = useAuthStore((s) => s.logout);
   const me = useCurrentUser();
   const isAdmin = me.data?.role === "ADMIN";
   const selected = loc.pathname;
-  const defaultOpen = useMemo(() => openKeysFor(loc.pathname), [loc.pathname]);
+  const initialOpen = useMemo(() => openKeysFor(loc.pathname), [loc.pathname]);
+  const [openKeys, setOpenKeys] = useState<string[]>(initialOpen);
+
+  const toggleSider = () => {
+    setCollapsed((value) => {
+      const next = !value;
+      localStorage.setItem(SIDER_KEY, next ? "1" : "0");
+      return next;
+    });
+  };
 
   return (
     <Layout className={`app-layout ${collapsed ? "is-sider-collapsed" : ""}`}>
-      <Sider width={220} collapsedWidth={64} collapsed={collapsed} className="brand-sider">
+      <Sider width={220} collapsedWidth={64} collapsed={collapsed} collapsible trigger={null} className="brand-sider">
         <div className="brand">
           <div className="brand-mark">Y</div>
           {!collapsed && (
@@ -58,8 +68,10 @@ export function AppLayout() {
         <Menu
           theme="dark"
           mode="inline"
+          inlineIndent={16}
           selectedKeys={[selected]}
-          defaultOpenKeys={defaultOpen}
+          openKeys={collapsed ? [] : openKeys}
+          onOpenChange={setOpenKeys}
           onClick={(e) => { if (!e.key.startsWith("g-")) nav(e.key); }}
           items={[
             { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
@@ -109,13 +121,7 @@ export function AppLayout() {
             {!collapsed && "Sign out"}
           </Button>
         </div>
-        <button
-          type="button"
-          className="sider-rail"
-          aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-          title={collapsed ? "Expand menu" : "Collapse menu"}
-          onClick={() => setCollapsed((value) => !value)}
-        >
+        <button type="button" className="sider-rail" aria-label={collapsed ? "Expand menu" : "Collapse menu"} title={collapsed ? "Expand menu" : "Collapse menu"} onClick={toggleSider}>
           {collapsed ? <RightOutlined /> : <LeftOutlined />}
         </button>
       </Sider>
