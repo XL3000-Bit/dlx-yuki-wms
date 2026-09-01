@@ -13,24 +13,27 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "company_profiles",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("company_name", sa.String(200), nullable=False, server_default="DLX"),
-        sa.Column("brand_name", sa.String(200), nullable=False, server_default="Yuki WMS"),
-        sa.Column("legal_name", sa.String(200), nullable=False, server_default="DLX"),
-        sa.Column("email", sa.String(255), nullable=False, server_default=""),
-        sa.Column("phone", sa.String(50), nullable=False, server_default=""),
-        sa.Column("address", sa.Text(), nullable=False, server_default=""),
-        sa.Column("city", sa.String(100), nullable=False, server_default=""),
-        sa.Column("state", sa.String(50), nullable=False, server_default="CA"),
-        sa.Column("zip_code", sa.String(20), nullable=False, server_default=""),
-        sa.Column("country", sa.String(2), nullable=False, server_default="US"),
-        sa.Column("timezone", sa.String(64), nullable=False, server_default="America/Los_Angeles"),
-        sa.Column("default_warehouse_id", sa.Integer(), sa.ForeignKey("warehouses.id", ondelete="SET NULL")),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-    )
+    bind = op.get_bind()
+    names = sa.inspect(bind).get_table_names()
+    if "company_profiles" not in names:
+        op.create_table(
+            "company_profiles",
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column("company_name", sa.String(200), nullable=False, server_default="DLX"),
+            sa.Column("brand_name", sa.String(200), nullable=False, server_default="Yuki WMS"),
+            sa.Column("legal_name", sa.String(200), nullable=False, server_default="DLX"),
+            sa.Column("email", sa.String(255), nullable=False, server_default=""),
+            sa.Column("phone", sa.String(50), nullable=False, server_default=""),
+            sa.Column("address", sa.Text(), nullable=False, server_default=""),
+            sa.Column("city", sa.String(100), nullable=False, server_default=""),
+            sa.Column("state", sa.String(50), nullable=False, server_default="CA"),
+            sa.Column("zip_code", sa.String(20), nullable=False, server_default=""),
+            sa.Column("country", sa.String(2), nullable=False, server_default="US"),
+            sa.Column("timezone", sa.String(64), nullable=False, server_default="America/Los_Angeles"),
+            sa.Column("default_warehouse_id", sa.Integer(), sa.ForeignKey("warehouses.id", ondelete="SET NULL")),
+            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+            sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        )
     op.execute(
         """
         INSERT INTO company_profiles (
