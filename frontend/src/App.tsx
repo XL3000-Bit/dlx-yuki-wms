@@ -43,6 +43,7 @@ export default function App() {
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/import-history" element={<ImportHistoryPage />} />
         <Route path="/admin/data-upload" element={<AdminDataUploadPage />} />
+        <Route path="/settings/:slug" element={<CompanySettingsPage />} />
         <Route path="/company/:slug" element={<CompanySettingsPage />} />
         <Route path="*" element={<Navigate to="/inbound" replace />} />
       </Route>
