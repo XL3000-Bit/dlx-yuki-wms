@@ -15,6 +15,7 @@ const WorkOrdersPage = lazy(() => import("./pages/WorkOrdersPage").then(m => ({ 
 const TroubleShootPage = lazy(() => import("./pages/TroubleShootPage").then(m => ({ default: m.TroubleShootPage })));
 const OperationsDashboardPage = lazy(() => import("./pages/OperationsDashboardPage").then(m => ({ default: m.OperationsDashboardPage })));
 const DocumentsPage = lazy(() => import("./pages/DocumentsPage").then(m => ({ default: m.DocumentsPage })));
+const CompanySettingsPage = lazy(() => import("./pages/CompanySettingsPage").then(m => ({ default: m.CompanySettingsPage })));
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
 import "./inventory.css";
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/import-history" element={<ImportHistoryPage />} />
         <Route path="/admin/data-upload" element={<AdminDataUploadPage />} />
+        <Route path="/company/:slug" element={<CompanySettingsPage />} />
         <Route path="*" element={<Navigate to="/inbound" replace />} />
       </Route>
     </Routes></Suspense>
