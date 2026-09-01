@@ -1,8 +1,11 @@
 import { api } from './client'
 import type { OutboundAllocation, OutboundParams, OutboundRecord, OutboundResponse } from '../types/outbound'
+export type DispatchReadinessCheck = { key: string; code?: string | null; label: string; passed: boolean; reason: string | null; route: string | null }
+export type DispatchReadiness = { status: 'READY' | 'NOT_READY'; checks: DispatchReadinessCheck[]; blocking_codes: string[]; blocking_reasons: string[]; error_code?: string | null }
 export const getOutbounds = async (params: OutboundParams) => (await api.get<OutboundResponse>('/outbounds', { params })).data
 export const getOutboundWorkbench = async (params: Record<string, unknown>) => (await api.get('/outbounds/workbench', { params })).data
 export const getOutboundWorkbenchDetail = async (id: number) => (await api.get(`/outbounds/${id}/workbench-detail`)).data
+export const getOutboundDispatchReadiness = async (id: number) => (await api.get<DispatchReadiness>(`/outbounds/${id}/dispatch-readiness`)).data
 export const createOutbound = async (data: Record<string, unknown>) => (await api.post<OutboundRecord>('/outbounds', data)).data
 export const updateOutbound = async (id: number, data: Record<string, unknown>) => (await api.put<OutboundRecord>(`/outbounds/${id}`, data)).data
 export const updateOutboundSchedule = async (id: number, data: Record<string, unknown>) => (await api.patch<OutboundRecord>(`/outbounds/${id}/schedule`, data)).data

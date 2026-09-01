@@ -29,6 +29,9 @@ def test_crud_filters_events_resolution_and_global_search(client, db, seed):
     data = created.json()
     assert re.fullmatch(r"EX-\d{8}-\d{4}", data["exception_no"])
     assert data["status"] == "OPEN" and data["related"]["outbound"]["label"] == outbound.ob_no
+    assert data["created_at"] is not None
+    assert data["updated_at"] is not None
+    assert data["reported_at"] is not None
     listed = client.get("/api/v1/operational-exceptions", params={"status":"OPEN", "severity":"HIGH", "q":"Dock mismatch"}).json()
     assert listed["meta"]["total"] == 1 and listed["counts"]["OPEN"] == 1
     exception_id = data["id"]
@@ -40,6 +43,7 @@ def test_crud_filters_events_resolution_and_global_search(client, db, seed):
     events = client.get(f"/api/v1/operational-exceptions/{exception_id}/events", params={"order":"asc"}).json()
     assert events["total"] >= 6
     assert events["data"][0]["event_type"] == "EXCEPTION_CREATED"
+    assert all(event["created_at"] is not None for event in events["data"])
     found = client.get("/api/v1/search", params={"q":data["exception_no"]}).json()
     assert any(group["type"] == "EXCEPTION" for group in found["groups"])
 

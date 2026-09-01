@@ -1,53 +1,44 @@
 # PHASE 10 Test Report
 
-Run date: 2026-08-30. Overall result: **NOT READY FOR RC**.
+Run date: 2026-08-30. Overall result: **FORMAL RELEASE CANDIDATE**.
 
 ## Backend regression
 
-Command: `python -m pytest -ra` with an OS temporary `--basetemp`.
+- `python -m compileall -q app tests alembic`: PASS.
+- Focused Operational Exception and Notification suites: **8 passed**, 0 failed, 1 cache-permission warning.
+- Full `pytest -ra`: **119 passed**, 0 failed, 0 skipped, 1 cache-permission warning in 15.62 seconds.
 
-- Total: 119
-- Passed: 119
-- Failed: 0
-- Skipped: 0
-- Warnings: 1 (`PytestCacheWarning`, existing `.pytest_cache` permission denied)
-- Duration: 14.08 seconds
-- Result: PASS
-
-## Security regression
-
-Focused suites: scoped RBAC, Global Search, Documents, Notifications, Dashboard, Work Orders/events, and Operational Exceptions.
-
-- Total/passed: 40/40
-- Result: PASS
-- Coverage intent: roles, warehouse isolation, list/detail/count/event/search/download/lookup/mutation boundaries.
+The warning is `PytestCacheWarning` for an existing Windows `.pytest_cache` permission condition. It does not affect test execution or application behavior.
 
 ## Migration and PostgreSQL
 
-- Single Alembic head: PASS (`20260830_0020`).
-- Empty PostgreSQL schema upgrade: corrected `0019` PASS; FAIL at `0020`, duplicate `notification_type` creation.
-- Isolated PostgreSQL `20260828_0012 -> head`: `0012` PASS; FAIL at `0020`. The development schema was not modified.
-- `0019 -> downgrade 0018 -> upgrade 0019`: PASS; downgrade leaves zero dependent tables and zero operational-document enum types.
-- Empty PostgreSQL database: NOT RUN; application role lacks `CREATEDB`.
-- PostgreSQL status: **NOT VERIFIED**.
+- Single Alembic head: PASS (`20260830_0021`).
+- Empty isolated PostgreSQL schema upgrade to head: PASS.
+- Empty isolated schema `alembic check`: PASS, no new operations.
+- Isolated PostgreSQL `20260828_0012 -> head`: PASS.
+- `0021 -> downgrade 0020 -> upgrade 0021`: PASS.
+- Existing local PostgreSQL schema repaired from a false `0020` stamp and upgraded through the standard chain: PASS.
+- Local `alembic current`: `20260830_0021 (head)`.
+- Local `alembic check`: PASS, no drift.
+- Operational Exception insertion through the application service: PASS, including non-null timestamps and creation event.
 
-## Frontend build
+## Frontend
 
-Command: `npm run build`.
+Command: `npm run build` (`tsc -b && vite build`).
 
-- Result: PASS
-- Modules transformed: 5,015
-- Main application JS: 248.31 kB / 81.96 kB gzip
-- Ant Design vendor JS: 1,168.79 kB / 364.42 kB gzip
-- Warning: one minified chunk exceeds 500 kB
+- TypeScript: PASS.
+- Production build: PASS.
+- Modules transformed: 5,015.
+- Build duration: 6.34 seconds.
+- Known warning: Ant Design vendor chunk is 1,168.79 kB (364.42 kB gzip), above Vite's 500 kB advisory threshold.
+- There is no frontend lint or unit-test script in `package.json`.
 
-## Repository and smoke status
+## Manual smoke
 
-- `git diff --check`: exit 0; no whitespace errors. It also reported permission-denied reads for ten user-owned, tracked-but-deleted files under `backend/.pytest-tmp` and CRLF normalization warnings.
-- Manual smoke checklist: NOT RUN; blocked by migration provisioning failure.
-- No new migration, version change, or git tag was created.
+Dashboard, Global Search/deep link, Outbound Dispatch query-state restoration, Loads empty state, completed Work Order history, Trouble Shoot exception validation/create/investigate/resolve/history, and Notifications empty/refresh behavior passed in the browser.
 
-## Acceptance blockers
+The new exception `EX-20260830-0001` demonstrated that the PostgreSQL timestamp blocker is fixed in the actual UI/service path. Non-destructive role, Load lifecycle, document lifecycle, and notification mutation cases remain covered by automated tests rather than new manual fixtures.
 
-1. Correct the equivalent PostgreSQL enum lifecycle defect in unreleased migration `0020`, with explicit authorization, then rerun fresh-schema and `0012 -> head` validation.
-2. Complete and sign off the manual smoke checklist after migrations pass.
+## RC decision
+
+No Critical or High stabilization blocker remains. PostgreSQL migrations, drift detection, backend regression, frontend compilation/build, and the documented manual smoke all pass. Phase 10 meets the technical RC gate.

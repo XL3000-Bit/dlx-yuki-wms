@@ -6,6 +6,8 @@ from app.models import Load, LoadStatus, OutboundOrder, User
 from app.schemas.load import LoadCreate, LoadRead, LoadStatusUpdate, LoadUpdate
 from app.services.load import add_outbounds, create_load, get_load, read_load, remove_outbound, transition_load, update_load, load_query
 from app.services.access_policy import customer_clause, warehouse_clause, assert_warehouse_access
+from app.schemas.staging import StageRequest, VerificationCompleteRequest, VerificationScanRequest, VerificationStartRequest
+from app.services.staging import execution_summary, stage as stage_load, verification_complete, verification_scan, verification_start
 
 router = APIRouter(prefix="/loads", tags=["Loads"])
 Writer = require_outbound_write
@@ -57,3 +59,23 @@ def detach(load_id: int, outbound_id: int, db: DbSession, user: User = Depends(r
 @router.post("/{load_id}/status", response_model=LoadRead)
 def status(load_id: int, payload: LoadStatusUpdate, db: DbSession, user: User = Depends(require_outbound_write)):
     return read_load(transition_load(db, _scoped_load(db,user,load_id), payload.status))
+
+@router.post("/{load_id}/stage")
+def stage(load_id: int, payload: StageRequest, db: DbSession, user: User = Depends(require_outbound_write)):
+    return stage_load(db, _scoped_load(db,user,load_id), payload, user.id)
+
+@router.post("/{load_id}/verify/start")
+def verify_start(load_id: int, payload: VerificationStartRequest, db: DbSession, user: User = Depends(require_outbound_write)):
+    return verification_start(db, _scoped_load(db,user,load_id), payload, user.id)
+
+@router.post("/{load_id}/verify/scan")
+def verify_scan(load_id: int, payload: VerificationScanRequest, db: DbSession, user: User = Depends(require_outbound_write)):
+    return verification_scan(db, _scoped_load(db,user,load_id), payload, user.id)
+
+@router.post("/{load_id}/verify/complete")
+def verify_complete(load_id: int, payload: VerificationCompleteRequest, db: DbSession, user: User = Depends(require_outbound_write)):
+    return verification_complete(db, _scoped_load(db,user,load_id), payload, user.id)
+
+@router.get("/{load_id}/execution-summary")
+def get_execution_summary(load_id: int, db: DbSession, user: CurrentUser):
+    return execution_summary(db, _scoped_load(db,user,load_id))

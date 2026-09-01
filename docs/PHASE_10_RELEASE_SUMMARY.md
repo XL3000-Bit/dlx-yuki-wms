@@ -1,6 +1,6 @@
 # PHASE 10 Release Candidate Summary
 
-Status: **NOT READY FOR RC** (2026-08-30).
+Status: **FORMAL RELEASE CANDIDATE** (2026-08-30).
 
 ## Architecture and features
 
@@ -8,11 +8,17 @@ Phase 10 extends the existing FastAPI/SQLAlchemy/Alembic backend and React/TypeS
 
 APIs remain under `/api/v1`; the production frontend uses the same-origin base and does not depend on the Vite development proxy. Route pages use `React.lazy`. Search covers Container, Outbound, FBA, Picking, BOL, Load, Work Order, Exception, and Document with bounded result collection, ranking/deduplication, scoped queries, and deep links.
 
+## Phase 10.9 stabilization closure
+
+The PostgreSQL Operational Exception blocker was fixed by aligning `created_at` and `updated_at` with the existing timestamp mixin through migration `20260830_0021`. PostgreSQL now supplies non-null timestamp defaults when the service creates an exception.
+
+The operational-document and notification migrations now have one explicit lifecycle per PostgreSQL enum. Fresh install, `0012 -> head`, latest-revision downgrade/re-upgrade, and `alembic check` all pass. The local schema's false revision stamp was safely reconciled and upgraded through the normal migration chain without deleting outbound orders.
+
 ## Security and consistency audit
 
 The automated matrix covers Admin/Manager/Operator/Viewer and cross-warehouse access across scoped lists/details, search, dashboard counts, events, documents/downloads, notifications, lookups, and mutations. Forty focused tests passed. Static endpoint review found no update/delete route for Work Order, Exception, or Document events. Event creation is transaction-coupled to valid operations.
 
-API paths, enum/datetime serialization, pagination, and error policies were reviewed. No low-risk API rewrite was justified. Cross-module query-state/deep-link code was reviewed, but browser refresh behavior still requires the manual checklist.
+API paths, enum/datetime serialization, pagination, and error policies were reviewed. No low-risk API rewrite was justified. Browser smoke confirmed the Global Search -> Outbound deep link and selected-order query state survive refresh.
 
 ## Performance, indexes, and bundle
 
@@ -28,18 +34,18 @@ Notifications implement recipient scope, read/mark-all, refresh, inactive handli
 
 ## Tests and release configuration
 
-Backend: 119 passed with one pytest cache permission warning; the focused security matrix passed 40/40. Frontend: production build passed with the Ant Design chunk warning. Configuration uses debug off by default, explicit CORS, JWT settings, PostgreSQL URL, business timezone, backup path, and document settings; no secret was added. Critical paths were checked for accidental logging of passwords, tokens, cookies, authorization headers, or file contents; no new logging framework was introduced.
+Backend: 119 passed with one pytest cache permission warning; the focused Operational Exception/Notification retest passed 8/8. PostgreSQL fresh/upgrade/drift/lifecycle smoke passed. Frontend TypeScript and production build passed with the Ant Design chunk warning. Configuration uses debug off by default, explicit CORS, JWT settings, PostgreSQL URL, business timezone, backup path, and document settings; no secret was added. Critical paths were checked for accidental logging of passwords, tokens, cookies, authorization headers, or file contents; no new logging framework was introduced.
+
+Manual browser smoke passed for Dashboard, Global Search/deep links, Outbound Dispatch refresh persistence, Loads, Work Order history, Trouble Shoot validation and lifecycle, and Notifications. Role-matrix, document-lifecycle, and destructive Load scenarios were not recreated manually and remain accepted through automated coverage.
 
 ## Known limitations
 
-- Resolved in scope: migration `0019` now has one PostgreSQL enum lifecycle; fresh execution and up/down/up validation pass without orphan enums.
-- Blocking: migration `0020` has the same duplicate enum lifecycle for `notification_type`; fresh-schema and `0012 -> head` validation cannot reach head.
 - The local role cannot create a separate empty database; safe isolated PostgreSQL schemas were used and cleaned successfully.
-- Manual browser smoke is pending.
 - Document storage is local, has no malware scan, and needs operational backup/retention policy.
 - Notifications have no background scheduler; customer scope remains limited to implemented mappings.
 - Container/POD-specific alert and SLA rules are not implemented.
 - Ant Design vendor chunk remains above 500 kB.
-- The working tree contains user-owned deleted tracked pytest XLSX fixtures; they were not restored or removed.
+- The browser reports known Ant Design compatibility/context warnings under React 19; tested flows remain functional.
+- The project has no frontend unit-test or lint script; TypeScript and the production build are the available frontend gates.
 
 See `PHASE_10_MIGRATION_AUDIT.md`, `PHASE_10_TEST_REPORT.md`, and `PHASE_10_MANUAL_SMOKE_CHECKLIST.md` for evidence and follow-up.

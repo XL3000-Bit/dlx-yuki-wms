@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -23,7 +23,7 @@ class ExceptionStatus(str, enum.Enum):
 class OperationalException(TimestampMixin, Base):
     __tablename__ = "operational_exceptions"
     id: Mapped[int] = mapped_column(primary_key=True)
-    exception_no: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    exception_no: Mapped[str] = mapped_column(String(32))
     exception_type: Mapped[ExceptionType] = mapped_column(Enum(ExceptionType, name="operational_exception_type"), index=True)
     severity: Mapped[ExceptionSeverity] = mapped_column(Enum(ExceptionSeverity, name="operational_exception_severity"), default=ExceptionSeverity.MEDIUM, index=True)
     status: Mapped[ExceptionStatus] = mapped_column(Enum(ExceptionStatus, name="operational_exception_status"), default=ExceptionStatus.OPEN, index=True)
@@ -48,7 +48,11 @@ class OperationalException(TimestampMixin, Base):
     assignee = relationship("User", foreign_keys=[assigned_to]); reporter = relationship("User", foreign_keys=[reported_by]); resolver = relationship("User", foreign_keys=[resolved_by])
     events = relationship("OperationalExceptionEvent", back_populates="operational_exception", cascade="all, delete-orphan", order_by="OperationalExceptionEvent.created_at.desc()")
     work_orders = relationship("WorkOrder", back_populates="operational_exception")
-    __table_args__ = (Index("ix_operational_exceptions_scope", "warehouse_id", "status", "severity"),)
+    __table_args__ = (
+        UniqueConstraint("exception_no"),
+        Index("ix_operational_exceptions_exception_no", "exception_no"),
+        Index("ix_operational_exceptions_scope", "warehouse_id", "status", "severity"),
+    )
 
 
 class OperationalExceptionEvent(Base):

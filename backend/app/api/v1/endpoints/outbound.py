@@ -12,6 +12,8 @@ from pydantic import BaseModel
 from app.services.outbound import allocate,allocations,change,complete_partial,create_ob,get_ob,list_outbounds,release,read_ob
 from app.schemas.outbound_workbench import OutboundWorkbenchResponse,OutboundWorkbenchDetail
 from app.services.outbound_workbench import list_workbench,detail as workbench_detail
+from app.schemas.dispatch_readiness import DispatchReadinessRead
+from app.services.dispatch_readiness import get_dispatch_readiness
 from app.services.picking_bol import generate_picking,generate_bol
 from app.utils.business_time import to_business_datetime
 from app.services.access_policy import assert_customer_access,assert_warehouse_access
@@ -65,10 +67,12 @@ def workbench_batch(payload:dict,db:DbSession,user:Writer):
    else: raise ValueError('Unsupported batch action')
    results.append({'id':oid,'status':'success'})
   except Exception as exc:
-   db.rollback();results.append({'id':oid,'status':'failed','reason':str(exc)})
+   db.rollback();detail=getattr(exc,'detail',None);reasons=detail.get('blocking_reasons',[]) if isinstance(detail,dict) else [];results.append({'id':oid,'status':'failed','reason':'; '.join(reasons) if reasons else str(detail or exc)})
  return {'results':results,'successful':sum(r['status']=='success' for r in results),'failed':sum(r['status']=='failed' for r in results)}
 @router.post('',response_model=OBRead,status_code=201)
 def create(payload:OBCreate,db:DbSession,user:Writer):assert_warehouse_access(user,payload.warehouse_id);assert_customer_access(user,payload.customer_id);return read_ob(db,create_ob(db,payload,user.id))
+@router.get('/{ob_id}/dispatch-readiness',response_model=DispatchReadinessRead)
+def dispatch_readiness(ob_id:int,db:DbSession,user:CurrentUser):return get_dispatch_readiness(db,get_ob(db,ob_id,user=user))
 @router.get('/{ob_id}',response_model=OBRead)
 def detail(ob_id:int,db:DbSession,user:CurrentUser):return read_ob(db,get_ob(db,ob_id,user=user))
 @router.put('/{ob_id}',response_model=OBRead)

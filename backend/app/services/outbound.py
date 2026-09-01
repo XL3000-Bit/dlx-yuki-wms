@@ -15,6 +15,7 @@ from app.services.inventory import ZERO,_tx,derive_status,get_lot,snapshot
 from app.schemas.operational_exception import ExceptionCreate
 from app.services.operational_exception import create_exception,transition_exception
 from app.services.access_policy import customer_clause,warehouse_clause
+from app.services.dispatch_readiness import require_dispatch_ready
 from app.utils.business_time import get_business_today,to_business_datetime
 STATUS={x.value:x.name.replace('_',' ').title() for x in OBStatus}
 TRANS={0:{1,2,3,6,7},1:{2,3,6,7},2:{3,6,7},3:{4,6,7},4:{5},7:{3,6}}
@@ -23,7 +24,10 @@ def generate_ob_no(db:Session,today:date|None=None)->str:
 def named(o:Any,kind:str):return NamedRef(id=o.id,code=getattr(o,f'{kind}_code'),name=getattr(o,f'{kind}_name')) if o else None
 def query():return select(OutboundOrder).options(joinedload(OutboundOrder.customer),joinedload(OutboundOrder.warehouse),joinedload(OutboundOrder.carrier),joinedload(OutboundOrder.fba_shipment),selectinload(OutboundOrder.allocations).joinedload(OutboundInventoryAllocation.inventory_lot))
 def get_ob(db:Session,id:int,lock=False,user:User|None=None):
- q=select(OutboundOrder).where(OutboundOrder.id==id).with_for_update() if lock else query().where(OutboundOrder.id==id)
+ if lock:
+  q=select(OutboundOrder).where(OutboundOrder.id==id)
+  if db.get_bind().dialect.name=='postgresql':q=q.with_for_update()
+ else:q=query().where(OutboundOrder.id==id)
  if user:
   clauses=(warehouse_clause(user,OutboundOrder.warehouse_id),customer_clause(user,OutboundOrder.customer_id))
   q=q.where(*(clause for clause in clauses if clause is not None))
@@ -84,9 +88,9 @@ def allocation_read(a):
 def allocations(db:Session,o):return[allocation_read(a) for a in db.scalars(select(OutboundInventoryAllocation).options(joinedload(OutboundInventoryAllocation.inventory_lot).joinedload(InventoryLot.location),joinedload(OutboundInventoryAllocation.outbound).joinedload(OutboundOrder.fba_shipment)).where(OutboundInventoryAllocation.outbound_order_id==o.id).order_by(OutboundInventoryAllocation.id)).all()]
 def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionRequest|None=None):
  o=get_ob(db,ob_id,True)
+ if target==OBStatus.DISPATCHED:require_dispatch_ready(db,o)
  if target not in TRANS.get(o.status,set()):raise HTTPException(409,f'Invalid status transition: {STATUS[o.status]} to {STATUS.get(target)}')
  if target==OBStatus.CONFIRMED and not o.allocations:raise HTTPException(409,'Outbound requires at least one allocation')
- if target==OBStatus.DISPATCHED and not o.carrier_id:raise HTTPException(409,'Carrier is required before dispatch')
  now=datetime.now(UTC);before=o.status;o.status=target
  if target==OBStatus.CONFIRMED:o.confirmed_at=now;o.confirmed_by=user_id
  if target==OBStatus.DISPATCHED:o.dispatched_at=now;o.dispatched_by=user_id

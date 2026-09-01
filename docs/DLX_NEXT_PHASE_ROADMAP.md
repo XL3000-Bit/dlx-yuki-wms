@@ -1,189 +1,192 @@
 # DLX Yuki WMS — Next Phase Roadmap
 
-**Proposed phase:** PHASE 10 — Operational Orchestration Foundation  
-**Basis:** current-source audit plus EasyFreight → DLX gap analysis dated 2026-08-29.
+**Roadmap date:** 2026-08-31
+**Baseline:** PHASE 10 frozen RC plus completed PHASE 11.0 and PHASE 11.1 execution foundations
 
-## Phase outcome
+## Release baseline
 
-Connect the already working Inbound → Inventory → FBA/Outbound → Picking/BOL core through shared identity, tasks, exceptions, documents and permissions. This phase should enhance existing modules rather than replace their tested allocation and transaction logic.
+```text
+PHASE 10
+FORMAL RELEASE CANDIDATE
+FROZEN
 
-## Delivery sequence
+PHASE 11.0
+Scan Execution Foundation
+COMPLETE
 
-1. **Foundation:** global search, permission model and canonical reference rules.
-2. **Orchestration:** Load control tower and generic exception cases.
-3. **Execution:** work orders, line-level picking and POD/document lifecycle.
-4. **Visibility/integration:** KPI cards, master-data governance and charge-event handoff.
+PHASE 11.1
+Picking Scan Workflow
+COMPLETE
+```
+
+PHASE 10's PostgreSQL migration blockers are closed. The 0019/0020 enum lifecycle and 0021 schema alignment were verified with Fresh PostgreSQL, `0012 -> head`, `alembic check`, automated tests, and final manual smoke. `20260830_0020` must not be carried forward as an open roadmap blocker.
+
+PHASE 11.0 established `ScanSession`, immutable `ScanEvent`, the scan workbench, RBAC enforcement, PostgreSQL verification, and a 127-test backend baseline. PHASE 11.1 then added transactional PICK execution, idempotency/concurrency guarantees, and a 135-test backend baseline.
+
+## Current P0
+
+| Order | Milestone | Status | Outcome |
+| ---: | --- | --- | --- |
+| 1 | PHASE 11.1 — Picking Scan Workflow | COMPLETE | Scan-confirmed picking updates outbound and inventory state transactionally |
+| 2 | PHASE 11.2 — Staging / Load Verification | NEXT | Verify staged handling units and load membership before dispatch |
+| 3 | PHASE 11.3 — Dispatch Readiness Gate | PENDING | Block dispatch until required execution evidence and exception state are valid |
+| 4 | POD Closure Workflow | PENDING | Capture proof, resolve delivery exceptions, and close the outbound lifecycle |
+
+The NEXT 10 list retains PHASE 11.1 as a completed baseline. The first development task still open is PHASE 11.2.
 
 ## NEXT 10 DEVELOPMENT TASKS
 
-### 1. Global Multi-Reference Search MVP
+### 1. PHASE 11.1 — Picking Scan Workflow
 
-| Field | Plan |
-|---|---|
-| Task Name | Global Multi-Reference Search MVP |
-| Why | Operators currently search each module separately. A read-only federated search gives immediate value and reveals duplicate/missing references before the Load model is finalized. |
-| Affected Files/Modules | New search endpoint/service/schema; `AppLayout`; existing Inbound, Container Tracking, Inventory, FBA, Outbound and BOL query/index paths. |
-| Frontend | Add top-bar search, grouped result panel, keyboard navigation and deep links to selected records. |
-| Backend | Federate exact/prefix matches for CNTR, MBL, HBL, inbound, lot, FBA/ST/PO, OB and BOL; enforce current-user visibility. |
-| Database | Reuse current indexes first; add only missing normalized/case-insensitive indexes after query-plan measurement. |
-| Tests | Ranking, duplicate references, empty input, permission filtering, deep-link shape and query-count/performance tests. |
-| Priority | P0 |
-| Complexity | M |
-| Dependencies | Existing module APIs and authentication; no new domain model required. |
+**Status:** COMPLETE
 
-### 2. Explicit RBAC and Warehouse/Customer Scopes
+Delivered transactional PICK behavior, quantity validation, inventory/outbound updates, idempotency, concurrency protection, RBAC, PostgreSQL verification, and regression coverage.
 
-| Field | Plan |
-|---|---|
-| Task Name | Explicit RBAC and Warehouse/Customer Scopes |
-| Why | Current enum roles protect broad writes but cannot enforce warehouse/customer boundaries or drive menus/buttons safely. |
-| Affected Files/Modules | `users`, API dependencies, auth schemas, all list/write services, `AppLayout`, action-heavy pages. |
-| Frontend | Capability-aware navigation/actions and an admin user-role-scope screen. |
-| Backend | Permission policy service, scoped query helpers, effective capabilities in `/users/me`, migration compatibility for existing roles. |
-| Database | Roles, permissions, mappings, user warehouse scopes and user customer scopes. |
-| Tests | Endpoint permission matrix, cross-warehouse/customer denial, admin migration compatibility and frontend capability rendering. |
-| Priority | P0 |
-| Complexity | L |
-| Dependencies | Should start before new Load/Work Order write endpoints. |
+No new PHASE 11.1 feature work is planned. Treat its behavior as the input contract for staging.
 
-### 3. Canonical Load and Reference-Link Model
+### 2. PHASE 11.2 — Staging / Load Verification
 
-| Field | Plan |
-|---|---|
-| Task Name | Canonical Load and Reference-Link Model |
-| Why | CNTR/MBL/BOL/customer references are fragmented across modules; a stable aggregate is required for a control tower, grouped documents and accounting handoff. |
-| Affected Files/Modules | New load model/schema/service/API; import reconciliation; links to container, inbound, FBA, outbound and BOL. |
-| Frontend | Initially none beyond search showing proposed/linked Load identity; admin reconciliation UI may follow. |
-| Backend | Deterministic link rules, duplicate/conflict detection, idempotent backfill and read-only aggregate detail. |
-| Database | `loads`, normalized `load_references`, and typed entity associations; retain existing entity tables/FKs. |
-| Tests | Duplicate identifiers, split/merge safeguards, import idempotency, association integrity and rollback. |
-| Priority | P0 |
-| Complexity | XL |
-| Dependencies | Task 1 data findings; Task 2 scope rules. |
+**Status:** NEXT
+**Priority:** P0
 
-### 4. Load Control Tower
+Implement the execution step between picking and dispatch:
 
-| Field | Plan |
-|---|---|
-| Task Name | Load Control Tower |
-| Why | Users need one operational view of container, warehouse, inventory, outbound, BOL, carrier, milestones and readiness. |
-| Affected Files/Modules | New Load page/API; existing container dispatch aggregates, outbound workbench, BOL and inventory. |
-| Frontend | Lifecycle tabs/counts, compact filters, configurable view presets, summary and linked detail panels. |
-| Backend | Server pagination/filter/sort/counts and an aggregate detail endpoint with bounded query counts. |
-| Database | Load associations from Task 3; user column/view preferences if included. |
-| Tests | Status counts, filter parity, authorization, N+1 regression and deep-link navigation. |
-| Priority | P0 |
-| Complexity | L |
-| Dependencies | Tasks 2 and 3. |
+- scan or otherwise verify staged handling units
+- validate outbound, warehouse, quantity, and load association
+- prevent cross-warehouse and cross-outbound contamination
+- record immutable execution evidence
+- make retries idempotent and concurrent attempts safe
+- expose actionable mismatch and incomplete-state errors
 
-### 5. Unified Exception / Trouble Shoot Center
+Do not weaken existing inventory or outbound invariants to achieve parity with an external UI.
 
-| Field | Plan |
-|---|---|
-| Task Name | Unified Exception / Trouble Shoot Center |
-| Why | Outbound exceptions exist, but cross-module issues have no owner, SLA, activity trail or shared queue. |
-| Affected Files/Modules | New exception model/API/page; Outbound exception service; Container, Import, Picking and BOL integrations. |
-| Frontend | Queue with status counts, entity links, owner/SLA/category filters and activity/comments panel. |
-| Backend | Generic entity-linked cases, transition rules, assignment/escalation and compatibility wrapper for current outbound endpoints. |
-| Database | Exception case, entity link, activity/comment and attachment metadata tables. |
-| Tests | State machine, ownership/scope, SLA calculation, outbound compatibility and audit history. |
-| Priority | P0 |
-| Complexity | L |
-| Dependencies | Task 2; benefits from Task 3 but can support typed entity links first. |
+The separate EasyFreight parity-capture artifact currently labeled PHASE 11.2 remains a read-only evidence track. Controlled writes stay blocked until a designated safe test environment and fixture are approved. That artifact is not implementation authorization.
 
-### 6. Warehouse Work Order Foundation
+### 3. PHASE 11.3 — Dispatch Readiness Gate
 
-| Field | Plan |
-|---|---|
-| Task Name | Warehouse Work Order Foundation |
-| Why | Inbound, put-away, move, pick and load actions need a common assignable execution queue and lifecycle. |
-| Affected Files/Modules | New work-order domain; Inbound, Inventory, Picking and Outbound transition hooks. |
-| Frontend | Work-order list/detail, type/status/priority tabs, assignment, start/complete/review actions. |
-| Backend | Number generation, state machine, assignment, counts and incremental task-generation hooks. |
-| Database | Work orders, entity links, assignments and event history. |
-| Tests | Transition matrix, idempotent generation, assignment/scope, counts and rollback around linked domain actions. |
-| Priority | P0 |
-| Complexity | XL |
-| Dependencies | Tasks 2 and 3; Task 5 for exception linkage. |
+**Status:** PENDING
+**Priority:** P0
 
-### 7. Picking Execution V2
+Create one authoritative readiness decision that checks:
 
-| Field | Plan |
-|---|---|
-| Task Name | Picking Execution V2 |
-| Why | Current picking snapshots and completion are useful but do not support line progress, assignment, scan/location verification or shortages. |
-| Affected Files/Modules | Picking models/services/endpoints/page; Inventory allocation checks; Work Orders. |
-| Frontend | Mobile-friendly task view, scan/manual confirmation, progress, shortage reason and exception creation. |
-| Backend | Per-line transitions, concurrency controls, assignment and exception integration; preserve current snapshot generation. |
-| Database | Picking line status/events, scan records and assignment/work-order link. |
-| Tests | Concurrent picks, over-pick prevention, partial/short completion, scan mismatch, retry/idempotency and audit. |
-| Priority | P0 |
-| Complexity | L |
-| Dependencies | Tasks 5 and 6. |
+- required quantities picked and staged
+- load verification complete
+- unresolved blocking exceptions absent
+- warehouse and load identities consistent
+- required documents and operational approvals present
 
-### 8. BOL / POD Document Workflow
+Dispatch must fail closed with explicit reasons when a required condition is not met. Repeated dispatch requests must not duplicate inventory, notification, history, or external effects.
 
-| Field | Plan |
-|---|---|
-| Task Name | BOL / POD Document Workflow |
-| Why | DLX can generate BOL files but cannot request, upload, version, track or resolve POD delivery proof. |
-| Affected Files/Modules | BOL service/page, Outbound/Load detail, new document storage abstraction and exception hooks. |
-| Frontend | BOL detail, status tabs/counts, POD request/upload/view, document history and missing-POD alert. |
-| Backend | File metadata/storage interface, POD lifecycle, secure download, versioning and eventual grouped-BOL support. |
-| Database | Documents, versions, POD requests/status/events and Load/BOL associations. |
-| Tests | File authorization, content/size validation, version history, POD transitions, missing-address cases and storage failures. |
-| Priority | P0 |
-| Complexity | L |
-| Dependencies | Tasks 2, 3 and 5; external object-storage choice can be adapter-based. |
+### 4. POD Closure Workflow
 
-### 9. Customer and Carrier/Vendor Master Governance
+**Status:** PENDING
+**Priority:** P0
 
-| Field | Plan |
-|---|---|
-| Task Name | Customer and Carrier/Vendor Master Governance |
-| Why | Existing models/APIs are adequate references but not manageable operational master data; future scopes, rates and accounting need governed identities. |
-| Affected Files/Modules | Master data endpoints/schemas/models; new customer and carrier/vendor pages; FBA/Outbound selectors. |
-| Frontend | Searchable list/detail/edit/deactivate, contacts/addresses, duplicate warnings and linked activity. |
-| Backend | Update/deactivate/merge safeguards, normalized identifiers and usage summaries. |
-| Database | Contacts, addresses, external references, vendor profile/compliance; defer rate tables to a follow-up if needed. |
-| Tests | Uniqueness, inactive-reference rules, merge protection, scope enforcement and regression for existing selectors/imports. |
-| Priority | P1 |
-| Complexity | M |
-| Dependencies | Task 2; coordinate normalized references with Task 3. |
+Complete the outbound lifecycle with:
 
-### 10. Operational KPI and Charge-Event Integration Foundation
+- POD document capture and versioning
+- delivery status and receipt metadata
+- missing/invalid POD exception path
+- linked work-order support where operational follow-up is required
+- immutable closure history and permission enforcement
 
-| Field | Plan |
-|---|---|
-| Task Name | Operational KPI and Charge-Event Integration Foundation |
-| Why | Management lacks backlog/SLA visibility, while future accounting needs an idempotent boundary rather than direct coupling to warehouse transactions. |
-| Affected Files/Modules | New dashboard metrics, Load/Work Order/POD events, service-order/charge-event module and integration-run monitoring. |
-| Frontend | KPI cards with drill-through plus unbilled/integration-status queue. |
-| Backend | Defined metric queries, immutable charge-event producer, mapping/export adapter, retry and reconciliation endpoints. |
-| Database | Missing owner/event timestamps, optional daily KPI snapshots, service orders, charge events and integration run/error records. |
-| Tests | Metric definition fixtures, timezone boundaries, idempotent charge emission, adapter retry and reconciliation. |
-| Priority | P1 |
-| Complexity | XL |
-| Dependencies | Tasks 3, 6 and 8; accounting target contract must be agreed before adapter implementation. |
+### 5. SKU Master Foundation
 
-## Acceptance gates for PHASE 10
+**Status:** PENDING
+**Priority:** P1
 
-- Existing 74 backend tests continue to pass; new migrations upgrade from the current head and have downgrade coverage appropriate to project policy.
-- Every new list endpoint enforces warehouse/customer scope, paginates server-side and has a bounded-query/N+1 test.
-- No new workflow writes inventory quantities outside the existing locked transaction services.
-- Search, Load, Work Order, Exception and Document entities have deterministic deep links and audit/event histories.
-- Picking and POD happy paths plus partial, concurrent, unauthorized and retry paths are tested.
-- Frontend unit/component testing is introduced before the new cross-module workflows become large; TypeScript build alone is not the final acceptance gate.
+Introduce canonical SKU identity, customer ownership, units of measure, dimensional data, and lifecycle controls. Avoid duplicating SKU definitions inside receipts, inventory rows, or outbound lines.
 
-## Recommended release slices
+### 6. LPN / Pallet Identity
 
-| Slice | Tasks | Deliverable |
-|---|---|---|
-| 10A — Find and secure | 1–2 | Global navigation/search and scoped authorization foundation. |
-| 10B — Connect operations | 3–5 | Canonical Load, control tower and exception center. |
-| 10C — Execute and prove | 6–8 | Work orders, picking V2 and BOL/POD document closure. |
-| 10D — Govern and measure | 9–10 | Master governance, operational KPIs and accounting integration boundary. |
+**Status:** PENDING
+**Priority:** P1
 
-## First implementation recommendation
+Add durable handling-unit identity with parent/child relationships, warehouse ownership, content traceability, status, and auditable movement history. Reuse scan sessions and events as the execution surface.
 
-Start with **Task 1: Global Multi-Reference Search MVP**. It is read-only, relatively contained and immediately useful. More importantly, its test data and collision findings will reduce the design risk of Task 3's canonical Load identity. In parallel planning (not coding), define the permission matrix required by Task 2 so that every later endpoint is scoped from its first release.
+### 7. Cycle Count
+
+**Status:** PENDING
+**Priority:** P1
+
+Support count plans, blind counting, discrepancy review, approval, adjustment, and audit history. Preserve separation between observed counts and approved inventory mutations.
+
+### 8. Scan-Driven Inventory Execution
+
+**Status:** PENDING
+**Priority:** P1
+
+Extend the established scan foundation to receiving, putaway, movement, cycle count, adjustment, and shipment confirmation. Each mutation must be warehouse-scoped, idempotent, auditable, and transactionally consistent.
+
+### 9. Billable Event and Transactional Outbox
+
+**Status:** PENDING
+**Priority:** P1
+
+Derive stable billable events from committed WMS operational events and publish them through a transactional outbox. Include deterministic event identity, versioning, retry state, and reconciliation metadata.
+
+### 10. Accounting Adapter and Reconciliation
+
+**Status:** PENDING
+**Priority:** P2
+
+Deliver billable events to the selected accounting or ERP system through an adapter with retry, dead-letter visibility, external identifiers, and reconciliation reporting.
+
+The architecture boundary is:
+
+```text
+WMS Operational Event
+        ↓
+Billable Event
+        ↓
+Transactional Outbox
+        ↓
+Accounting Adapter
+        ↓
+External accounting / ERP
+```
+
+Do not implement a general ledger, accounts receivable, accounts payable, tax engine, or financial close inside DLX WMS.
+
+## Delivery dependencies
+
+```text
+PHASE 10 frozen RC
+        ↓
+PHASE 11.0 scan foundation (complete)
+        ↓
+PHASE 11.1 picking (complete)
+        ↓
+PHASE 11.2 staging / load verification
+        ↓
+PHASE 11.3 dispatch readiness
+        ↓
+POD closure
+        ↓
+Inventory identity and count expansion
+        ↓
+Billable events / outbox / accounting adapter
+```
+
+## Cross-cutting acceptance gates
+
+Every new execution milestone must preserve:
+
+- warehouse-scoped authorization and data visibility
+- immutable and attributable operational history
+- idempotency and concurrent-request safety
+- PostgreSQL-first migration and lifecycle verification
+- fresh-schema and upgrade-path validation
+- backend regression coverage and scoped security tests
+- frontend build and critical browser workflow smoke
+- `git diff --check`
+- no Critical or High release issue
+
+## Roadmap constraints
+
+- Do not reopen or silently modify the frozen PHASE 10 RC baseline.
+- Do not list scan infrastructure as missing; extend the existing PHASE 11 foundation.
+- Do not infer EasyFreight write contracts from read-only observations.
+- Do not use production EasyFreight records for parity experiments.
+- Do not weaken database constraints to make workflow tests pass.
+- Do not rebuild accounting or general-ledger functionality inside the WMS.

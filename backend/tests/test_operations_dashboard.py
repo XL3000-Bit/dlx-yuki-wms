@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
 from app.core.security import create_access_token, hash_password
-from app.models import User, Warehouse
+from app.models import Load, User, Warehouse
 from app.models.user import ScopeMode, UserRole
-from app.utils.business_time import get_business_today
+from app.utils.business_time import get_business_today, to_business_datetime
 
 
 def _auth(client: TestClient, user: User) -> None:
@@ -57,10 +57,22 @@ def test_operations_dashboard_metrics_activity_and_snapshot_date_semantics(clien
     ).json()
     db.commit()
 
-    today = get_business_today().isoformat()
+    # SQLite drops timezone information for DateTime columns and its
+    # CURRENT_TIMESTAMP default is UTC. Store this fixture in business-local
+    # wall time explicitly so the test exercises the same Los Angeles business
+    # date represented by PostgreSQL timestamptz in production.
+    utc_created_at = datetime(2026, 8, 30, 0, 30, tzinfo=UTC)
+    business_created_at = to_business_datetime(utc_created_at)
+    assert utc_created_at.date() != business_created_at.date()
+    load_row = db.get(Load, load["id"])
+    assert load_row is not None
+    load_row.created_at = business_created_at
+    db.commit()
+
+    business_date = business_created_at.date().isoformat()
     body = client.get(
         "/api/v1/dashboard/operations",
-        params={"date_from": today, "date_to": today},
+        params={"date_from": business_date, "date_to": business_date},
     ).json()
     assert body["summary"]["active_loads"] == 1
     assert body["summary"]["open_work_orders"] == 1
@@ -73,6 +85,13 @@ def test_operations_dashboard_metrics_activity_and_snapshot_date_semantics(clien
     assert body["warehouses"][0]["open_exceptions"] == 1
     assert {item["entity_id"] for item in body["recent_activity"]} == {work["id"], exception["id"]}
     assert {item["kind"] for item in body["attention"]} == {"WORK_ORDER", "EXCEPTION"}
+
+    utc_date = utc_created_at.date().isoformat()
+    utc_day = client.get(
+        "/api/v1/dashboard/operations",
+        params={"date_from": utc_date, "date_to": utc_date},
+    ).json()
+    assert utc_day["loads"]["created_period"] == 0
 
     historic = client.get(
         "/api/v1/dashboard/operations",

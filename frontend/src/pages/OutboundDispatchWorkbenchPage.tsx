@@ -26,8 +26,9 @@ import {
   message,
 } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTableScrollHeight } from "../hooks/useTableScrollHeight";
 import {
   allocateOutbound,
   cancelOutbound,
@@ -55,6 +56,7 @@ import {
   type OutboundSplitLayoutHandle,
   type OutboundVerticalSplitLayoutHandle,
 } from "../components/outbound-workbench/OutboundSplitLayout";
+import { DispatchCommandBar } from "../components/outbound-workbench/DispatchCommandBar";
 import {
   DispatchPriorityTag,
   DispatchReadinessTag,
@@ -86,40 +88,6 @@ const n = (value: any) =>
   value == null
     ? "N/A"
     : Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
-
-function useTableScrollHeight(reserved: number, minimum: number) {
-  const hostNode = useRef<HTMLDivElement | null>(null);
-  const observer = useRef<ResizeObserver | null>(null);
-  const [height, setHeight] = useState(minimum);
-
-  const update = useCallback(() => {
-    const hostHeight = hostNode.current?.clientHeight || 0;
-    setHeight(Math.max(minimum, Math.floor(hostHeight - reserved)));
-  }, [minimum, reserved]);
-
-  const hostRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      observer.current?.disconnect();
-      hostNode.current = node;
-      if (node) {
-        observer.current = new ResizeObserver(update);
-        observer.current.observe(node);
-        update();
-      }
-    },
-    [update],
-  );
-
-  useEffect(() => {
-    window.addEventListener("resize", update);
-    return () => {
-      observer.current?.disconnect();
-      window.removeEventListener("resize", update);
-    };
-  }, [update]);
-
-  return [hostRef, height] as const;
-}
 
 export function OutboundDispatchWorkbenchPage() {
   const [sp, setSp] = useSearchParams();
@@ -576,6 +544,49 @@ export function OutboundDispatchWorkbenchPage() {
       <OutboundSplitLayout
         left={
           <div className="dispatch-left-workspace">
+            <DispatchCommandBar
+              values={{
+                id: sp.get("id") || "",
+                status: sp.get("status") || "",
+                ob_type: sp.get("ob_type") || "",
+                warehouse: sp.get("warehouse") || "",
+                carrier_id: sp.get("carrier_id") || "",
+                bol_no: sp.get("bol_no") || "",
+                container_number: sp.get("container_number") || "",
+                delivery_location: sp.get("delivery_location") || "",
+                reference_search: sp.get("reference_search") || "",
+                del_ref: sp.get("del_ref") || "",
+                agent_code: sp.get("agent_code") || "",
+                pickup_location: sp.get("pickup_location") || "",
+                redirect_location: sp.get("redirect_location") || "",
+              }}
+              warehouses={warehouses.data || []}
+              carriers={carriers.data || []}
+              selectedCount={selectedIds.length}
+              canConfirm={!!selected?.allowed_actions?.confirm}
+              canCancel={!!selected?.allowed_actions?.cancel}
+              canException={!!selected?.allowed_actions?.exception}
+              canDispatch={!!selected?.allowed_actions?.dispatch}
+              rightHidden={rightHidden}
+              onChange={patch}
+              onRefresh={() => list.refetch()}
+              onResetFilters={() => setSp(new URLSearchParams())}
+              onResetWindow={resetWindow}
+              onToggleRight={() => horizontalSplitRef.current?.toggleRight()}
+              onCreate={() => setCreateOpen(true)}
+              onConfirm={() => action.mutate({ name: "confirm", id: selected.id })}
+              onCancel={() => action.mutate({ name: "cancel", id: selected.id })}
+              onDispatch={() => action.mutate({ name: "dispatch", id: selected.id })}
+              onException={() => setExceptionOpen(true)}
+              onDelete={() => {
+                if (!selected) return;
+                Modal.confirm({
+                  title: "Delete / cancel this OB?",
+                  content: "Yuki has no hard-delete API. This runs Cancel.",
+                  onOk: () => action.mutate({ name: "cancel", id: selected.id }),
+                });
+              }}
+            />
             <div className="workbench-heading">
               <div className="workbench-title">
                 <Typography.Title level={4}>Outbound Dispatch</Typography.Title>

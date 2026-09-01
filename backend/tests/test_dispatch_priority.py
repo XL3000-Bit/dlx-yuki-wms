@@ -24,6 +24,18 @@ def scheduled_order(client: TestClient, seed, lot: dict, when: date, fc: str = "
     return order
 
 
+def prepare_dispatch(client: TestClient, outbound_id: int) -> None:
+    picking = client.post(f"/api/v1/outbounds/{outbound_id}/picking-lists")
+    assert picking.status_code == 200, picking.text
+    completed = client.post(
+        f"/api/v1/picking-lists/{picking.json()['id']}/complete",
+        json={},
+    )
+    assert completed.status_code == 200, completed.text
+    bol = client.post(f"/api/v1/outbounds/{outbound_id}/bol")
+    assert bol.status_code == 200, bol.text
+
+
 def test_priority_thresholds():
     today = date(2026, 8, 29)
     assert calculate_dispatch_priority(today - timedelta(days=1), today) == DispatchPriority.CRITICAL
@@ -68,7 +80,7 @@ def test_earliest_outbound_ignores_canceled_and_updates(client: TestClient, db: 
 def test_completed_and_unscheduled_orders_do_not_set_earliest(client: TestClient, db: Session, seed):
     container='DONE-UNSCHEDULED';tracked=tracking(db,container);lot=inventory(client,seed,container=container,pallet=3)
     unscheduled=client.post('/api/v1/outbounds',json=ob(seed)).json();assert client.post(f"/api/v1/outbounds/{unscheduled['id']}/allocate",json={'inventory_lot_id':lot['id'],'pallet_qty':1}).status_code==200
-    done=scheduled_order(client,seed,lot,date.today()+timedelta(days=1));assert client.post(f"/api/v1/outbounds/{done['id']}/confirm").status_code==200;assert client.post(f"/api/v1/outbounds/{done['id']}/dispatch").status_code==200;assert client.post(f"/api/v1/outbounds/{done['id']}/complete").status_code==200
+    done=scheduled_order(client,seed,lot,date.today()+timedelta(days=1));assert client.post(f"/api/v1/outbounds/{done['id']}/confirm").status_code==200;prepare_dispatch(client,done['id']);assert client.post(f"/api/v1/outbounds/{done['id']}/dispatch").status_code==200;assert client.post(f"/api/v1/outbounds/{done['id']}/complete").status_code==200
     body=client.get(f'/api/v1/container-tracking/{tracked.id}').json()['basic'];assert body['earliest_outbound_date'] is None
 
 
@@ -84,6 +96,7 @@ def test_container_not_completed_when_another_order_or_allocation_remains(client
     container='MULTI-DEMAND';tracked=tracking(db,container);lot=inventory(client,seed,container=container,pallet=10)
     completed_order=scheduled_order(client,seed,lot,date.today()+timedelta(days=1),'LAX9');active_order=scheduled_order(client,seed,lot,date.today()+timedelta(days=2),'GYR2')
     assert client.post(f"/api/v1/outbounds/{completed_order['id']}/confirm").status_code==200
+    prepare_dispatch(client,completed_order['id'])
     assert client.post(f"/api/v1/outbounds/{completed_order['id']}/dispatch").status_code==200
     assert client.post(f"/api/v1/outbounds/{completed_order['id']}/complete").status_code==200
     assert client.get(f'/api/v1/container-tracking/{tracked.id}').json()['basic']['dispatch_readiness']=='PARTIAL'
@@ -97,6 +110,7 @@ def test_container_completed_and_canceled_boundary(client: TestClient, db: Sessi
     canceled=scheduled_order(client,seed,lot,date.today()+timedelta(days=1));completed=scheduled_order(client,seed,lot,date.today()+timedelta(days=2))
     assert client.post(f"/api/v1/outbounds/{canceled['id']}/cancel").status_code==200
     assert client.post(f"/api/v1/outbounds/{completed['id']}/confirm").status_code==200
+    prepare_dispatch(client,completed['id'])
     assert client.post(f"/api/v1/outbounds/{completed['id']}/dispatch").status_code==200
     assert client.post(f"/api/v1/outbounds/{completed['id']}/complete").status_code==200
     assert client.get(f'/api/v1/container-tracking/{tracked.id}').json()['basic']['dispatch_readiness']=='COMPLETED'
@@ -107,6 +121,7 @@ def test_container_completed_and_canceled_boundary(client: TestClient, db: Sessi
 
 def test_completed_demand_is_not_reblocked_by_historical_exception(client: TestClient, db: Session, seed):
     container='DONE-EXCEPTION';tracked=tracking(db,container);lot=inventory(client,seed,container=container,pallet=2);order=scheduled_order(client,seed,lot,date.today()+timedelta(days=1));allocation=db.query(OutboundInventoryAllocation).filter_by(outbound_order_id=order['id']).one()
+    prepare_dispatch(client,order['id'])
     assert client.post(f"/api/v1/outbounds/{order['id']}/complete",json={'allocation_id':allocation.id,'pallet_qty':1}).status_code==200
     assert client.post(f"/api/v1/outbounds/{order['id']}/exception",json={'reason':'Historical check'}).status_code==200
     assert client.get(f'/api/v1/container-tracking/{tracked.id}').json()['basic']['dispatch_readiness']=='COMPLETED'
