@@ -15,6 +15,14 @@ class UserCreateInput(BaseModel):
     customer_ids: list[int] = Field(default_factory=list)
 
 
+class UserUpdateInput(BaseModel):
+    display_name: str | None = Field(default=None, min_length=1, max_length=100)
+    email: EmailStr | None = None
+    password: str | None = Field(default=None, min_length=10, max_length=128)
+    role: UserRole | None = None
+    is_active: bool | None = None
+
+
 class UserRead(Timestamped):
     username: str
     display_name: str
