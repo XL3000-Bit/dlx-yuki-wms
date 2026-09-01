@@ -21,6 +21,7 @@ import { useAuthStore } from "../stores/auth";
 import { useCurrentUser } from "../hooks/usePermissions";
 import { GlobalSearch } from "../components/GlobalSearch";
 import { NotificationCenter } from "../components/NotificationCenter";
+import { CompanyMenu } from "../components/CompanyMenu";
 
 const { Header, Sider, Content } = Layout;
 const SIDER_KEY = "dlx_wms:sider_collapsed";
@@ -130,6 +131,7 @@ export function AppLayout() {
           <GlobalSearch />
           <Space size={8} className="topbar-actions">
             <NotificationCenter />
+            <CompanyMenu />
             <Avatar size={28} icon={<UserOutlined />} className="topbar-avatar" />
           </Space>
         </Header>
