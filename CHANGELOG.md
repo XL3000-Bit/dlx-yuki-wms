@@ -1,5 +1,12 @@
 # Changelog
 
+## Admin data upload (2026-09-01)
+
+- Adds `/admin/data-upload` for `ADMIN` accounts only. Other roles do not see the menu item and are redirected.
+- Uploads the four West Coast 4.0 converter files in order: tracking, OL, DS, outbound.
+- OL / DS / outbound reuse preview → async validate → Confirm (`SKIP`). Outbound stays locked until OL + DS are confirmed and the inventory checkbox is ticked.
+- Container tracking import accepts converter headers (`container_number`, `mbl_number`, `pod_eta`, …) as well as shipmentexport.csv headers.
+
 ## West Coast 4.0 converter program (2026-09-01)
 
 - Adds offline program `tools/west_coast_import/convert_west_coast.py` and double-click launcher `CONVERT_WEST_COAST.bat`.
