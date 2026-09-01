@@ -11,6 +11,7 @@ import {
   UploadOutlined,
 } from "@ant-design/icons";
 import {
+  Alert,
   Button,
   Drawer,
   Form,
@@ -38,6 +39,7 @@ import {
   exportOutboundSelected,
   getOutboundWorkbench,
   getOutboundWorkbenchDetail,
+  getOutboundDispatchReadiness,
   releaseOutbound,
   resolveOutbound,
   updateOutboundSchedule,
@@ -134,6 +136,11 @@ export function OutboundDispatchWorkbenchPage() {
     queryFn: () => getOutboundWorkbenchDetail(selectedId),
     enabled: !!selectedId,
   });
+  const dispatchReadiness = useQuery({
+    queryKey: ["outbound-dispatch-readiness", selectedId],
+    queryFn: () => getOutboundDispatchReadiness(selectedId),
+    enabled: !!selectedId,
+  });
   const rows = list.data?.data || [];
   const selected =
     detail.data?.basic || rows.find((row: any) => row.id === selectedId);
@@ -150,6 +157,7 @@ export function OutboundDispatchWorkbenchPage() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["outbound-workbench"] });
     qc.invalidateQueries({ queryKey: ["outbound-workbench-detail"] });
+    qc.invalidateQueries({ queryKey: ["outbound-dispatch-readiness"] });
   };
   const action = useMutation({
     mutationFn: ({ name, id }: any) =>
@@ -166,7 +174,14 @@ export function OutboundDispatchWorkbenchPage() {
       message.success("Operation completed");
       refresh();
     },
-    onError: () => message.error("Operation rejected"),
+    onError: (error: any) => {
+      const reasons = error?.response?.data?.detail?.blocking_reasons;
+      message.error(
+        Array.isArray(reasons) && reasons.length
+          ? reasons.join("; ")
+          : "Operation rejected",
+      );
+    },
   });
   const create = useMutation({
     mutationFn: createOutbound,
@@ -561,7 +576,7 @@ export function OutboundDispatchWorkbenchPage() {
           <div className="workbench-toolbar">
             <div className="toolbar-group dispatch-batch-actions">
               <Button danger icon={<CloseCircleOutlined />} disabled={!selected?.allowed_actions?.cancel} onClick={() => action.mutate({ name: "cancel", id: selected.id })}>Cancel</Button>
-              <Button icon={<CheckOutlined />} disabled={!selected?.allowed_actions?.dispatch} onClick={() => action.mutate({ name: "dispatch", id: selected.id })}>Dispatch Current OB</Button>
+              <Button icon={<CheckOutlined />} disabled={!selected?.allowed_actions?.dispatch || dispatchReadiness.data?.status !== "READY"} onClick={() => action.mutate({ name: "dispatch", id: selected.id })}>Dispatch Current OB</Button>
               <Button icon={<ExclamationCircleOutlined />} disabled={!selected?.allowed_actions?.exception} onClick={() => setExceptionOpen(true)}>Exception</Button>
               <Button loading={createLoadMutation.isPending} disabled={!selectedIds.length} onClick={() => createLoadMutation.mutate()}>Create Load</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>Create OB</Button>
@@ -605,10 +620,28 @@ export function OutboundDispatchWorkbenchPage() {
             />
           </div>
           <div className="dispatch-summary">Total {summary.ob_count || 0} OB <span>/</span> {n(summary.total_pallet_qty)} PLT <span>/</span> {n(summary.allocated_carton_qty)} CTN <span>/</span> {n(summary.allocated_weight_lbs)} LB <span>/</span> {n(summary.allocated_cbm)} CBM{selectedIds.length > 0 && <> <span>/</span> Selected {selectedIds.length} OB / {n(selectedPallets)} PLT</>}</div>
+          {selected && dispatchReadiness.data?.status === "BLOCKED" && (
+            <Alert
+              type="warning"
+              showIcon
+              message="Dispatch blocked"
+              description={(
+                <Space direction="vertical" size={2}>
+                  {dispatchReadiness.data.checks.filter((check) => !check.passed).map((check) => (
+                    check.route ? (
+                      <Button key={check.key} type="link" size="small" onClick={() => navigate(check.route!)}>{check.reason}</Button>
+                    ) : (
+                      <Typography.Text key={check.key}>{check.reason}</Typography.Text>
+                    )
+                  ))}
+                </Space>
+              )}
+            />
+          )}
           <div className="dispatch-actions">
             <div className="dispatch-lifecycle-buttons">
               <Button disabled={!selected?.allowed_actions?.confirm} onClick={() => action.mutate({ name: "confirm", id: selected.id })}>Confirm</Button>
-              <Button disabled={!selected?.allowed_actions?.dispatch} onClick={() => action.mutate({ name: "dispatch", id: selected.id })}>Dispatch</Button>
+              <Button disabled={!selected?.allowed_actions?.dispatch || dispatchReadiness.data?.status !== "READY"} onClick={() => action.mutate({ name: "dispatch", id: selected.id })}>Dispatch</Button>
               <Button disabled={!selected?.allowed_actions?.complete} onClick={() => action.mutate({ name: "complete", id: selected.id })}>Complete</Button>
               <Button danger disabled={!selected?.allowed_actions?.cancel} onClick={() => action.mutate({ name: "cancel", id: selected.id })}>Cancel</Button>
               <Button disabled={!selected?.allowed_actions?.exception} onClick={() => setExceptionOpen(true)}>Exception</Button>
