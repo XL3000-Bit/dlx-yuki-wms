@@ -16,6 +16,7 @@ backend/.pytest-tmp/
 uploads/
 tmp/
 temp/
+import_out/
 *.db
 *.sqlite
 *.sqlite3
