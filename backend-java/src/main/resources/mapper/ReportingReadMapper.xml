@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuki.wms.v2.mapper.ReportingReadMapper">
+  <select id="ping" resultType="int">SELECT 1</select>
+
+  <select id="findCustomers" resultType="java.util.LinkedHashMap">
+    SELECT id, created_at, updated_at, customer_code, customer_name, contact_name,
+           phone, email, remark, is_active
+    FROM customers
+    <if test="allCustomers == false">
+      <choose>
+        <when test="customerIds != null and customerIds.size() > 0">
+          WHERE id IN
+          <foreach collection="customerIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        </when>
+        <otherwise>WHERE 1 = 0</otherwise>
+      </choose>
+    </if>
+    ORDER BY customer_code
+  </select>
+
+  <select id="findWarehouses" resultType="java.util.LinkedHashMap">
+    SELECT id, created_at, updated_at, warehouse_code, warehouse_name, address,
+           city, state, zip_code, country, is_active
+    FROM warehouses
+    <if test="allWarehouses == false">
+      <choose>
+        <when test="warehouseIds != null and warehouseIds.size() > 0">
+          WHERE id IN
+          <foreach collection="warehouseIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        </when>
+        <otherwise>WHERE 1 = 0</otherwise>
+      </choose>
+    </if>
+    ORDER BY warehouse_code
+  </select>
+
+  <select id="findCarriers" resultType="java.util.LinkedHashMap">
+    SELECT id, created_at, updated_at, carrier_code, carrier_name, scac, contact_name,
+           phone, email, remark, is_active
+    FROM carriers
+    ORDER BY carrier_code
+  </select>
+
+  <select id="findFcAddresses" resultType="java.util.LinkedHashMap">
+    SELECT id, created_at, updated_at, fc_code, fc_name, address_line1, address_line2,
+           city, state, zip_code, country, is_active
+    FROM amazon_fc_addresses
+    ORDER BY fc_code
+  </select>
+
+  <sql id="scopePredicate">
+    <if test="allWarehouses == false">
+      <choose>
+        <when test="warehouseIds != null and warehouseIds.size() > 0">
+          AND warehouse_id IN
+          <foreach collection="warehouseIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        </when>
+        <otherwise>AND 1 = 0</otherwise>
+      </choose>
+    </if>
+    <if test="allCustomers == false">
+      <choose>
+        <when test="customerIds != null and customerIds.size() > 0">
+          AND customer_id IN
+          <foreach collection="customerIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        </when>
+        <otherwise>AND 1 = 0</otherwise>
+      </choose>
+    </if>
+  </sql>
+
+  <select id="inboundSummary" resultType="java.util.LinkedHashMap">
+    SELECT COUNT(*) AS total_records,
+           COUNT(*) FILTER (WHERE status &lt; 5) AS open_records,
+           COALESCE(SUM(pallet_qty), 0) AS pallet_qty,
+           COALESCE(SUM(carton_qty), 0) AS carton_qty
+    FROM inbound_records
+    WHERE 1 = 1
+    <include refid="scopePredicate"/>
+  </select>
+
+  <select id="inventorySummary" resultType="java.util.LinkedHashMap">
+    SELECT COUNT(*) AS total_lots,
+           COUNT(*) FILTER (WHERE status = 0) AS available_lots,
+           COUNT(DISTINCT marking) FILTER (WHERE marking IS NOT NULL) AS sku_count,
+           COALESCE(SUM(available_pallet_qty), 0) AS available_pallet_qty,
+           COALESCE(SUM(available_carton_qty), 0) AS available_carton_qty
+    FROM inventory_lots
+    WHERE 1 = 1
+    <include refid="scopePredicate"/>
+  </select>
+
+  <select id="outboundSummary" resultType="java.util.LinkedHashMap">
+    SELECT COUNT(*) AS total_orders,
+           COUNT(*) FILTER (WHERE status &lt; 6) AS open_orders,
+           COUNT(*) FILTER (WHERE status = 6) AS canceled_orders,
+           COUNT(*) FILTER (WHERE status = 7) AS exception_orders
+    FROM outbound_orders
+    WHERE 1 = 1
+    <include refid="scopePredicate"/>
+  </select>
+</mapper>

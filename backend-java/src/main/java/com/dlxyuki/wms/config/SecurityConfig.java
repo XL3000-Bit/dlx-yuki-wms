@@ -1,6 +1,7 @@
 package com.dlxyuki.wms.config;
 
 import com.dlxyuki.wms.auth.BearerTokenFilter;
+import com.yuki.wms.v2.observability.RequestContextFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
@@ -17,11 +18,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, BearerTokenFilter bearer) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, BearerTokenFilter bearer,
+                                            RequestContextFilter requestContext) throws Exception {
         return http.csrf(csrf -> csrf.disable()).cors(cors -> {})
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v2/health", "/api/v2/health/db").permitAll()
+                .requestMatchers("/api/v2/openapi/**", "/api/v2/swagger-ui.html", "/api/v2/swagger-ui/**").permitAll()
                 .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/bootstrap").permitAll()
                 .anyRequest().authenticated())
@@ -30,7 +34,8 @@ public class SecurityConfig {
                 response.setContentType("application/json");
                 response.getWriter().write("{\"detail\":\"Not authenticated\"}");
             }))
-            .addFilterBefore(bearer, UsernamePasswordAuthenticationFilter.class).build();
+            .addFilterBefore(bearer, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(requestContext, BearerTokenFilter.class).build();
     }
 
     @Bean CorsConfigurationSource corsConfigurationSource() {

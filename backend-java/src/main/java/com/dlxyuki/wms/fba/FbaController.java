@@ -2,6 +2,8 @@ package com.dlxyuki.wms.fba;
 
 import com.dlxyuki.wms.user.UserAccount;
 import jakarta.validation.constraints.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,36 @@ import org.springframework.web.bind.annotation.*;
 public class FbaController {
     private final FbaService service;
     public FbaController(FbaService service) { this.service = service; }
+
+    @RequestMapping(method = RequestMethod.POST)
+    @ResponseStatus(HttpStatus.CREATED)
+    Object create(@RequestBody FbaWriteRequest request, @AuthenticationPrincipal UserAccount user) {
+        return service.create(request, user);
+    }
+
+    @RequestMapping(path = "/{fba_id}", method = RequestMethod.PUT)
+    Object update(@PathVariable("fba_id") long fbaId, @RequestBody FbaWriteRequest request,
+                  @AuthenticationPrincipal UserAccount user) {
+        return service.update(fbaId, request, user);
+    }
+
+    @RequestMapping(path = "/{fba_id}/allocate", method = RequestMethod.POST)
+    Object allocate(@PathVariable("fba_id") long fbaId, @RequestBody FbaAllocateRequest request,
+                    @AuthenticationPrincipal UserAccount user) {
+        return service.allocate(fbaId, request, user);
+    }
+
+    @RequestMapping(path = "/{fba_id}/allocations/{allocation_id}/release", method = RequestMethod.POST)
+    Object release(@PathVariable("fba_id") long fbaId, @PathVariable("allocation_id") long allocationId,
+                   @RequestBody FbaReleaseRequest request, @AuthenticationPrincipal UserAccount user) {
+        return service.release(fbaId, allocationId, request, user);
+    }
+
+    @ExceptionHandler(FbaService.FcMismatchException.class)
+    ResponseEntity<Object> fcMismatch(FbaService.FcMismatchException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of("detail", java.util.Map.of(
+            "message", exception.getMessage(), "fc_mismatch", true)));
+    }
 
     @GetMapping
     Object list(@RequestParam(defaultValue="1") @Min(1) int page,
@@ -78,3 +110,12 @@ public class FbaController {
         return service.get(fbaId, user);
     }
 }
+
+record FbaWriteRequest(Long customerId, Long warehouseId, String amazonFcCode, Long carrierId,
+                       String scheduledPickupAt, String appointmentTime, String referenceNo,
+                       String shipmentId, String stNumber, String remark) {}
+record FbaAllocateRequest(Long inventoryLotId, java.math.BigDecimal palletQty,
+                          java.math.BigDecimal cartonQty, java.math.BigDecimal weightLbs,
+                          java.math.BigDecimal cbm, Boolean confirmFcMismatch) {}
+record FbaReleaseRequest(java.math.BigDecimal palletQty, java.math.BigDecimal cartonQty,
+                         java.math.BigDecimal weightLbs, java.math.BigDecimal cbm, String remark) {}

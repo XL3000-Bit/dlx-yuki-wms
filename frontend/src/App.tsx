@@ -17,20 +17,25 @@ const OperationsDashboardPage = lazy(() => import("./pages/OperationsDashboardPa
 const OperationsWallboardPage = lazy(() => import("./pages/OperationsWallboardPage").then(m => ({ default: m.OperationsWallboardPage })));
 const DocumentsPage = lazy(() => import("./pages/DocumentsPage").then(m => ({ default: m.DocumentsPage })));
 const CompanySettingsPage = lazy(() => import("./pages/CompanySettingsPage").then(m => ({ default: m.CompanySettingsPage })));
+const ThreePLPage = lazy(() => import("./pages/ThreePLPage").then(m => ({ default: m.ThreePLPage })));
+const PdaPage = lazy(() => import("./pages/PdaPage").then(m => ({ default: m.PdaPage })));
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
 import "./inventory.css";
 import "./fba.css";
 import "./outbound.css";
+import "./threepl.css";
 export default function App() {
   const token = useAuthStore((s) => s.accessToken);
   if (!token) return <LoginPage />;
   return (
     <Suspense fallback={<div className="page-loading">Loading…</div>}><Routes>
       <Route path="/wallboard" element={<OperationsWallboardPage />} />
+      <Route path="/pda" element={<PdaPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<OperationsDashboardPage />} />
+        <Route path="/3pl" element={<ThreePLPage />} />
         <Route path="/inbound" element={<InboundPage />} />
         <Route path="/container-tracking" element={<ContainerTrackingPage />} />
         <Route path="/inventory" element={<InventoryPage />} />

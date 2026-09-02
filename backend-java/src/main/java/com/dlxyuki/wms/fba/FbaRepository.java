@@ -5,6 +5,7 @@ import java.math.*;
 import java.sql.*;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.*;
@@ -48,6 +49,134 @@ public class FbaRepository {
       "left join warehouse_locations l on l.id=i.location_id where (a.allocated_pallet_qty<>0 or a.allocated_carton_qty<>0 or a.allocated_weight_lbs<>0 or a.allocated_cbm<>0) group by a.fba_shipment_id");
     private final NamedParameterJdbcTemplate jdbc;
     public FbaRepository(JdbcTemplate jdbc) { this.jdbc=new NamedParameterJdbcTemplate(jdbc); }
+
+    boolean warehouseExists(long id) { return exists("warehouses", id); }
+    boolean customerExists(long id) { return exists("customers", id); }
+    boolean carrierExists(long id) { return exists("carriers", id); }
+    private boolean exists(String table, long id) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from "+table+" where id=:id)",
+            Map.of("id",id),Boolean.class));
+    }
+    Long amazonFcAddressId(String code) {
+        return jdbc.query("select id from amazon_fc_addresses where upper(fc_code)=:code order by id limit 1",
+            Map.of("code",code),(r,n)->r.getLong(1)).stream().findFirst().orElse(null);
+    }
+    long create(FbaService.WriteValues v,long userId,LocalDate businessDate) {
+        String prefix="FBA"+businessDate.format(DateTimeFormatter.ofPattern("yyMMdd"));
+        jdbc.query("select pg_advisory_xact_lock(hashtext(:prefix))",Map.of("prefix",prefix),r->null);
+        Integer last=jdbc.queryForObject("select coalesce(max(right(fba_no,4)::integer),0) from fba_shipments where fba_no like :pattern",
+            Map.of("pattern",prefix+"%"),Integer.class);
+        String number=prefix+String.format("%04d",(last==null?0:last)+1);
+        MapSqlParameterSource p=writeParams(v).addValue("fba_no",number).addValue("created_by",userId);
+        Long id=jdbc.queryForObject("""
+            insert into fba_shipments(fba_no,customer_id,warehouse_id,amazon_fc_code,amazon_fc_address_id,
+              carrier_id,scheduled_pickup_at,appointment_time,reference_no,shipment_id,st_number,remark,status,created_by,created_at,updated_at)
+            values(:fba_no,:customer_id,:warehouse_id,:amazon_fc_code,:amazon_fc_address_id,:carrier_id,
+              :scheduled_pickup_at,:appointment_time,:reference_no,:shipment_id,:st_number,:remark,0,:created_by,current_timestamp,current_timestamp)
+            returning id
+            """,p,Long.class);
+        return Objects.requireNonNull(id);
+    }
+    void update(long id,FbaService.WriteValues v) {
+        MapSqlParameterSource p=writeParams(v).addValue("id",id);
+        jdbc.update("""
+            update fba_shipments set customer_id=:customer_id,warehouse_id=:warehouse_id,
+              amazon_fc_code=:amazon_fc_code,amazon_fc_address_id=:amazon_fc_address_id,carrier_id=:carrier_id,
+              scheduled_pickup_at=:scheduled_pickup_at,appointment_time=:appointment_time,reference_no=:reference_no,
+              shipment_id=:shipment_id,st_number=:st_number,remark=:remark,updated_at=current_timestamp where id=:id
+            """,p);
+    }
+    private MapSqlParameterSource writeParams(FbaService.WriteValues v) {
+        return new MapSqlParameterSource().addValue("customer_id",v.customerId()).addValue("warehouse_id",v.warehouseId())
+            .addValue("amazon_fc_code",v.amazonFcCode()).addValue("amazon_fc_address_id",v.amazonFcAddressId())
+            .addValue("carrier_id",v.carrierId()).addValue("scheduled_pickup_at",v.scheduledPickupAt())
+            .addValue("appointment_time",v.appointmentTime()).addValue("reference_no",v.referenceNo())
+            .addValue("shipment_id",v.shipmentId()).addValue("st_number",v.stNumber()).addValue("remark",v.remark());
+    }
+    String snapshot(long id) {
+        return jdbc.query("select to_jsonb(s)::text from fba_shipments s where id=:id",Map.of("id",id),(r,n)->r.getString(1))
+            .stream().findFirst().orElse(null);
+    }
+    void audit(String action,long entityId,long userId,String before,String after) {
+        MapSqlParameterSource p=new MapSqlParameterSource().addValue("action",action).addValue("entity_id",entityId)
+            .addValue("user_id",userId).addValue("before",before).addValue("after",after);
+        jdbc.update("""
+            insert into audit_logs(user_id,action,entity_type,entity_id,before_data,after_data,created_at)
+            values(:user_id,:action,'FBA',:entity_id,cast(:before as jsonb),cast(:after as jsonb),current_timestamp)
+            """,p);
+    }
+
+    Optional<ShipmentLock> lockShipment(long id, UserAccount user) {
+        MapSqlParameterSource p=new MapSqlParameterSource("id",id); List<String> c=new ArrayList<>(List.of("s.id=:id")); scope(user,p,c);
+        return jdbc.query("select s.id,s.fba_no,s.warehouse_id,s.customer_id,s.amazon_fc_code,s.status from fba_shipments s"+where(c)+" for update",p,
+            (r,n)->new ShipmentLock(r.getLong("id"),r.getString("fba_no"),r.getLong("warehouse_id"),nlong(r,"customer_id"),r.getString("amazon_fc_code"),r.getInt("status"))).stream().findFirst();
+    }
+    Optional<LotLock> lockLot(long id, UserAccount user) {
+        MapSqlParameterSource p=new MapSqlParameterSource("id",id); List<String> c=new ArrayList<>(List.of("s.id=:id")); scope(user,p,c);
+        String sql="select s.id,s.warehouse_id,s.customer_id,s.fc_code,s.original_pallet_qty,s.original_carton_qty,"+
+            "s.available_pallet_qty,s.available_carton_qty,s.available_weight_lbs,s.available_cbm,"+
+            "s.allocated_pallet_qty,s.allocated_carton_qty,s.allocated_weight_lbs,s.allocated_cbm,"+
+            "s.hold_pallet_qty,s.hold_carton_qty from inventory_lots s"+where(c)+" for update";
+        return jdbc.query(sql,p,(r,n)->new LotLock(r.getLong("id"),r.getLong("warehouse_id"),nlong(r,"customer_id"),r.getString("fc_code"),
+            qty(r,"original_pallet_qty"),qty(r,"original_carton_qty"),
+            new FbaService.Quantities(qty(r,"available_pallet_qty"),qty(r,"available_carton_qty"),qty(r,"available_weight_lbs"),qty(r,"available_cbm")),
+            new FbaService.Quantities(qty(r,"allocated_pallet_qty"),qty(r,"allocated_carton_qty"),qty(r,"allocated_weight_lbs"),qty(r,"allocated_cbm")),
+            qty(r,"hold_pallet_qty"),qty(r,"hold_carton_qty"))).stream().findFirst();
+    }
+    Optional<AllocationLock> lockAllocation(long fbaId,long allocationId) {
+        return jdbc.query("select * from fba_inventory_allocations where id=:id and fba_shipment_id=:fba_id for update",
+            Map.of("id",allocationId,"fba_id",fbaId),(r,n)->allocationLock(r)).stream().findFirst();
+    }
+    Optional<AllocationLock> lockAllocationByLot(long fbaId,long lotId) {
+        return jdbc.query("select * from fba_inventory_allocations where fba_shipment_id=:fba_id and inventory_lot_id=:lot_id for update",
+            Map.of("fba_id",fbaId,"lot_id",lotId),(r,n)->allocationLock(r)).stream().findFirst();
+    }
+    long insertAllocation(long fbaId,long lotId,FbaService.Quantities q,long userId) {
+        MapSqlParameterSource p=quantityParams(q).addValue("fba_id",fbaId).addValue("lot_id",lotId).addValue("user_id",userId);
+        return Objects.requireNonNull(jdbc.queryForObject("""
+            insert into fba_inventory_allocations(fba_shipment_id,inventory_lot_id,allocated_pallet_qty,allocated_carton_qty,
+              allocated_weight_lbs,allocated_cbm,created_by,created_at,updated_at)
+            values(:fba_id,:lot_id,:pallet,:carton,:weight,:cbm,:user_id,current_timestamp,current_timestamp) returning id
+            """,p,Long.class));
+    }
+    void updateAllocation(long id,FbaService.Quantities q) {
+        jdbc.update("update fba_inventory_allocations set allocated_pallet_qty=:pallet,allocated_carton_qty=:carton,allocated_weight_lbs=:weight,allocated_cbm=:cbm,updated_at=current_timestamp where id=:id",quantityParams(q).addValue("id",id));
+    }
+    void updateLot(long id,FbaService.Quantities available,FbaService.Quantities allocated,LotLock lot) {
+        int status=lotStatus(available,allocated,lot);
+        MapSqlParameterSource p=quantityParams(available,"available_").addValues(quantityMap(allocated,"allocated_")).addValue("id",id).addValue("status",status);
+        jdbc.update("update inventory_lots set available_pallet_qty=:available_pallet,available_carton_qty=:available_carton,available_weight_lbs=:available_weight,available_cbm=:available_cbm,allocated_pallet_qty=:allocated_pallet,allocated_carton_qty=:allocated_carton,allocated_weight_lbs=:allocated_weight,allocated_cbm=:allocated_cbm,status=:status,updated_at=current_timestamp where id=:id",p);
+    }
+    void updateFbaStatus(long id,int status) { jdbc.update("update fba_shipments set status=:status,updated_at=current_timestamp where id=:id",Map.of("id",id,"status",status)); }
+    String lotSnapshot(long id) { return jdbc.query("select to_jsonb(s)::text from inventory_lots s where id=:id",Map.of("id",id),(r,n)->r.getString(1)).stream().findFirst().orElse(null); }
+    void inventoryTransaction(long lotId,String type,FbaService.Quantities delta,long fbaId,String remark,long userId,String before,String after) {
+        MapSqlParameterSource p=quantityParams(delta).addValue("lot_id",lotId).addValue("type",type).addValue("fba_id",fbaId)
+            .addValue("remark",remark).addValue("user_id",userId).addValue("before",before).addValue("after",after);
+        jdbc.update("""
+            insert into inventory_transactions(inventory_lot_id,transaction_type,pallet_delta,carton_delta,weight_delta,cbm_delta,
+              reference_type,reference_id,before_snapshot,after_snapshot,remark,created_by,created_at)
+            values(:lot_id,cast(:type as inventory_transaction_type),:pallet,:carton,:weight,:cbm,'FBA',:fba_id,
+              cast(:before as jsonb),cast(:after as jsonb),:remark,:user_id,current_timestamp)
+            """,p);
+    }
+    Optional<Map<String,Object>> allocationRead(long fbaId,long allocationId,String fc) {
+        return allocationRows(fbaId,fc).stream().filter(x->Objects.equals(((Number)x.get("id")).longValue(),allocationId)).findFirst();
+    }
+    private AllocationLock allocationLock(ResultSet r)throws SQLException { return new AllocationLock(r.getLong("id"),r.getLong("fba_shipment_id"),r.getLong("inventory_lot_id"),new FbaService.Quantities(qty(r,"allocated_pallet_qty"),qty(r,"allocated_carton_qty"),qty(r,"allocated_weight_lbs"),qty(r,"allocated_cbm"))); }
+    private BigDecimal qty(ResultSet r,String name)throws SQLException { BigDecimal v=r.getBigDecimal(name);return v==null?BigDecimal.ZERO:v; }
+    private MapSqlParameterSource quantityParams(FbaService.Quantities q){return quantityParams(q,"");}
+    private MapSqlParameterSource quantityParams(FbaService.Quantities q,String prefix){return new MapSqlParameterSource(quantityMap(q,prefix));}
+    private Map<String,Object> quantityMap(FbaService.Quantities q,String prefix){Map<String,Object> m=new HashMap<>();m.put(prefix+"pallet",q.pallet());m.put(prefix+"carton",q.carton());m.put(prefix+"weight",q.weight());m.put(prefix+"cbm",q.cbm());return m;}
+    private int lotStatus(FbaService.Quantities available,FbaService.Quantities allocated,LotLock lot){
+        boolean av=available.pallet().signum()>0||available.carton().signum()>0, al=allocated.pallet().signum()>0||allocated.carton().signum()>0;
+        boolean held=lot.holdPallet().signum()>0||lot.holdCarton().signum()>0, original=lot.originalPallet().signum()>0||lot.originalCarton().signum()>0;
+        if(!av&&!al&&!held&&original)return 4;if(!av&&held)return 3;if(!av&&al)return 2;if(av&&al)return 1;return 0;
+    }
+
+    record ShipmentLock(long id,String fbaNo,long warehouseId,Long customerId,String amazonFcCode,int status) {}
+    record LotLock(long id,long warehouseId,Long customerId,String fcCode,BigDecimal originalPallet,BigDecimal originalCarton,
+                   FbaService.Quantities available,FbaService.Quantities allocated,BigDecimal holdPallet,BigDecimal holdCarton) {}
+    record AllocationLock(long id,long fbaId,long lotId,FbaService.Quantities quantities) {}
 
     Map<String,Object> list(FbaQuery q,UserAccount u) {
         MapSqlParameterSource p=new MapSqlParameterSource(); List<String> c=new ArrayList<>(); scope(u,p,c);

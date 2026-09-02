@@ -13,6 +13,7 @@ import {
   UserOutlined,
   LeftOutlined,
   RightOutlined,
+  ApartmentOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, Layout, Menu, Space } from "antd";
 import { useMemo, useState } from "react";
@@ -77,6 +78,7 @@ export function AppLayout() {
           onClick={(e) => { if (!e.key.startsWith("g-")) nav(e.key); }}
           items={[
             { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+            { key: "/3pl", icon: <ApartmentOutlined />, label: "3PL Control Tower" },
             {
               key: "inbound", icon: <ImportOutlined />, label: "InBound",
               children: [

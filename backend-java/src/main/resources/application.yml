@@ -1,11 +1,13 @@
 server:
-  port: ${PORT:8000}
+  port: ${YUKI_SERVER_PORT:${PORT:8081}}
 
 app:
-  database-url: ${DATABASE_URL:postgresql+psycopg://dlx_user:change_me@localhost:5432/dlx_yuki_wms}
+  database-url: ${YUKI_DB_URL:${DATABASE_URL:postgresql+psycopg://dlx_user:change_me@localhost:5432/dlx_yuki_wms}}
+  database-user: ${YUKI_DB_USER:}
+  database-password: ${YUKI_DB_PASSWORD:}
   business-timezone: ${BUSINESS_TIMEZONE:America/Los_Angeles}
   jwt:
-    secret-key: ${JWT_SECRET_KEY:development-only-change-me-32-chars}
+    secret-key: ${YUKI_JWT_SECRET:${JWT_SECRET_KEY:development-only-change-me-32-chars}}
     algorithm: ${JWT_ALGORITHM:HS256}
     access-token-expire-minutes: ${ACCESS_TOKEN_EXPIRE_MINUTES:30}
     refresh-token-expire-days: ${REFRESH_TOKEN_EXPIRE_DAYS:7}
@@ -15,6 +17,21 @@ spring:
     exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   jackson:
     property-naming-strategy: SNAKE_CASE
+  flyway:
+    enabled: false
+
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: false
+    call-setters-on-nulls: true
+
+springdoc:
+  api-docs:
+    path: /api/v2/openapi
+  swagger-ui:
+    path: /api/v2/swagger-ui.html
+  paths-to-match: /api/v2/**
 
 logging:
   level:

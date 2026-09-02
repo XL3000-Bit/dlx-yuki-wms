@@ -18,6 +18,16 @@ from app.models.operational_exception import ExceptionSeverity, ExceptionStatus,
 from app.models.operational_document import DocumentEvent, DocumentStatus, DocumentType, OperationalDocument
 from app.models.operational_notification import NotificationSeverity, NotificationType, OperationalNotification
 from app.models.company_profile import CompanyProfile
+from app.models.scan_execution import (
+    PickQuantityUnit,
+    ScanEvent,
+    ScanEventType,
+    ScanOperationType,
+    ScanResult,
+    ScanSession,
+    ScanSessionStatus,
+    ScanType,
+)
 
 __all__ = ["AmazonFCAddress", "Carrier", "Customer", "User", "UserRole", "ScopeMode", "Warehouse", "WarehouseArea", "WarehouseLocation", "ImportJob", "ImportRow", "ImportError", "InboundRecord", "AuditLog", "InventoryLot", "InventoryLotLocation", "InventoryTransaction", "InventoryPriorityRule", "FBAShipment", "FBAInventoryAllocation"]
 __all__ += ["OBStatus", "OBType", "OutboundOrder", "OutboundInventoryAllocation"]
@@ -30,3 +40,13 @@ __all__ += ["ExceptionSeverity", "ExceptionStatus", "ExceptionType", "Operationa
 __all__ += ["DocumentEvent", "DocumentStatus", "DocumentType", "OperationalDocument"]
 __all__ += ["NotificationSeverity", "NotificationType", "OperationalNotification"]
 __all__ += ["LoadVerificationTransaction", "StageTransaction", "CompanyProfile"]
+__all__ += [
+    "PickQuantityUnit",
+    "ScanEvent",
+    "ScanEventType",
+    "ScanOperationType",
+    "ScanResult",
+    "ScanSession",
+    "ScanSessionStatus",
+    "ScanType",
+]
