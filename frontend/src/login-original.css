@@ -1,0 +1,29 @@
+.login-page-original {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #eef1f4;
+}
+
+.login-panel-original {
+  width: 390px;
+  background: #fff;
+  border: 1px solid #d9dee4;
+  padding: 30px;
+  box-shadow: 0 10px 30px #26334118;
+}
+
+.login-brand-original {
+  color: #f57c00;
+  font-size: 25px;
+  font-weight: 800;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+
+.login-brand-original span {
+  font-size: 13px;
+  color: #3d4854;
+  margin-left: 8px;
+}
