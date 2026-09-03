@@ -20,7 +20,14 @@ if (-not (Test-Path -LiteralPath $hbaPath -PathType Leaf)) {
 }
 
 $currentBytes = [IO.File]::ReadAllBytes($hbaPath)
-$currentHash = (Get-FileHash -LiteralPath $hbaPath -Algorithm SHA256).Hash
+$sha256 = [Security.Cryptography.SHA256]::Create()
+$hbaStream = [IO.File]::OpenRead($hbaPath)
+try {
+    $currentHash = [BitConverter]::ToString($sha256.ComputeHash($hbaStream)).Replace('-', '')
+} finally {
+    $hbaStream.Dispose()
+    $sha256.Dispose()
+}
 
 if ($currentHash -eq $originalHash) {
     if (Test-Path -LiteralPath $backupPath -PathType Leaf) {
