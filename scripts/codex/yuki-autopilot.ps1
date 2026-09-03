@@ -13,11 +13,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if ($AutoApprove -and -not $Run) {
+    Write-Output 'FINAL = REFUSED_AUTOAPPROVE_REQUIRES_RUN'
+    throw '-AutoApprove is valid only with -Run.'
+}
 $modes = @($Status, $Prepare, $Review, $Finish, $Next, $Run, $DryRun) | Where-Object { [bool]$_ }
 if ($modes.Count -ne 1) {
     throw 'Specify exactly one mode: -Status, -Prepare, -Review, -Finish, -Next, -Run, or -DryRun.'
 }
-if ($AutoApprove -and -not $Run) { throw '-AutoApprove is valid only with -Run.' }
 
 $repoRoot = (& git -C $PSScriptRoot rev-parse --show-toplevel 2>$null).Trim()
 $taskPath = Join-Path $repoRoot '.codex/CURRENT_TASK.md'
