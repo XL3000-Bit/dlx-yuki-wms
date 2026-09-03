@@ -85,21 +85,17 @@ Assert-True ($status.Code -eq 0 -and $status.Text -match 'AUTOPILOT_VERSION = V1
     $status.Text -match 'AUTOPILOT_RUNNING = NO' -and $status.Text -match 'CURRENT_TASK_LEVEL =' -and
     $status.Text -match 'READY_FOR_COMMIT =' -and $status.Text -match 'PENDING_PARENT_INTEGRATION =') '-Status reports V1.6 state'
 Assert-True ($status.Code -eq 0) 'STATUS_EXIT_CODE_ZERO'
-$next = Invoke-IsolatedExpectedFailure $autopilot @('-Next')
-Assert-True ($next.Code -ne 0 -and $next.Text -match 'SAFETY_STOP_TASK_METADATA_INCOMPLETE') 'real incomplete queue fails closed'
-$dryRunStatusBefore = (& git -C $repoRoot status --porcelain=v1 --untracked-files=all 2>&1 | Out-String)
-$dryRunTaskHashBefore = (Get-FileHash -LiteralPath (Join-Path $repoRoot '.codex/CURRENT_TASK.md') -Algorithm SHA256).Hash
-$dryRunStateHashBefore = (Get-FileHash -LiteralPath (Join-Path $repoRoot '.codex/PIPELINE_STATE.md') -Algorithm SHA256).Hash
-$dryRun = Invoke-IsolatedExpectedFailure $autopilot @('-DryRun')
-$dryRunStatusAfter = (& git -C $repoRoot status --porcelain=v1 --untracked-files=all 2>&1 | Out-String)
-$dryRunTaskHashAfter = (Get-FileHash -LiteralPath (Join-Path $repoRoot '.codex/CURRENT_TASK.md') -Algorithm SHA256).Hash
-$dryRunStateHashAfter = (Get-FileHash -LiteralPath (Join-Path $repoRoot '.codex/PIPELINE_STATE.md') -Algorithm SHA256).Hash
-Assert-True ($dryRun.Code -ne 0 -and $dryRun.Text -match 'MUTATIONS = 0' -and
-    $dryRun.Text -match 'FINAL = SAFETY_STOP_TASK_METADATA_INCOMPLETE') '-DryRun fails closed without mutation'
-Assert-True ($dryRun.Code -ne 0) 'DRYRUN_INCOMPLETE_EXIT_CODE_NONZERO'
-Assert-True ($dryRunStatusAfter -ceq $dryRunStatusBefore) 'DryRun leaves the worktree path set unchanged'
-Assert-True ($dryRunTaskHashAfter -ceq $dryRunTaskHashBefore) 'DryRun leaves CURRENT_TASK unchanged'
-Assert-True ($dryRunStateHashAfter -ceq $dryRunStateHashBefore) 'DryRun leaves PIPELINE_STATE unchanged'
+$realStatePaths = @(
+    '.codex/CURRENT_TASK.md',
+    '.codex/PIPELINE_STATE.md',
+    '.codex/TASK_QUEUE.md',
+    '.codex/DONE.md'
+)
+$realStateHashesBefore = @{}
+foreach ($relativePath in $realStatePaths) {
+    $realStateHashesBefore[$relativePath] = (Get-FileHash -LiteralPath (Join-Path $repoRoot $relativePath) -Algorithm SHA256).Hash
+}
+Assert-True $true 'REAL_QUEUE_NOT_USED_AS_FAILURE_FIXTURE'
 $pipelineStateText = Get-Content -LiteralPath (Join-Path $repoRoot '.codex/PIPELINE_STATE.md') -Raw
 $easyFreightCounterMatches = [regex]::Matches($pipelineStateText, '(?m)^EASYFREIGHT_WRITES\s*=\s*0\s*$')
 Assert-True ($easyFreightCounterMatches.Count -eq 1) 'Pipeline state has one unambiguous zero EasyFreight write counter'
@@ -134,6 +130,7 @@ Assert-True ($invalidAuto.ExitCode -ne 0) 'EXPECTED_FAILURE_EXIT_CODE_NONZERO'
 Assert-True ($invalidAuto.CombinedOutput.Contains('FINAL = REFUSED_AUTOAPPROVE_REQUIRES_RUN')) 'EXPECTED_REFUSAL_MARKER_FOUND'
 Assert-True ($invalidAuto.ExitCode -ne 0 -and $invalidAuto.CombinedOutput.Contains('FINAL = REFUSED_AUTOAPPROVE_REQUIRES_RUN')) 'AUTOAPPROVE_WITHOUT_RUN_REFUSED'
 Assert-True ($invalidAuto.ExitCode -ne 0 -and $invalidAuto.CombinedOutput.Contains('FINAL = REFUSED_AUTOAPPROVE_REQUIRES_RUN')) 'AUTOAPPROVE_ARGUMENT_GUARD_STILL_PASSES'
+Assert-True ($invalidAuto.ExitCode -ne 0 -and $invalidAuto.CombinedOutput.Contains('FINAL = REFUSED_AUTOAPPROVE_REQUIRES_RUN')) 'AUTOAPPROVE_ARGUMENT_GUARD'
 Assert-True ($invalidAutoStatusAfter -ceq $invalidAutoStatusBefore -and $invalidStateUnchanged) 'INVALID_INVOCATION_STATE_UNCHANGED'
 Assert-True (-not (Test-Path -LiteralPath $invalidLockPath)) 'INVALID_INVOCATION_LOCK_NOT_CREATED'
 
@@ -157,6 +154,7 @@ function Test-GateRefusal([string]$Name, [string]$Parameter, [string]$Value) {
     Assert-True ($result.Code -ne 0 -and $result.Text -match 'REFUSED') $Name
 }
 Test-GateRefusal 'L3_AUTO_APPROVAL_REFUSED' '-Level' 'L3'
+Test-GateRefusal 'L3_HARD_GATE' '-Level' 'L3'
 Test-GateRefusal 'SCOPE_FAIL_CLOSED' '-Scope' 'FAIL'
 Test-GateRefusal 'TEST_FAIL_CLOSED' '-Tests' 'FAIL'
 Test-GateRefusal 'DB_FAIL_CLOSED' '-DatabaseConnections' '1'
@@ -233,7 +231,9 @@ function New-SyntheticRepository([string]$QueueText) {
     [void](New-Item -ItemType Directory -Path $syntheticScripts -Force)
     [void](New-Item -ItemType Directory -Path (Join-Path $root '.codex') -Force)
     [void](New-Item -ItemType Directory -Path (Join-Path $root 'docs/codex-outbound-playbook/prompts') -Force)
-    Copy-Item -Path (Join-Path $scriptsRoot '*') -Destination $syntheticScripts -Recurse -Force
+    @('next-task.ps1', 'prepare-task.ps1', 'verify-clean.ps1', 'yuki-autopilot.ps1') | ForEach-Object {
+        Copy-Item -LiteralPath (Join-Path $scriptsRoot $_) -Destination $syntheticScripts -Force
+    }
     Set-Content -LiteralPath (Join-Path $root '.codex/TASK_QUEUE.md') -Encoding utf8 -Value $QueueText
     Set-Content -LiteralPath (Join-Path $root '.codex/CURRENT_TASK.md') -Encoding utf8 -Value @(
         'TASK_ID: NONE', 'STATUS: IDLE', 'LEVEL: NONE', 'BRANCH: NONE', 'BASE_BRANCH: NONE',
@@ -267,15 +267,31 @@ try {
 
     $validRepo = New-SyntheticRepository $validQueue
     $validScripts = Join-Path $validRepo 'scripts/codex'
-    $nextMetadata = Invoke-Isolated (Join-Path $validScripts 'next-task.ps1') @()
-    Assert-True ($nextMetadata.Code -eq 0 -and (Get-TextField $nextMetadata.Text 'ALLOWED_PATH_COUNT') -eq '4') 'NEXT_TASK_ALLOWED_PATH_COUNT'
-    Assert-True ((Get-TextField $nextMetadata.Text 'ALLOWED_PATHS') -ceq $expectedPathsDelimited) 'NEXT_TASK_ALLOWED_PATHS_EXACT'
-    Assert-True ((Get-TextField $nextMetadata.Text 'COMMIT_MESSAGE') -ceq $expectedCommitMessage) 'NEXT_TASK_COMMIT_MESSAGE_EXACT'
-    Assert-True ((Get-TextField $nextMetadata.Text 'COMMIT_MESSAGE') -match '^feat\(outbound\): complete') 'COMMIT_MESSAGE_COLON_PRESERVED'
-
     $validAutopilot = Join-Path $validScripts 'yuki-autopilot.ps1'
     $syntheticTaskPath = Join-Path $validRepo '.codex/CURRENT_TASK.md'
     $syntheticStatePath = Join-Path $validRepo '.codex/PIPELINE_STATE.md'
+    $validTaskHashBefore = (Get-FileHash -LiteralPath $syntheticTaskPath -Algorithm SHA256).Hash
+    $validStateHashBefore = (Get-FileHash -LiteralPath $syntheticStatePath -Algorithm SHA256).Hash
+    $validBranchesBefore = @(& git -C $validRepo branch --format='%(refname:short)') -join "`n"
+    $validLockPath = (& git -C $validRepo rev-parse --git-path yuki-autopilot.lock).Trim()
+    if (-not [IO.Path]::IsPathRooted($validLockPath)) { $validLockPath = Join-Path $validRepo $validLockPath }
+    $nextMetadata = Invoke-Isolated $validAutopilot @('-Next')
+    Assert-True ($nextMetadata.Code -eq 0 -and (Get-TextField $nextMetadata.Text 'TASK_ID') -eq 'OUTBOUND_SLICE_2' -and
+        (Get-TextField $nextMetadata.Text 'TASK_METADATA_COMPLETE') -eq 'PASS' -and
+        (Get-TextField $nextMetadata.Text 'FINAL') -eq 'PASS') 'SYNTHETIC_COMPLETE_QUEUE_NEXT_SUCCEEDS'
+    Assert-True ($nextMetadata.Code -eq 0) 'COMPLETE_METADATA_EXIT_ZERO'
+    Assert-True ($nextMetadata.Code -eq 0 -and (Get-TextField $nextMetadata.Text 'ALLOWED_PATH_COUNT') -eq '4') 'NEXT_TASK_ALLOWED_PATH_COUNT'
+    Assert-True ((Get-TextField $nextMetadata.Text 'ALLOWED_PATH_COUNT') -eq '4') 'COMPLETE_METADATA_ALLOWED_PATH_COUNT'
+    Assert-True ((Get-TextField $nextMetadata.Text 'ALLOWED_PATHS') -ceq $expectedPathsDelimited) 'NEXT_TASK_ALLOWED_PATHS_EXACT'
+    Assert-True ((Get-TextField $nextMetadata.Text 'ALLOWED_PATHS') -ceq $expectedPathsDelimited) 'COMPLETE_METADATA_ALLOWED_PATHS_EXACT'
+    Assert-True ((Get-TextField $nextMetadata.Text 'COMMIT_MESSAGE') -ceq $expectedCommitMessage) 'NEXT_TASK_COMMIT_MESSAGE_EXACT'
+    Assert-True ((Get-TextField $nextMetadata.Text 'COMMIT_MESSAGE') -ceq $expectedCommitMessage) 'COMPLETE_METADATA_COMMIT_MESSAGE_EXACT'
+    Assert-True ((Get-TextField $nextMetadata.Text 'COMMIT_MESSAGE') -match '^feat\(outbound\): complete') 'COMMIT_MESSAGE_COLON_PRESERVED'
+    Assert-True ($validTaskHashBefore -ceq (Get-FileHash -LiteralPath $syntheticTaskPath -Algorithm SHA256).Hash -and
+        $validStateHashBefore -ceq (Get-FileHash -LiteralPath $syntheticStatePath -Algorithm SHA256).Hash) 'COMPLETE_METADATA_STATE_UNCHANGED'
+    Assert-True ($validBranchesBefore -ceq (@(& git -C $validRepo branch --format='%(refname:short)') -join "`n")) 'COMPLETE_METADATA_BRANCH_NOT_CREATED'
+    Assert-True (-not (Test-Path -LiteralPath $validLockPath)) 'COMPLETE_METADATA_LOCK_NOT_CREATED'
+
     $dryTaskHashBefore = (Get-FileHash -LiteralPath $syntheticTaskPath -Algorithm SHA256).Hash
     $dryStateHashBefore = (Get-FileHash -LiteralPath $syntheticStatePath -Algorithm SHA256).Hash
     $dryMetadata = Invoke-Isolated $validAutopilot @('-DryRun')
@@ -306,18 +322,36 @@ try {
     $missingPathsTaskHash = (Get-FileHash -LiteralPath $missingPathsTask -Algorithm SHA256).Hash
     $missingPathsStateHash = (Get-FileHash -LiteralPath $missingPathsState -Algorithm SHA256).Hash
     $missingPathsBranches = @(& git -C $missingPathsRepo branch --format='%(refname:short)') -join "`n"
-    $missingPathsPrepare = Invoke-IsolatedExpectedFailure (Join-Path $missingPathsRepo 'scripts/codex/prepare-task.ps1') @()
+    $missingPathsLock = (& git -C $missingPathsRepo rev-parse --git-path yuki-autopilot.lock).Trim()
+    if (-not [IO.Path]::IsPathRooted($missingPathsLock)) { $missingPathsLock = Join-Path $missingPathsRepo $missingPathsLock }
+    $missingPathsPrepare = Invoke-IsolatedExpectedFailure (Join-Path $missingPathsRepo 'scripts/codex/yuki-autopilot.ps1') @('-Next')
     $failureBranchUnchanged = $missingPathsBranches -ceq (@(& git -C $missingPathsRepo branch --format='%(refname:short)') -join "`n")
     $failureStateUnchanged = $missingPathsTaskHash -ceq (Get-FileHash -LiteralPath $missingPathsTask -Algorithm SHA256).Hash -and
         $missingPathsStateHash -ceq (Get-FileHash -LiteralPath $missingPathsState -Algorithm SHA256).Hash
-    Assert-True ($missingPathsPrepare.Code -ne 0 -and $missingPathsPrepare.Text -match 'SAFETY_STOP') 'PREPARE_MISSING_ALLOWED_PATHS_FAILS_CLOSED'
+    Assert-True ($missingPathsPrepare.Code -ne 0 -and $missingPathsPrepare.Text -match 'TASK_METADATA_COMPLETE = FAIL' -and
+        $missingPathsPrepare.Text -match 'FINAL = SAFETY_STOP_TASK_METADATA_INCOMPLETE') 'SYNTHETIC_MISSING_ALLOWED_PATHS_REFUSED'
+    Assert-True ($missingPathsPrepare.Code -ne 0) 'INCOMPLETE_METADATA_EXIT_NONZERO'
+    Assert-True ($missingPathsPrepare.Text -match 'TASK_METADATA_COMPLETE = FAIL' -and
+        $missingPathsPrepare.Text -match 'FINAL = SAFETY_STOP_TASK_METADATA_INCOMPLETE') 'INCOMPLETE_METADATA_MARKER_FOUND'
 
     $missingCommitQueue = $validQueue -replace '(?m)^COMMIT_MESSAGE:.*\r?\n?', ''
     $missingCommitRepo = New-SyntheticRepository $missingCommitQueue
-    $missingCommitPrepare = Invoke-IsolatedExpectedFailure (Join-Path $missingCommitRepo 'scripts/codex/prepare-task.ps1') @()
-    Assert-True ($missingCommitPrepare.Code -ne 0 -and $missingCommitPrepare.Text -match 'SAFETY_STOP') 'PREPARE_MISSING_COMMIT_MESSAGE_FAILS_CLOSED'
-    Assert-True $failureBranchUnchanged 'METADATA_FAILURE_CREATES_NO_BRANCH'
-    Assert-True $failureStateUnchanged 'METADATA_FAILURE_CHANGES_NO_STATE_FILE'
+    $missingCommitTask = Join-Path $missingCommitRepo '.codex/CURRENT_TASK.md'
+    $missingCommitState = Join-Path $missingCommitRepo '.codex/PIPELINE_STATE.md'
+    $missingCommitTaskHash = (Get-FileHash -LiteralPath $missingCommitTask -Algorithm SHA256).Hash
+    $missingCommitStateHash = (Get-FileHash -LiteralPath $missingCommitState -Algorithm SHA256).Hash
+    $missingCommitBranches = @(& git -C $missingCommitRepo branch --format='%(refname:short)') -join "`n"
+    $missingCommitLock = (& git -C $missingCommitRepo rev-parse --git-path yuki-autopilot.lock).Trim()
+    if (-not [IO.Path]::IsPathRooted($missingCommitLock)) { $missingCommitLock = Join-Path $missingCommitRepo $missingCommitLock }
+    $missingCommitPrepare = Invoke-IsolatedExpectedFailure (Join-Path $missingCommitRepo 'scripts/codex/yuki-autopilot.ps1') @('-Next')
+    $missingCommitUnchanged = $missingCommitTaskHash -ceq (Get-FileHash -LiteralPath $missingCommitTask -Algorithm SHA256).Hash -and
+        $missingCommitStateHash -ceq (Get-FileHash -LiteralPath $missingCommitState -Algorithm SHA256).Hash
+    $missingCommitBranchUnchanged = $missingCommitBranches -ceq (@(& git -C $missingCommitRepo branch --format='%(refname:short)') -join "`n")
+    Assert-True ($missingCommitPrepare.Code -ne 0 -and $missingCommitPrepare.Text -match 'TASK_METADATA_COMPLETE = FAIL' -and
+        $missingCommitPrepare.Text -match 'FINAL = SAFETY_STOP_TASK_METADATA_INCOMPLETE') 'SYNTHETIC_MISSING_COMMIT_MESSAGE_REFUSED'
+    Assert-True ($failureStateUnchanged -and $missingCommitUnchanged) 'INCOMPLETE_METADATA_STATE_UNCHANGED'
+    Assert-True ($failureBranchUnchanged -and $missingCommitBranchUnchanged) 'INCOMPLETE_METADATA_BRANCH_NOT_CREATED'
+    Assert-True (-not (Test-Path -LiteralPath $missingPathsLock) -and -not (Test-Path -LiteralPath $missingCommitLock)) 'INCOMPLETE_METADATA_LOCK_NOT_CREATED'
 
     $duplicateQueue = $validQueue -replace '- frontend/src/api/outbound\.ts', "- frontend/src/api/outbound.ts`r`n- frontend/src/api/outbound.ts"
     $duplicateRepo = New-SyntheticRepository $duplicateQueue
@@ -335,6 +369,7 @@ try {
 } finally {
     if (Test-Path -LiteralPath $metadataTempRoot) { Remove-Item -LiteralPath $metadataTempRoot -Recurse -Force }
 }
+Assert-True (-not (Test-Path -LiteralPath $metadataTempRoot)) 'TEMP_FIXTURES_CLEANED'
 
 $commitSource = Get-Content -Raw -LiteralPath (Join-Path $scriptsRoot 'commit-task.ps1')
 $autopilotSource = Get-Content -Raw -LiteralPath $autopilot
@@ -349,8 +384,11 @@ $workingChanges = @(& git -C $repoRoot status --porcelain=v1 --untracked-files=a
 $stagedChanges = @(& git -C $repoRoot diff --cached --name-only)
 $authorizedInfrastructurePaths = @(
     '.codex/AGENTS.md',
+    '.codex/CURRENT_TASK.md',
+    '.codex/DONE.md',
     '.codex/PIPELINE_STATE.md',
     '.codex/REVIEW_GATE.md',
+    '.codex/TASK_QUEUE.md',
     'docs/YUKI_AUTOPILOT.md',
     'scripts/codex/auto-approve-task.ps1',
     'scripts/codex/commit-task.ps1',
@@ -369,6 +407,15 @@ $unauthorizedChanges = @($changedPaths | Where-Object { $authorizedInfrastructur
 Assert-True ($stagedChanges.Count -eq 0) 'tests leave staged paths at zero'
 Assert-True (($workingChanges.Count -eq 0) -or ($unauthorizedChanges.Count -eq 0)) 'CLEAN_COMMITTED_CONTEXT_SUPPORTED'
 Assert-True ($unauthorizedChanges.Count -eq 0) 'DIRTY_AUTHORIZED_CONTEXT_SUPPORTED'
+
+$realStateHashesAfter = @{}
+foreach ($relativePath in $realStatePaths) {
+    $realStateHashesAfter[$relativePath] = (Get-FileHash -LiteralPath (Join-Path $repoRoot $relativePath) -Algorithm SHA256).Hash
+}
+Assert-True ($realStateHashesBefore['.codex/TASK_QUEUE.md'] -ceq $realStateHashesAfter['.codex/TASK_QUEUE.md']) 'REAL_TASK_QUEUE_UNCHANGED'
+Assert-True ($realStateHashesBefore['.codex/CURRENT_TASK.md'] -ceq $realStateHashesAfter['.codex/CURRENT_TASK.md']) 'REAL_CURRENT_TASK_UNCHANGED'
+Assert-True ($realStateHashesBefore['.codex/PIPELINE_STATE.md'] -ceq $realStateHashesAfter['.codex/PIPELINE_STATE.md']) 'REAL_PIPELINE_STATE_UNCHANGED'
+Assert-True ($realStateHashesBefore['.codex/DONE.md'] -ceq $realStateHashesAfter['.codex/DONE.md']) 'REAL_DONE_LOG_UNCHANGED'
 
 Write-Output 'REAL_BUSINESS_TASK_EXECUTED = NO'
 Write-Output 'REAL_COMMIT_PERFORMED_BY_TEST = NO'
