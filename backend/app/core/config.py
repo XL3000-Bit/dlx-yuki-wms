@@ -1,14 +1,18 @@
 from functools import lru_cache
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     app_name: str = "DLX Yuki WMS V3"
-    environment: str = "development"
+    environment: str = Field(
+        default="development",
+        validation_alias=AliasChoices("WMS_ENV", "ENVIRONMENT"),
+    )
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
-    database_url: str = "postgresql+psycopg://dlx_user:change_me@localhost:5432/dlx_yuki_wms"
+    # Required: absence must never silently fall back to the protected main DB.
+    database_url: str = Field(min_length=1)
     jwt_secret_key: str = Field(default="development-only-change-me-32-chars", min_length=32)
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
