@@ -44,7 +44,8 @@ function Get-OutputField([object[]]$Lines, [string]$Name) {
     return $null
 }
 function Get-NextTaskOutput {
-    return @(& (Join-Path $PSScriptRoot 'next-task.ps1') 2>&1)
+    $lines = @(& (Join-Path $PSScriptRoot 'next-task.ps1') 2>&1)
+    return [pscustomobject]@{ Code = $LASTEXITCODE; Lines = $lines }
 }
 function Write-CodexDetection {
     & (Join-Path $PSScriptRoot 'invoke-codex.ps1') -DetectOnly
@@ -83,30 +84,62 @@ if ($DryRun) {
     $prompt = Get-ColonField $taskPath 'PROMPT'
     $allowedPaths = Get-ColonField $taskPath 'ALLOWED_PATHS'
     $commitMessage = Get-ColonField $taskPath 'COMMIT_MESSAGE'
-    $wouldPrepare = $taskId -eq 'NONE'
+    $wouldPrepare = -not $taskId -or $taskId -eq 'NONE'
+    $nextResult = Get-NextTaskOutput
+    $nextOutput = $nextResult.Lines
+    $queueTaskId = Get-OutputField $nextOutput 'TASK_ID'
+    $queueAllowedPaths = Get-OutputField $nextOutput 'ALLOWED_PATHS'
+    $queueAllowedPathCount = Get-OutputField $nextOutput 'ALLOWED_PATH_COUNT'
+    $queueCommitMessage = Get-OutputField $nextOutput 'COMMIT_MESSAGE'
+    $metadataComplete = Get-OutputField $nextOutput 'TASK_METADATA_COMPLETE'
+    $final = Get-OutputField $nextOutput 'FINAL'
+    $metadataDrift = $false
     if ($wouldPrepare) {
-        $nextOutput = Get-NextTaskOutput
-        $taskId = Get-OutputField $nextOutput 'TASK_ID'
+        $taskId = $queueTaskId
         $level = Get-OutputField $nextOutput 'LEVEL'
         $branch = Get-OutputField $nextOutput 'BRANCH'
         $baseBranch = Get-OutputField $nextOutput 'BASE_BRANCH'
         $prompt = Get-OutputField $nextOutput 'PROMPT'
-        $allowedPaths = 'DECLARATION_REQUIRED_DURING_PREPARE'
+        $allowedPaths = $queueAllowedPaths
+        $commitMessage = $queueCommitMessage
+    } elseif ($nextResult.Code -eq 0 -and $final -eq 'PASS' -and $metadataComplete -eq 'PASS') {
+        $metadataDrift = $taskId -cne $queueTaskId -or
+            $allowedPaths -cne $queueAllowedPaths -or
+            $commitMessage -cne $queueCommitMessage
     }
+    $metadataValid = $nextResult.Code -eq 0 -and $final -eq 'PASS' -and $metadataComplete -eq 'PASS' -and -not $metadataDrift
+    $allowedPathCount = if ($wouldPrepare) { $queueAllowedPathCount } elseif ($allowedPaths) {
+        @($allowedPaths -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }).Count
+    } else { 0 }
+    $canAutoApprove = $metadataValid -and $level -in @('L1', 'L2')
     Write-Output 'YUKI_AUTOPILOT_DRY_RUN'
     Write-Output ("TASK_ID = {0}" -f $(if ($taskId) { $taskId } else { 'NONE' }))
     Write-Output ("LEVEL = {0}" -f $(if ($level) { $level } else { 'UNKNOWN' }))
     Write-Output ("BRANCH = {0}" -f $(if ($branch) { $branch } else { 'UNKNOWN' }))
     Write-Output ("BASE_BRANCH = {0}" -f $(if ($baseBranch) { $baseBranch } else { 'UNKNOWN' }))
     Write-Output ("PROMPT = {0}" -f $(if ($prompt) { $prompt } else { 'UNKNOWN' }))
+    Write-Output ("ALLOWED_PATH_COUNT = {0}" -f $allowedPathCount)
     Write-Output ("ALLOWED_PATHS = {0}" -f $(if ($allowedPaths) { $allowedPaths } else { 'UNKNOWN' }))
+    Write-Output ("COMMIT_MESSAGE = {0}" -f $(if ($commitMessage) { $commitMessage } else { 'UNKNOWN' }))
+    Write-Output ("TASK_METADATA_COMPLETE = {0}" -f $(if ($metadataValid) { 'PASS' } else { 'FAIL' }))
     Write-Output ("WOULD_PREPARE = {0}" -f $(if ($wouldPrepare) { 'YES' } else { 'NO' }))
-    Write-Output 'WOULD_INVOKE_CODEX = YES'
-    Write-Output ("WOULD_AUTO_APPROVE = {0}" -f $(if ($AutoApprove) { 'YES' } else { 'NO' }))
-    Write-Output ("WOULD_COMMIT = {0}" -f $(if ($AutoApprove -and $level -in @('L1', 'L2') -and $commitMessage -and $commitMessage -ne 'NONE') { 'YES' } else { 'NO' }))
-    Write-Output ("WOULD_PUSH = {0}" -f $(if ($AutoApprove -and $level -in @('L1', 'L2') -and $commitMessage -and $commitMessage -ne 'NONE') { 'YES' } else { 'NO' }))
+    Write-Output ("WOULD_INVOKE_CODEX = {0}" -f $(if ($metadataValid) { 'YES' } else { 'NO' }))
+    Write-Output ("WOULD_AUTO_APPROVE = {0}" -f $(if ($canAutoApprove) { 'YES' } else { 'NO' }))
+    Write-Output ("WOULD_COMMIT = {0}" -f $(if ($canAutoApprove) { 'YES' } else { 'NO' }))
+    Write-Output ("WOULD_PUSH = {0}" -f $(if ($canAutoApprove) { 'YES' } else { 'NO' }))
     Write-CodexDetection
     Write-Output 'MUTATIONS = 0'
+    if ($metadataDrift) {
+        Write-Output 'FINAL = SAFETY_STOP_TASK_METADATA_DRIFT'
+        exit 1
+    }
+    if (-not $metadataValid) {
+        foreach ($missing in @('ALLOWED_PATHS', 'COMMIT_MESSAGE')) {
+            if (-not (Get-OutputField $nextOutput $missing)) { Write-Output ("MISSING_FIELD = {0}" -f $missing) }
+        }
+        Write-Output 'FINAL = SAFETY_STOP_TASK_METADATA_INCOMPLETE'
+        exit 1
+    }
     Write-Output 'FINAL = DRY_RUN_COMPLETE'
     exit 0
 }
