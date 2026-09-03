@@ -39,10 +39,12 @@ import {
   exceptionOutbound,
   exportOutbounds,
   exportOutboundSelected,
+  getOutboundDispatchReadiness,
   getOutboundWorkbench,
   getOutboundWorkbenchDetail,
   releaseOutbound,
   resolveOutbound,
+  runOutboundWorkbenchBatch,
   updateOutboundSchedule,
 } from "../api/outbound";
 import { generateBol, generatePicking } from "../api/pickingBol";
@@ -152,6 +154,15 @@ export function OutboundDispatchWorkbenchPage() {
   const rows = list.data?.data || [];
   const selected =
     detail.data?.basic || rows.find((row: any) => row.id === selectedId);
+  const selectedRows = rows.filter((row: any) => selectedIds.includes(row.id));
+  const lifecycleRows = selectedIds.length
+    ? selectedRows
+    : selected
+      ? [selected]
+      : [];
+  const lifecycleIds = lifecycleRows.map((row: any) => row.id);
+  const canRunLifecycle = (name: string) =>
+    lifecycleRows.some((row: any) => row.allowed_actions?.[name]);
 
   const patch = (values: any) => {
     const query = new URLSearchParams(sp);
@@ -183,6 +194,82 @@ export function OutboundDispatchWorkbenchPage() {
     },
     onError: () => message.error("Operation rejected"),
   });
+  const batchAction = useMutation({
+    mutationFn: async ({ name, ids }: any) => {
+      if (name === "dispatch") {
+        const readiness = await Promise.all(
+          ids.map(async (id: number) => ({
+            id,
+            readiness: await getOutboundDispatchReadiness(id),
+          })),
+        );
+        const blocked = readiness.filter(
+          ({ readiness: result }: any) => result.status !== "READY",
+        );
+        if (blocked.length) {
+          const error: any = new Error("Dispatch blocked by readiness checks");
+          error.blocked = blocked;
+          throw error;
+        }
+      }
+      return runOutboundWorkbenchBatch(name, ids);
+    },
+    onSuccess: (result: any) => {
+      const failedResults = result.results.filter(
+        (item: any) => item.status === "failed",
+      );
+      if (result.failed > 0) {
+        Modal.warning({
+          title:
+            result.successful > 0
+              ? "Batch completed with blocked outbound orders"
+              : "Batch operation blocked",
+          content: (
+            <div>
+              <p>
+                Successful: {result.successful}; Failed: {result.failed}
+              </p>
+              <ul>
+                {failedResults.map((item: any) => (
+                  <li key={item.id}>
+                    OB {item.id}: {item.reason || "Operation rejected"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ),
+        });
+      } else {
+        message.success(
+          `Batch operation completed for ${result.successful} outbound order${result.successful === 1 ? "" : "s"}`,
+        );
+      }
+      refresh();
+    },
+    onError: (error: any) => {
+      if (error.blocked?.length) {
+        Modal.warning({
+          title: "Dispatch blocked",
+          content: (
+            <ul>
+              {error.blocked.flatMap(({ id, readiness }: any) =>
+                readiness.blocking_reasons.map((reason: string, index: number) => (
+                  <li key={`${id}-${index}`}>
+                    OB {id}: {reason}
+                  </li>
+                )),
+              )}
+            </ul>
+          ),
+        });
+        return;
+      }
+      message.error(error?.message || "Batch operation rejected");
+    },
+  });
+  const runLifecycle = (name: string) => {
+    if (lifecycleIds.length) batchAction.mutate({ name, ids: lifecycleIds });
+  };
   const create = useMutation({
     mutationFn: createOutbound,
     onSuccess: () => {
@@ -299,8 +386,15 @@ export function OutboundDispatchWorkbenchPage() {
       title: "Readiness",
       dataIndex: "dispatch_readiness",
       width: 108,
-      render: (value: any) =>
-        value ? <DispatchReadinessTag value={value} /> : "--",
+      render: (value: any, row: any) =>
+        value ? (
+          <DispatchReadinessTag
+            value={value}
+            reasons={row.blocking_reasons}
+          />
+        ) : (
+          "--"
+        ),
     },
     { title: "Carrier", dataIndex: "carrier", width: 116 },
     {
@@ -455,16 +549,20 @@ export function OutboundDispatchWorkbenchPage() {
   ];
 
   const summary = list.data?.summary || {};
-  const selectedRows = rows.filter((row: any) => selectedIds.includes(row.id));
   const selectedPallets = selectedRows.reduce(
     (total: number, row: any) => total + Number(row.allocated_pallet_qty || 0),
     0,
   );
 
   const upperPanel = (
-    <div className="dispatch-panel dispatch-panel-upper">
+    <section
+      className="dispatch-panel dispatch-panel-upper"
+      aria-labelledby="outbound-region-allocation"
+    >
       <div className="panel-title">
-        <h3>OB Allocation / Picking / BOL</h3>
+        <h3 id="outbound-region-allocation">
+          Region 2: Allocation / Picking / BOL
+        </h3>
         <Space size={6} wrap>
           <Button
             disabled={!selected?.allowed_actions?.picking}
@@ -507,13 +605,16 @@ export function OutboundDispatchWorkbenchPage() {
         {n(selected?.allocated_weight_lbs)} LB <span>/</span>{" "}
         {n(selected?.allocated_cbm)} CBM
       </div>
-    </div>
+    </section>
   );
 
   const lowerPanel = (
-    <div className="dispatch-panel dispatch-panel-lower">
+    <section
+      className="dispatch-panel dispatch-panel-lower"
+      aria-labelledby="outbound-region-source"
+    >
       <div className="panel-title">
-        <h3>Remaining Source</h3>
+        <h3 id="outbound-region-source">Region 3: Remaining Source</h3>
       </div>
       {selected && <EntityDocuments relation={{ outbound_id: selected.id }} />}
       <div
@@ -536,7 +637,7 @@ export function OutboundDispatchWorkbenchPage() {
           }}
         />
       </div>
-    </div>
+    </section>
   );
 
   return (
@@ -563,10 +664,10 @@ export function OutboundDispatchWorkbenchPage() {
               warehouses={warehouses.data || []}
               carriers={carriers.data || []}
               selectedCount={selectedIds.length}
-              canConfirm={!!selected?.allowed_actions?.confirm}
-              canCancel={!!selected?.allowed_actions?.cancel}
+              canConfirm={canRunLifecycle("confirm")}
+              canCancel={canRunLifecycle("cancel")}
               canException={!!selected?.allowed_actions?.exception}
-              canDispatch={!!selected?.allowed_actions?.dispatch}
+              canDispatch={canRunLifecycle("dispatch")}
               rightHidden={rightHidden}
               onChange={patch}
               onRefresh={() => list.refetch()}
@@ -574,9 +675,9 @@ export function OutboundDispatchWorkbenchPage() {
               onResetWindow={resetWindow}
               onToggleRight={() => horizontalSplitRef.current?.toggleRight()}
               onCreate={() => setCreateOpen(true)}
-              onConfirm={() => action.mutate({ name: "confirm", id: selected.id })}
-              onCancel={() => action.mutate({ name: "cancel", id: selected.id })}
-              onDispatch={() => action.mutate({ name: "dispatch", id: selected.id })}
+              onConfirm={() => runLifecycle("confirm")}
+              onCancel={() => runLifecycle("cancel")}
+              onDispatch={() => runLifecycle("dispatch")}
               onException={() => setExceptionOpen(true)}
               onDelete={() => {
                 if (!selected) return;
@@ -668,8 +769,11 @@ export function OutboundDispatchWorkbenchPage() {
                 Reset
               </Button>
             </div>
-            <section className="dispatch-orders">
-              <h3>Outbound Orders</h3>
+            <section
+              className="dispatch-orders"
+              aria-labelledby="outbound-region-orders"
+            >
+              <h3 id="outbound-region-orders">Region 1: Outbound Orders</h3>
               <div
                 ref={ordersTableRef}
                 className="dispatch-table-host dispatch-orders-table-host"
@@ -734,35 +838,27 @@ export function OutboundDispatchWorkbenchPage() {
             <div className="dispatch-actions">
               <div className="dispatch-lifecycle-buttons">
                 <Button
-                  disabled={!selected?.allowed_actions?.confirm}
-                  onClick={() =>
-                    action.mutate({ name: "confirm", id: selected.id })
-                  }
+                  disabled={!canRunLifecycle("confirm")}
+                  onClick={() => runLifecycle("confirm")}
                 >
                   Confirm
                 </Button>
                 <Button
-                  disabled={!selected?.allowed_actions?.dispatch}
-                  onClick={() =>
-                    action.mutate({ name: "dispatch", id: selected.id })
-                  }
+                  disabled={!canRunLifecycle("dispatch")}
+                  onClick={() => runLifecycle("dispatch")}
                 >
                   Dispatch
                 </Button>
                 <Button
-                  disabled={!selected?.allowed_actions?.complete}
-                  onClick={() =>
-                    action.mutate({ name: "complete", id: selected.id })
-                  }
+                  disabled={!canRunLifecycle("complete")}
+                  onClick={() => runLifecycle("complete")}
                 >
                   Complete
                 </Button>
                 <Button
                   danger
-                  disabled={!selected?.allowed_actions?.cancel}
-                  onClick={() =>
-                    action.mutate({ name: "cancel", id: selected.id })
-                  }
+                  disabled={!canRunLifecycle("cancel")}
+                  onClick={() => runLifecycle("cancel")}
                 >
                   Cancel
                 </Button>
@@ -784,7 +880,7 @@ export function OutboundDispatchWorkbenchPage() {
           </div>
         }
         right={
-          <section className="dispatch-right">
+          <div className="dispatch-right">
             {selected ? (
               <OutboundVerticalSplitLayout
                 top={upperPanel}
@@ -803,7 +899,7 @@ export function OutboundDispatchWorkbenchPage() {
                 </div>
               </div>
             )}
-          </section>
+          </div>
         }
       />
       <ScheduleDrawer

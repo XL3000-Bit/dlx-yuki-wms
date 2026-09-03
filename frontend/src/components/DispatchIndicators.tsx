@@ -6,9 +6,11 @@ export function DispatchPriorityTag({ value }: { value?: string | null }) {
   return <Tooltip title="Dispatch Priority: CRITICAL overdue/today; HIGH 1–2 days; MEDIUM 3–5 days; NORMAL later or unscheduled."><Tag color={colors[value || 'NORMAL']}>{value || 'NORMAL'}</Tag></Tooltip>
 }
 
-export function DispatchReadinessTag({ value }: { value?: string | null }) {
+export function DispatchReadinessTag({ value, reasons = [] }: { value?: string | null; reasons?: Array<string | null | undefined> }) {
   const color = value === 'BLOCKED' ? 'red' : value === 'READY' ? 'green' : value === 'PARTIAL' ? 'orange' : value === 'COMPLETED' ? 'blue' : 'default'
-  return <Tooltip title="Dispatch Readiness: READY has inventory and allocation; PARTIAL is partly completed; BLOCKED has an exception; NOT_READY lacks inventory/allocation; COMPLETED is finished."><Tag color={color}>{value || 'NOT_READY'}</Tag></Tooltip>
+  const blockingReasons = reasons.filter((reason): reason is string => Boolean(reason))
+  const title = blockingReasons.length ? <div><div>Dispatch blocked:</div><ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>{blockingReasons.map((reason, index) => <li key={`${reason}-${index}`}>{reason}</li>)}</ul></div> : 'Dispatch Readiness: READY has inventory and allocation; PARTIAL is partly completed; BLOCKED has an exception; NOT_READY lacks inventory/allocation; COMPLETED is finished.'
+  return <Tooltip title={title}><Tag color={color}>{value || 'NOT_READY'}</Tag></Tooltip>
 }
 
 export function OutboundDateCell({ value, days }: { value?: string | null; days?: number | null }) {
