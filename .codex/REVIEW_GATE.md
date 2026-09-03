@@ -55,4 +55,21 @@ Automated token checks support but do not replace the human semantic review.
 - `READY_FOR_HUMAN_REVIEW`
 - `READY_FOR_COMMIT`
 
-Never automatically convert `READY_FOR_HUMAN_REVIEW` to `READY_FOR_COMMIT`.
+Yuki Autopilot V1.6 may convert `READY_FOR_HUMAN_REVIEW` to
+`READY_FOR_COMMIT` only for L1/L2 and only when every auto-approval gate below
+passes. L3 can never be auto-approved.
+
+## H. V1.6 auto-approval gate
+
+All values must be explicit; a missing value fails closed:
+
+- `LEVEL` is `L1` or `L2`.
+- `REVIEW_RESULT = READY_FOR_HUMAN_REVIEW`.
+- `SCOPE`, `TESTS`, `BUSINESS_GATE`, and `GIT_DIFF_CHECK` are `PASS`.
+- `UNAUTHORIZED_PATHS`, `PROTECTED_PATHS_CHANGED`, `STAGED_PATHS`,
+  `DATABASE_CONNECTIONS`, `DATABASE_WRITES`, and `EASYFREIGHT_WRITES` are `0`.
+- `MIGRATION_FILES_CHANGED` and `PDA_FILES_CHANGED` are `NO`.
+
+Successful auto-approval authorizes one exact-path commit and a non-force push
+of the current task branch. It never authorizes a pull, rebase, merge, parent
+integration, queue unlock, or another task.

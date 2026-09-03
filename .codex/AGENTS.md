@@ -2,7 +2,8 @@
 
 Repo:
 
-`C:\Users\XL\dlx-yuki-wms`
+Use the current Git worktree supplied by the invocation. Never redirect work to a
+different checkout or worktree.
 
 ## Permanent rules
 
@@ -16,7 +17,9 @@ Repo:
 8. Every implementation task must run its required validation.
 9. Every task ends with a structured result.
 10. `FAIL` or `SAFETY_STOP` means stop immediately.
-11. `READY_FOR_COMMIT` still requires human approval.
+11. `READY_FOR_COMMIT` requires human approval except when Yuki Autopilot V1.6 has
+    independently verified every documented L1/L2 auto-approval gate. L3 always
+    requires human approval and can never use the auto-approval exception.
 12. Never auto-merge long-lived branches.
 
 ## Permanent forbidden actions unless explicitly authorized
@@ -43,4 +46,4 @@ L3 work additionally requires `APPROVED_L3 = YES` before preparation. L3 include
 4. Automated tests
 5. UI polish
 
-For a prepared task, read `.codex/CURRENT_TASK.md` and the referenced prompt before editing. If `ALLOWED_PATHS` contains `DECLARATION_REQUIRED`, replace only that token with the exact minimal paths justified by the prompt before changing application files. Stop after implementation and validation. Do not commit, push, unlock another queue item, or begin another task.
+For a prepared task, read `.codex/CURRENT_TASK.md` and the referenced prompt before editing. If `ALLOWED_PATHS` contains `DECLARATION_REQUIRED`, replace only that token with the exact minimal paths justified by the prompt before changing application files. Stop after implementation and validation. Do not commit, push, unlock another queue item, or begin another task unless the task is running through the explicitly selected Yuki Autopilot V1.6 `-Run -AutoApprove` L1/L2 flow. That flow may commit and push only the current task branch after all gates pass; it may never integrate the parent, unlock the queue, or begin another task.
