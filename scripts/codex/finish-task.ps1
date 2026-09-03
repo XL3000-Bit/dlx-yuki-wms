@@ -32,6 +32,7 @@ if (-not $ApproveCommit) {
 }
 
 Set-Field $statePath 'STATE' 'READY_FOR_COMMIT'
+Set-Field $statePath 'AUTO_APPROVAL' 'HUMAN'
 $paths = @(& git -C $repoRoot status --porcelain=v1 --untracked-files=all | ForEach-Object { if ($_.Length -ge 4) { $_.Substring(3).Trim('"') } } | Sort-Object -Unique)
 $quotedPaths = @($paths | ForEach-Object { "'" + ($_ -replace "'", "''") + "'" }) -join ' '
 Write-Output 'PIPELINE_STATE = READY_FOR_COMMIT'
