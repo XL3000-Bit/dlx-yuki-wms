@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func,or_,select
 from sqlalchemy.orm import Session,joinedload,selectinload
-from app.models import AuditLog,Carrier,Customer,ExceptionSeverity,ExceptionStatus,ExceptionType,FBAInventoryAllocation,FBAShipment,InventoryLot,InventoryTransaction,OperationalException,OutboundInventoryAllocation,OutboundOrder,User,Warehouse
+from app.models import AuditLog,BOL,Carrier,Customer,ExceptionSeverity,ExceptionStatus,ExceptionType,FBAInventoryAllocation,FBAShipment,InventoryLot,InventoryTransaction,LoadVerificationTransaction,OperationalDocument,OperationalException,OutboundInventoryAllocation,OutboundOrder,PickingList,ScanSession,StageTransaction,User,Warehouse,WorkOrder
 from app.models.inventory import TransactionType
 from app.models.outbound import OBStatus
 from app.schemas.inbound import NamedRef,PaginationMeta
@@ -34,6 +34,36 @@ def get_ob(db:Session,id:int,lock=False,user:User|None=None):
  o=db.scalar(q)
  if not o:raise HTTPException(404,'Outbound order not found')
  return o
+OUTBOUND_DELETE_LINKS=(
+ ('inventory allocation',OutboundInventoryAllocation,OutboundInventoryAllocation.outbound_order_id),
+ ('picking list',PickingList,PickingList.outbound_order_id),
+ ('BOL',BOL,BOL.outbound_order_id),
+ ('scan session',ScanSession,ScanSession.outbound_id),
+ ('staging transaction',StageTransaction,StageTransaction.outbound_id),
+ ('load verification',LoadVerificationTransaction,LoadVerificationTransaction.outbound_id),
+ ('work order',WorkOrder,WorkOrder.outbound_id),
+ ('exception',OperationalException,OperationalException.outbound_id),
+ ('document',OperationalDocument,OperationalDocument.outbound_id),
+)
+def outbound_delete_blockers(db:Session,o:OutboundOrder)->list[str]:
+ blockers=[]
+ if o.status!=OBStatus.NEW:blockers.append(f'Status {STATUS[o.status]} is not New')
+ if o.load_id is not None:blockers.append('Outbound is assigned to a load')
+ for label,model,column in OUTBOUND_DELETE_LINKS:
+  if db.scalar(select(model.id).where(column==o.id).limit(1)) is not None:blockers.append(f'Outbound has a linked {label}')
+ return blockers
+def outbound_ids_with_delete_links(db:Session,ids:list[int])->set[int]:
+ linked=set()
+ if not ids:return linked
+ for _,_,column in OUTBOUND_DELETE_LINKS:linked.update(db.scalars(select(column).where(column.in_(ids))).all())
+ return linked
+def delete_outbound_draft(db:Session,ob_id:int,user_id:int,user:User|None=None,commit=True):
+ o=get_ob(db,ob_id,True,user=user);blockers=outbound_delete_blockers(db,o)
+ if blockers:raise HTTPException(409,detail={'message':'Only pristine New outbound drafts can be deleted','blocking_reasons':blockers})
+ before=jsonable_encoder({'id':o.id,'ob_no':o.ob_no,'status':o.status,'customer_id':o.customer_id,'warehouse_id':o.warehouse_id,'reference_no':o.reference_no})
+ db.add(AuditLog(user_id=user_id,action='DELETE_OUTBOUND',entity_type='OUTBOUND',entity_id=o.id,before_data=before));db.delete(o);db.flush()
+ if commit:db.commit()
+ return before
 FIELDS={'pallet':'pallet_qty','carton':'carton_qty','weight_lbs':'weight_lbs','cbm':'cbm'}
 def totals(o):return tuple(sum((getattr(a,f'allocated_{FIELDS[x]}')-getattr(a,f'completed_{FIELDS[x]}') for a in o.allocations),ZERO) for x in FIELDS)
 def read_ob(db:Session,o):
