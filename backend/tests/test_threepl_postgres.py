@@ -28,7 +28,7 @@ pytestmark = pytest.mark.skipif(
     reason="requires the isolated PostgreSQL concurrency gate",
 )
 
-BASE_REVISION = "20260902_0026"
+BASE_REVISION = "20260904_0026"
 TARGET_REVISION = "20260904_0028"
 ROOT = Path(__file__).resolve().parents[1]
 

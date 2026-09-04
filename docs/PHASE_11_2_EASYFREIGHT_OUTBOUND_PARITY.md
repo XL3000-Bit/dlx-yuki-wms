@@ -1,223 +1,74 @@
-# PHASE 11.2 — EasyFreight Outbound Parity Matrix
+# PHASE 11.2 — Outbound parity evidence reconciliation
 
-> **Reference structure captured; functional parity not yet established.**
+## Decision
 
-**Implementation gate:** NOT READY FOR PARITY IMPLEMENTATION
+The accepted recovery semantics have been ported onto the repaired live-main integration branch and have not been integrated into `main`:
 
-Controlled behavior-capture evidence:
+1. source `cc60e3d442bf263bf55e55a695f4e640e0108860`, integration `47c9eb6` — safe outbound deletion and idempotent batch inventory actions;
+2. source `29f86278f6efd2202fcaa77a67d32acfafb9a0d0`, integration `8ceefbb` — idempotent Picking/BOL ensure operations and atomic document creation during outbound confirmation;
+3. source `78798157baa479155ab643da886add62a86e2af2`, integration `0fc8725` — read-only 3PL dispatch queue workbench.
 
-- [Action matrix](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_ACTION_MATRIX.md)
-- [Status matrix](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_STATUS_MATRIX.md)
-- [Sanitized API observations](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_API_OBSERVATIONS.md)
-- [Visual measurements](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_VISUAL_MEASUREMENTS.md)
-- [Gap analysis](parity/easyfreight-outbound/EASYFREIGHT_OUTBOUND_GAP_ANALYSIS.md)
+The integration is based on live-main `bf1ca5f`, followed by the reviewed baseline repairs `ebcecc2` and `fe9a87b`. Migration `20260904_0026` is supplied by the minimal integration prerequisite `d6ceda5`; it is not a transplant of the broader source commit that originally introduced that revision.
 
-## Status and evidence boundary
+The rejected 3PL commit `321554f0042ecb33c7f01dfd0806ff53c351f104` is `QUARANTINED_SCOPE_LEAK`, `NOT ACCEPTED`, and `NOT IN VALID CHAIN`. It was not integrated or used as an evidence source because it contains rejected branding and an out-of-scope layout change.
 
-**Capture date:** 2026-08-30
+## Verified outbound behavior
 
-**Source:** authenticated EasyFreight Outbound page at `/admin/v2/outbounds`
+### Safe deletion
 
-**Mode:** read-only browser inspection of rendered controls and DOM metadata.
+Deletion is intentionally narrow. An outbound can be deleted only while it is a pristine `NEW` draft with no allocations, picking list, BOL, load, exception, or other dependent operational record. The API revalidates these rules in the transaction. Batch deletion returns a result for every selected row, so one rejected row does not conceal successful or failed outcomes for the others; audit records remain server-owned.
 
-No authentication material was read or recorded. No create, confirm, exception,
-dispatch, cancel, delete, export, or other business mutation was submitted. The
-Create Outbound form was opened without entering data and closed with its Cancel
-button.
+### Batch inventory actions
 
-Evidence vocabulary in this baseline records source observations. Parity state in
-the controlled-capture documents is limited to MATCHED, PARTIAL, MISSING,
-BLOCKED, UNKNOWN, INTENTIONAL_DIFFERENCE, and NOT_APPLICABLE.
+Allocation and release are explicit checkbox-and-button batch actions. Operators select rows and invoke the relevant command; validation, authorization, quantity checks, and transaction rollback remain on the server. The implementation does not provide multi-row drag-and-drop between the Remaining Source and Allocation panels. Any legacy `Drag BOL` text is a button label, not evidence of a drag interaction.
 
-Source-evidence vocabulary:
+Allocation and release accept a persistent `Idempotency-Key`. The stored receipt and database uniqueness constraint make completed retries replayable and serialize concurrent requests for the same operation key. A key cannot be reused for a different request payload. These guarantees were verified on PostgreSQL; they are not inferred from the browser alone.
 
-- **CONFIRMED** — directly visible in the rendered page or control metadata.
-- **PARTIAL** — a comparable DLX capability exists, but fields or behavior differ.
-- **UNKNOWN** — the behavior would require a business mutation, network capture,
-  or another page that was not exercised in this read-only pass.
+Migration `20260904_0027` introduces the persistent outbound inventory idempotency receipts.
 
-## EasyFreight workbench composition
+### Picking and BOL documents
 
-The page is a three-zone outbound operations workbench rather than one flat list:
+Picking-list and BOL ensure endpoints reuse the active document pair on a repeat request instead of creating duplicates. Cancelled document history is retained; when no active document remains, ensure creates the replacement permitted by the existing rules. Outbound confirmation performs the active Picking/BOL ensure work in the same database transaction as the status transition. If document creation fails, confirmation rolls back. Page and queue reads do not create documents. Migration `20260904_0028` adds database uniqueness for one active picking list and one active BOL per outbound.
 
-1. the primary Outbound/OB list;
-2. the selected OB's `OB BOL List`;
-3. a `Remaining BOL List` used as the unassigned candidate pool.
+Picking XLSX and BOL PDF/XLSX generation were exercised against synthetic disposable data. This verifies availability and non-empty downloads, not pixel-perfect document layout or production printer compatibility.
 
-During capture, the primary list count moved between 12,418 and 12,423 and the
-OB BOL count moved between 8,191 and 8,192; the Remaining BOL list showed 340.
-These are volatile source-system snapshots, not parity constants. They are
-recorded only as evidence that all three areas paginate independently.
+## Verified 3PL dispatch queue behavior
 
-## Primary OB list
+The 3PL workbench loads a server-derived dispatch queue with authorization and warehouse/customer scope enforcement, priority and blocker indicators, summary counts, search/filter/sort controls, paging, URL-backed state, refresh/back navigation, outbound navigation, and document links. Missing documents are shown explicitly.
 
-### Actions
+Queue retrieval is read-only: repeated `GET` requests and UI refreshes produced no business-table changes in the PostgreSQL verification. `Issue docs` is a separate, explicit mutation and is not part of queue loading; a queue read never performs an automatic document ensure. The `/3pl` and `/fba` routes retain the shared full-height application layout.
 
-| Action | Observed state | Result evidence |
-| --- | --- | --- |
-| Delete | Visible | UNKNOWN; not invoked. |
-| Cancel | Visible | UNKNOWN; not invoked. |
-| Confirm OB | Visible | UNKNOWN; not invoked. |
-| Exception | Visible | UNKNOWN; not invoked. |
-| Create OB | Visible; form inspected | Form fields CONFIRMED; submission not invoked. |
-| Refresh | Visible; invoked after a safe filter change | Retained the applied filtered result. |
-| Reset Window | Visible; invoked | Confirmed as a layout command rather than a filter reset; persistence remains UNKNOWN. |
-| Hide OB BOL List | Visible; hide/show invoked and restored | Confirms the right-side list visibility control. |
+## Brand decision
 
-### Filters
+The accepted interface remains **DLX Yuki WMS V3**. EasyFreight names, logos, colors, copied layouts, and rejected-brand artifacts are not part of the implementation. The historical filename is retained only to preserve the existing documentation location.
 
-| Label | Rendered field name or options |
+## Evidence and verification boundary
+
+The recovered external evidence set contained 503 files. None qualified as safe, accepted external evidence. Environment files, derived media, source candidates requiring sanitization, unverified raw media, and quarantined sensitive files remain outside Git and were neither executed nor modified. Recorder source was not run. Media review could illustrate synthetic checkbox/button flows, but provenance, data-safety, rejected-brand, and legacy-label concerns prevent it from proving product behavior.
+
+The accepted claims instead rest on the commit ancestry, code review, automated backend tests, a disposable PostgreSQL 17 database migrated to `20260904_0028`, frontend typecheck/build, and a fresh isolated Chromium parity smoke. The full backend suite passed with PostgreSQL-only tests skipped in the SQLite run and then exercised separately on PostgreSQL.
+
+## Verification matrix
+
+| Gate | Result |
 | --- | --- |
-| ID | `ids` |
-| Status | New, Confirmed, Cargo Loaded, Partially Shipout, Fully Shipout, Exception, Canceled |
-| Type | TBD, Direct, Consol, Redirect |
-| Delivery Type | TBD, FBA, FBM, UPS, FedEx, Order Fulfillment, Self Pickup, USPS, MIX, DHL, Walmart |
-| Pickup Location | `pickup_locations` |
-| Delivery Location | `delivery_locations` |
-| Carrier | `carriers` |
-| BOL# | `bol_ids` |
-| CNTR#/IB# | `ib_numbers` |
-| SKD PU Date | `scheduled_pickup_times` |
-| Redirect Location | `redirect_locations` |
-| ISA/FBA/MARKING/REF# | `searches` |
-| DEL REF# | `delivery_references` |
-| Agent Code | `agent_codes` |
+| Targeted SQLite backend tests | 41 passed |
+| Full backend suite | 186 passed against the isolated PostgreSQL database, including PostgreSQL-only gates |
+| PostgreSQL 17.11 | Database-name guard passed; Alembic head `20260904_0028`; targeted 6 outbound, 3 Picking/BOL, and 1 3PL tests passed |
+| Frontend unit tests | NOT_CONFIGURED |
+| Frontend lint | NOT_CONFIGURED |
+| Frontend typecheck | Passed |
+| Frontend production build | Passed; non-fatal chunk-size warning |
+| Dedicated Chromium smoke | Passed with synthetic disposable records and an outside-repository persistent profile |
 
-### Columns
+No production database, existing browser session, saved browser identity, or recovered recorder credential was used.
 
-`OB#`, Status, Carrier Code, Loading Team, Truck Type, Notify Carrier,
-Delivery Type, Pickup Location, Schedule PU, DEL APT TIME, OB Type, DEL,
-Redirect, Booked Qty, ISA/DEL APT#, DEL REF#, WHS Remark, and OB BOL.
+## Known limitations
 
-Each row also exposes a selection checkbox and a `Show` control for related BOL
-content. The primary list supports 10, 20, 50, 100, 200, 500, and 1,000 rows per
-page in the observed UI.
-
-## OB BOL List
-
-### Actions and filters
-
-The toolbar contains `Mange Properties`, Views, Show/Hide Filters, Awaiting
-Dispatch, Refresh, Export, an unlabeled icon action, disabled Batch Update
-Transfer Code, and Active Filters. `Mange Properties` is retained here exactly
-as displayed; it should not be copied as a DLX label.
-
-| Filter | Options or field evidence |
-| --- | --- |
-| BOL# / OB# | `id` / `ob_number` |
-| Status | Pre, Confirmed, In Transit, Delivered, Exception, Canceled |
-| Pickup / Delivery / Redirect Location | Named location controls |
-| Customer | Named customer control |
-| Transfer Code | Named transfer-code control |
-| Reference ID | `receiver_reference_id` |
-| Receiver Shipment ID | `receiver_shipment_id` |
-| Group Status | Pre-Alert, Arrived at Port, At WHS Yard, WHS Received |
-| CNTR | `container_number` |
-| Type | FBM, FBA, UPS, FedEx, Work Order, Other, Order Fulfillment, Temporary Storage, Self Pickup, USPS, DHL, Walmart |
-| Ready To Ship | Ready To Ship, Hold |
-| Urgent | Yes, No |
-| Date Type | APT, Out Gate, ETA, Unloading Date, LFD |
-| Date range | Two date controls; APT was the initial date type |
-| ISA/FBA/MARKING/REF# | `dispatchSearches` |
-| Agent Code | `dispatchAgentCodes` |
-
-### Columns and totals
-
-`BOL#`, Type, Group Status, Pickup Location, Del Code, Redirect Code,
-Transfer Code, Weight LB, CBM, Est. OB PLT, WHS PLT, DW, ETA, APT,
-Unloading Date, LFD, Custom Status, Out Gate, Remark, Dispatch, Ready,
-CNTR#, Agent Code, Customer, Receiver Shipment ID, Reference ID, Status, and
-Urgent.
-
-The grid displays Selected and Total summaries for weight, CBM, estimated
-pallets, and warehouse pallets. It has its own row selection and pagination.
-
-## Remaining BOL List
-
-The toolbar contains Active Filters, Show/Hide Filters, Refresh, and Export.
-
-### Filters
-
-`BOL#`, `OB#`, Status, Pickup Location, Delivery Location, Redirect Location,
-Customer, Group Status, CNTR, Ready To Ship, Type, Urgent, Act IB Date range,
-and Est. IB Date range. Status, Group Status, readiness, type, and urgency use
-the same option families documented for the OB BOL list where applicable.
-
-### Columns and totals
-
-`OB BOL#`, Type, Status, Pickup Location, Del Code, Redirect Code, Act. IB
-Date, Est. IB Date, Remaining PLT, and CNTR#. The list displays a Remaining PLT
-total and has independent pagination.
-
-## Create Outbound form
-
-Opening `Create OB` replaces the primary work area with a `Create Outbound`
-form. The following fields are CONFIRMED:
-
-| Field | Observed behavior/options |
-| --- | --- |
-| OB# | Disabled; generated automatically. |
-| OB Type | TBD, Direct, Consol, Redirect. |
-| Delivery Type | Default label displayed as `TDB`; FBA, FBM, UPS, FedEx, Order Fulfillment, Self Pickup, USPS, MIX, DHL, Walmart. |
-| Truck Type | TBD, 53' FTL, LTL, 26' FTL, Floor loaded, 30' FTL. |
-| Carrier | Searchable selection; default TBD. |
-| Schedule Pickup Time | Date/time field. |
-| Pickup Location | Searchable selection; default TBD. |
-| Delivery Apt Time | Date/time field. |
-| Booked PLT | Quantity field. |
-| ISA/DEL APT# | Reference field. |
-| DEL REF# | Reference field. |
-| Related OB BOL List | Required drag-and-drop target for one or more OB BOL records. |
-
-The related-BOL table contains OB BOL#, Type, Status, Pickup Location,
-Delivery Apt Time, Del Code, Redirect Code, Act. IB Date, ETA, Est. OB PLT,
-Remaining PLT, Weight, and Action. Cancel and Create buttons are present. The
-observed source label `TDB` appears to be a typo and should not become a DLX
-contract.
-
-## Initial parity matrix
-
-| Capability | EasyFreight evidence | Current DLX baseline | PHASE 11.2 disposition |
-| --- | --- | --- | --- |
-| Three-zone workbench | CONFIRMED | PARTIAL: primary Outbound list plus selected OB allocated/BOL and remaining inventory panels. | Preserve the DLX page-scroll layout; make the three data roles explicit. |
-| Master OB search/filter | Dense reference, location, date, carrier, type, and status filters. | PARTIAL: unified reference search plus status, OB type, warehouse, and carrier. | Add only filters backed by stable DLX fields and server queries. Do not create display-only filters. |
-| OB lifecycle vocabulary | New through partial/full shipout plus exception/cancel. | PARTIAL: New, On Hold, In Progress, Confirmed, Dispatched, Completed, Canceled, Exception. | Create an explicit semantic mapping before changing labels or transitions. |
-| OB columns | 19 operational columns plus selection/expansion. | PARTIAL: broad dispatch columns exist, but EasyFreight-specific team, notify, DEL, and redirect semantics are not all equivalent. | Map field-by-field; mark unsupported source concepts instead of inventing data. |
-| Create OB | Rich scheduling fields and required related-BOL drag/drop. | PARTIAL: DLX Create OB captures warehouse, customer, carrier, type, and reference. | Separate OB header creation from shipment allocation unless the existing transaction boundary safely supports both. |
-| Create Load | Action requested and PostgreSQL-smoke-verified in the DLX baseline. | CONFIRMED in DLX for selected OBs from one resolved warehouse. | Retain DLX warehouse-resolution validation. EasyFreight result remains UNKNOWN in this pass. |
-| Confirm / Dispatch / Complete / Cancel | Entry points visible; mutation results UNKNOWN. | CONFIRMED in the validated DLX lifecycle baseline. | Keep backend `allowed_actions` authoritative; avoid inferring state from labels. |
-| Exception / Resolve Exception | Exception entry point visible; resolve behavior not exercised. | CONFIRMED in the validated DLX lifecycle baseline, including reason/remark capture. | Preserve DLX exception history and transaction behavior. |
-| OB BOL candidate management | Dedicated list with selection, readiness, dispatch, transfer, references, dates, and summaries. | PARTIAL: allocated shipment/BOL panel exists. | Identify which concepts map to allocations, loads, documents, or container tracking before UI expansion. |
-| Remaining candidate pool | Dedicated filterable/paginated BOL list with remaining-pallet total. | PARTIAL: Remaining Shipment / Inventory List exists. | Confirm quantity and identity mapping; keep remaining quantities server-derived. |
-| Saved views/property management | Visible `Views` and property-management controls. | Not established by this capture. | Out of parity scope unless an existing DLX preference contract is found. |
-| Export | Visible in both subordinate lists. | PARTIAL: filtered/selected outbound exports exist. | Verify export dataset semantics separately; do not expose a permanently disabled action. |
-| Filter request contract | Client-bound named controls; no native form action or method. | Existing DLX queries are URL/server parameter based. | UNKNOWN for EasyFreight endpoint, HTTP method, payload, debounce, and response schema until a safe request trace is authorized. |
-
-## Operation-result evidence still required
-
-The following source-system results remain deliberately unverified because a
-read-only production inspection cannot safely establish them:
-
-- validation and persistence rules for Create OB;
-- exact state transitions and side effects for Confirm OB, Exception, Cancel,
-  Delete, and Awaiting Dispatch;
-- partial-versus-full dispatch calculation;
-- concurrency, idempotency, and duplicate-submit behavior;
-- which operation refreshes each of the three lists;
-- API endpoints, request payloads, error contracts, and response schemas;
-- permission differences for Viewer, warehouse-scoped, and cross-warehouse users.
-
-These items require a non-production test account/fixture, approved safe records,
-or source/API documentation. They must not be guessed from button labels.
-
-## Implementation gates
-
-No DLX business page or API is changed by this baseline. Before implementation:
-
-1. define the EasyFreight-to-DLX status and identity mappings;
-2. map every proposed filter and column to an existing server-owned field;
-3. preserve DLX inventory, allocation, load, exception, and lifecycle transaction
-   boundaries already verified against PostgreSQL;
-4. separate confirmed parity requirements from source-specific labels and typos;
-5. validate any mutating parity workflow in an isolated PostgreSQL fixture before
-   browser smoke.
+- No accepted external artifact establishes EasyFreight production behavior or exact UI parity.
+- Drag-and-drop is unsupported and is not claimed.
+- Frontend unit-test and lint scripts are not configured; typecheck, production build, backend suites, PostgreSQL gates, and browser smoke supply the recorded verification.
+- Download checks establish successful non-empty XLSX/PDF output, not visual fidelity or printer compatibility.
+- Browser verification used synthetic disposable records and did not access a production database or an existing browser session.
+- The integration commits and this document remain on `integration/outbound-recovery-repaired-bf1ca5f`, have not been merged into `main` or pushed, and do not establish live `origin/main` integration; those remain separately authorized actions.
+- Production deployment, production data validation, load/performance testing, accessibility certification, and cross-browser certification are outside this recovery slice.
