@@ -7,6 +7,7 @@ const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage").then(m 
 const AdminDataUploadPage = lazy(() => import("./pages/AdminDataUploadPage").then(m => ({ default: m.AdminDataUploadPage })));
 const FBAPage = lazy(() => import("./pages/FBAPage").then(m => ({ default: m.FBAPage })));
 const OutboundDispatchPage = lazy(() => import("./pages/OutboundDispatchWorkbenchPage").then(m => ({ default: m.OutboundDispatchWorkbenchPage })));
+const ThreePLPage = lazy(() => import("./pages/ThreePLPage").then(m => ({ default: m.ThreePLPage })));
 const ContainerTrackingPage = lazy(() => import("./pages/ContainerTrackingPage").then(m => ({ default: m.ContainerTrackingPage })));
 const PickingPage = lazy(() => import("./pages/PickingPage").then(m => ({ default: m.PickingPage })));
 const BOLPage = lazy(() => import("./pages/BOLPage").then(m => ({ default: m.BOLPage })));
@@ -22,6 +23,7 @@ import { useAuthStore } from "./stores/auth";
 import "./inventory.css";
 import "./fba.css";
 import "./outbound.css";
+import "./threepl.css";
 export default function App() {
   const token = useAuthStore((s) => s.accessToken);
   if (!token) return <LoginPage />;
@@ -36,6 +38,7 @@ export default function App() {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/fba" element={<FBAPage />} />
         <Route path="/outbound/dispatch" element={<OutboundDispatchPage />} />
+        <Route path="/3pl" element={<ThreePLPage />} />
         <Route path="/outbound/picking" element={<PickingPage />} />
         <Route path="/outbound/picking-history" element={<PickingPage history />} />
         <Route path="/outbound/bol" element={<BOLPage />} />

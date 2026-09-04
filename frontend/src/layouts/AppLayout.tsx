@@ -13,6 +13,7 @@ import {
   UserOutlined,
   LeftOutlined,
   RightOutlined,
+  ApartmentOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, Layout, Menu, Space } from "antd";
 import { useMemo, useState } from "react";
@@ -77,6 +78,7 @@ export function AppLayout() {
           onClick={(e) => { if (!e.key.startsWith("g-")) nav(e.key); }}
           items={[
             { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+            { key: "/3pl", icon: <ApartmentOutlined />, label: "3PL Workbench" },
             {
               key: "inbound", icon: <ImportOutlined />, label: "InBound",
               children: [
@@ -136,7 +138,7 @@ export function AppLayout() {
             <Avatar size={28} icon={<UserOutlined />} className="topbar-avatar" />
           </Space>
         </Header>
-        <Content className={`content ${loc.pathname === "/outbound/dispatch" ? "content-workbench" : ""}`}>
+        <Content className={`content ${["/outbound/dispatch", "/3pl"].includes(loc.pathname) ? "content-workbench" : ""}`}>
           <Outlet />
         </Content>
       </Layout>
