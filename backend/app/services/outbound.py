@@ -116,7 +116,7 @@ def release(db:Session,ob_id:int,allocation_id:int,p:ReleaseRequest,user_id:int,
 def allocation_read(a):
  lot=a.inventory_lot;return AllocationRead.model_validate({**a.__dict__,'lot_no':lot.lot_no,'container_number':lot.container_number,'fc_code':lot.fc_code,'location':named(lot.location,'location'),'source_type':'FBA' if a.fba_allocation_id else 'INVENTORY','fba_no':a.outbound.fba_shipment.fba_no if a.fba_allocation_id and a.outbound.fba_shipment else None})
 def allocations(db:Session,o):return[allocation_read(a) for a in db.scalars(select(OutboundInventoryAllocation).options(joinedload(OutboundInventoryAllocation.inventory_lot).joinedload(InventoryLot.location),joinedload(OutboundInventoryAllocation.outbound).joinedload(OutboundOrder.fba_shipment)).where(OutboundInventoryAllocation.outbound_order_id==o.id).order_by(OutboundInventoryAllocation.id)).all()]
-def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionRequest|None=None):
+def _change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionRequest|None=None):
  o=get_ob(db,ob_id,True)
  if target==OBStatus.DISPATCHED:require_dispatch_ready(db,o)
  if target not in TRANS.get(o.status,set()):raise HTTPException(409,f'Invalid status transition: {STATUS[o.status]} to {STATUS.get(target)}')
@@ -130,11 +130,19 @@ def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionReques
  if before==OBStatus.EXCEPTION and target==OBStatus.CONFIRMED:
   for incident in db.scalars(select(OperationalException).where(OperationalException.outbound_id==o.id,OperationalException.exception_type==ExceptionType.OUTBOUND,OperationalException.status.in_((ExceptionStatus.OPEN,ExceptionStatus.INVESTIGATING))).with_for_update()).all():
    transition_exception(db,incident,ExceptionStatus.RESOLVED,user_id,'Resolved through Outbound action',commit=False)
+ if target==OBStatus.CONFIRMED:
+  from app.services.picking_bol import ensure_outbound_documents
+  ensure_outbound_documents(db,o.id,user_id)
  if target==OBStatus.COMPLETED:complete_all(db,o,user_id);o.completed_at=now;o.completed_by=user_id
  if target==OBStatus.CANCELED:
   for a in list(o.allocations):
    if any((a.allocated_pallet_qty-a.completed_pallet_qty,a.allocated_carton_qty-a.completed_carton_qty,a.allocated_weight_lbs-a.completed_weight_lbs,a.allocated_cbm-a.completed_cbm)):release(db,o.id,a.id,ReleaseRequest(),user_id,False)
  o.canceled_at=now if target==OBStatus.CANCELED else o.canceled_at;o.canceled_by=user_id if target==OBStatus.CANCELED else o.canceled_by;db.add(AuditLog(user_id=user_id,action='CANCEL_OUTBOUND' if target==6 else 'CHANGE_OUTBOUND_STATUS',entity_type='OUTBOUND',entity_id=o.id,before_data={'status':before},after_data={'status':target}));db.commit();return get_ob(db,o.id)
+def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionRequest|None=None):
+ try:return _change(db,ob_id,target,user_id,exception)
+ except Exception:
+  db.rollback()
+  raise
 def complete_all(db,o,user_id):
  for a in o.allocations:
   rem=(a.allocated_pallet_qty-a.completed_pallet_qty,a.allocated_carton_qty-a.completed_carton_qty,a.allocated_weight_lbs-a.completed_weight_lbs,a.allocated_cbm-a.completed_cbm)

@@ -66,29 +66,49 @@ def _ready_fixture(
         response = client.post(f"/api/v1/outbounds/{outbound['id']}/confirm")
         assert response.status_code == 200, response.text
 
-    picking = PickingList(
-        picking_no=f"PICK-{suffix}",
-        outbound_order_id=outbound["id"],
-        status=PickingStatus.COMPLETED,
-        created_by=seed["admin"].id,
-    )
-    db.add(picking)
-    db.flush()
-    db.add(
-        PickingListItem(
-            picking_list_id=picking.id,
-            outbound_allocation_id=allocation["id"],
-            inventory_lot_id=lot["id"],
-            location_id=seed["location"].id,
-            lot_no=lot["lot_no"],
-            container_number=lot["container_number"],
-            planned_pallet_qty=6,
-            picked_pallet_qty=picked_pallet_qty,
+    if confirmed:
+        picking = (
+            db.query(PickingList)
+            .filter(PickingList.outbound_order_id == outbound["id"])
+            .order_by(PickingList.id.desc())
+            .first()
         )
-    )
-    if with_bol:
+        assert picking is not None
+        picking.status = PickingStatus.COMPLETED
+        picking.items[0].picked_pallet_qty = picked_pallet_qty
+
+        bol = (
+            db.query(BOL)
+            .filter(BOL.outbound_order_id == outbound["id"])
+            .order_by(BOL.id.desc())
+            .first()
+        )
+        assert bol is not None
+        if not with_bol:
+            bol.status = BOLStatus.CANCELED
+    else:
+        picking = PickingList(
+            picking_no=f"PICK-{suffix}",
+            outbound_order_id=outbound["id"],
+            status=PickingStatus.COMPLETED,
+            created_by=seed["admin"].id,
+        )
+        db.add(picking)
+        db.flush()
         db.add(
-            BOL(
+            PickingListItem(
+                picking_list_id=picking.id,
+                outbound_allocation_id=allocation["id"],
+                inventory_lot_id=lot["id"],
+                location_id=seed["location"].id,
+                lot_no=lot["lot_no"],
+                container_number=lot["container_number"],
+                planned_pallet_qty=6,
+                picked_pallet_qty=picked_pallet_qty,
+            )
+        )
+        if with_bol:
+            db.add(BOL(
                 bol_no=f"BOL-{suffix}",
                 outbound_order_id=outbound["id"],
                 customer_id=seed["customer"].id,
@@ -98,8 +118,7 @@ def _ready_fixture(
                 ship_from_address="1 Warehouse Way",
                 status=BOLStatus.GENERATED,
                 created_by=seed["admin"].id,
-            )
-        )
+            ))
     if exception_status is not None:
         db.add(
             OperationalException(

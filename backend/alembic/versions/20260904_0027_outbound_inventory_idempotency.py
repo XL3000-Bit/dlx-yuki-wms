@@ -1,7 +1,7 @@
 """add outbound inventory idempotency receipts
 
 Revision ID: 20260904_0027
-Revises: 20260902_0026
+Revises: 20260904_0026
 """
 from alembic import op
 import sqlalchemy as sa
