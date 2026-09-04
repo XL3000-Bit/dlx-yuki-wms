@@ -1,0 +1,21 @@
+TASK_ID: RECOVERY-2G
+STATUS: INTEGRATION_VALIDATED_PENDING_MAIN_UPDATE
+LEVEL: L3
+BRANCH: integration/outbound-recovery-repaired-bf1ca5f
+BASE_BRANCH: main
+NEXT_TASK: RECOVERY-2G — final main update and push/PR decision
+INTEGRATION_BASE: bf1ca5f481b1bb41376af4f0509154bb5f7dcb1c
+BASELINE_REPAIR_HEAD: fe9a87bd1853cd624c1f99afb16ecb070d87f3dd
+INTEGRATION_IMPLEMENTATION_HEAD: 0fc8725a07e6308b12ecd77ad853670d3e1069c4
+INTEGRATION_DOCUMENT_HEAD: 099b8d08c5edb0f60633fa3be4e5058e71f6e493
+MAIN_UPDATE: NOT_PERFORMED
+PUSH: NOT_PERFORMED
+PRODUCTION_DATABASE: NOT_ACCESSED
+PHASE_INBOUND_1A: BLOCKED_PENDING_MAIN_UPDATE
+WALLBOARD_1: NOT_AUTHORIZED_IN_THIS_SLICE
+ACTIVE_BRAND: DLX Yuki WMS
+REJECTED_COMMIT: QUARANTINED_DO_NOT_INTEGRATE
+
+The repaired-main baseline, prerequisite migration, accepted outbound recovery chain,
+parity documentation, PostgreSQL gates, complete regression, and dedicated browser
+acceptance are validated. RECOVERY-2G is the next authorized decision slice.
