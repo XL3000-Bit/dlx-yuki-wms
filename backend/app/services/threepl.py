@@ -16,7 +16,7 @@ from app.models.user import User
 from app.models.warehouse import Warehouse
 from app.models.work_order import WorkOrder, WorkOrderPriority, WorkOrderStatus
 from app.services.access_policy import scoped_statement
-from app.utils.business_time import get_business_now, to_business_datetime
+from app.utils.business_time import business_day_range, get_business_now, get_business_today, to_business_date, to_business_datetime
 
 
 def _number(value: Decimal | int | float | None) -> float:
@@ -26,7 +26,7 @@ def _number(value: Decimal | int | float | None) -> float:
 def _within(value: date | datetime | None, first: date, last: date) -> bool:
     if value is None:
         return False
-    day = value.date() if isinstance(value, datetime) else value
+    day = to_business_date(value) if isinstance(value, datetime) else value
     return first <= day <= last
 
 
@@ -77,7 +77,7 @@ def build_threepl_overview(
     inventory = list(db.scalars(inventory_stmt).all())
     inbounds = list(db.scalars(inbound_stmt).all())
     outbounds = list(db.scalars(outbound_stmt).all())
-    today = datetime.now(timezone.utc).date()
+    today = get_business_today()
 
     for lot in inventory:
         if lot.customer_id not in customer_map:
@@ -373,9 +373,11 @@ def build_threepl_dispatch_queue(
     if priority is not None:
         filtered = filtered.where(derived.c.priority == priority)
     if date_from is not None:
-        filtered = filtered.where(func.date(derived.c.due_at) >= date_from)
+        start, _ = business_day_range(date_from)
+        filtered = filtered.where(derived.c.due_at >= start)
     if date_to is not None:
-        filtered = filtered.where(func.date(derived.c.due_at) <= date_to)
+        _, next_start = business_day_range(date_to)
+        filtered = filtered.where(derived.c.due_at < next_start)
     filtered = filtered.cte("threepl_dispatch_filtered")
 
     summary_row = db.execute(select(

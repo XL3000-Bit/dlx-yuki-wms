@@ -107,6 +107,7 @@ def release(db:Session,ob_id:int,allocation_id:int,p:ReleaseRequest,user_id:int,
  if not a:raise HTTPException(404,'Outbound allocation not found')
  if o.status in (OBStatus.COMPLETED,OBStatus.DISPATCHED):raise HTTPException(409,'Completed or dispatched outbound is immutable')
  vals=(p.pallet_qty if p.pallet_qty is not None else a.allocated_pallet_qty-a.completed_pallet_qty,p.carton_qty if p.carton_qty is not None else a.allocated_carton_qty-a.completed_carton_qty,p.weight_lbs if p.weight_lbs is not None else a.allocated_weight_lbs-a.completed_weight_lbs,p.cbm if p.cbm is not None else a.allocated_cbm-a.completed_cbm);remain=(a.allocated_pallet_qty-a.completed_pallet_qty,a.allocated_carton_qty-a.completed_carton_qty,a.allocated_weight_lbs-a.completed_weight_lbs,a.allocated_cbm-a.completed_cbm)
+ if any(v<ZERO for v in vals):raise HTTPException(422,'Release quantities must be non-negative')
  if any(v>r for v,r in zip(vals,remain)):raise HTTPException(409,'Release exceeds remaining allocation')
  if a.fba_allocation_id is None:
   lot=get_lot(db,a.inventory_lot_id,True);before=snapshot(lot);lot.available_pallet_qty+=vals[0];lot.available_carton_qty+=vals[1];lot.available_weight_lbs+=vals[2];lot.available_cbm+=vals[3];lot.allocated_pallet_qty-=vals[0];lot.allocated_carton_qty-=vals[1];lot.allocated_weight_lbs-=vals[2];lot.allocated_cbm-=vals[3];derive_status(lot);_tx(db,lot,TransactionType.OUTBOUND_RELEASE,user_id,before,p=vals[0],c=vals[1],w=vals[2],v=vals[3],reference_type='OUTBOUND',reference_id=o.id,remark=p.remark or 'Released')

@@ -4,7 +4,7 @@ import os
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -232,3 +232,45 @@ def test_postgres_dispatch_queue_is_scoped_deterministic_and_zero_write(threepl_
         after_statuses = db.execute(select(OutboundOrder.id, OutboundOrder.status).order_by(OutboundOrder.id)).all()
     assert after_statuses == before_statuses
     assert _table_counts(threepl_pg_engine) == before_counts
+
+
+def test_postgres_dispatch_queue_date_filters_use_los_angeles_days(threepl_pg_engine: Engine) -> None:
+    sessions = sessionmaker(threepl_pg_engine, expire_on_commit=False)
+    user_id, token, _ = _seed(sessions)
+    with sessions.begin() as db:
+        visible = db.scalar(select(OutboundOrder).where(OutboundOrder.ob_no == f"3PL-A-{token}"))
+        early = OutboundOrder(
+            ob_no=f"3PL-DATE-E-{token}", customer_id=visible.customer_id,
+            warehouse_id=visible.warehouse_id, carrier_id=visible.carrier_id,
+            status=OBStatus.IN_PROGRESS,
+            schedule_pickup_at=datetime(2026, 9, 2, 0, 30, tzinfo=timezone.utc),
+            created_by=user_id,
+        )
+        boundary = OutboundOrder(
+            ob_no=f"3PL-DATE-B-{token}", customer_id=visible.customer_id,
+            warehouse_id=visible.warehouse_id, carrier_id=visible.carrier_id,
+            status=OBStatus.IN_PROGRESS,
+            schedule_pickup_at=datetime(2026, 9, 2, 7, 0, tzinfo=timezone.utc),
+            created_by=user_id,
+        )
+        db.add_all([early, boundary])
+
+    def references(*, date_from=None, date_to=None):
+        with sessions() as db:
+            db.execute(text("SET TIME ZONE 'UTC'"))
+            result = build_threepl_dispatch_queue(
+                db, db.get(User, user_id), None, None, date_from=date_from, date_to=date_to,
+                page=1, page_size=100, sort="reference",
+            )
+            return {task["reference"] for task in result["tasks"]}
+
+    sep1 = references(date_from=date(2026, 9, 1), date_to=date(2026, 9, 1))
+    sep2 = references(date_from=date(2026, 9, 2), date_to=date(2026, 9, 2))
+    through_sep1 = references(date_to=date(2026, 9, 1))
+    from_sep2 = references(date_from=date(2026, 9, 2))
+    early_ref = f"3PL-DATE-E-{token}"
+    boundary_ref = f"3PL-DATE-B-{token}"
+    assert early_ref in sep1 and boundary_ref not in sep1
+    assert boundary_ref in sep2 and early_ref not in sep2
+    assert early_ref in through_sep1 and boundary_ref not in through_sep1
+    assert boundary_ref in from_sep2 and early_ref not in from_sep2

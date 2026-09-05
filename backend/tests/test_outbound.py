@@ -1,9 +1,18 @@
 from datetime import date
+from decimal import Decimal
+import logging
+import re
+
+import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from app.api.v1.endpoints import outbound as outbound_endpoints
 from app.models import AuditLog,BOL,BOLStatus,FBAInventoryAllocation,InventoryLot,InventoryTransaction,OutboundInventoryAllocation,OutboundInventoryIdempotency,OutboundOrder,PickingList,PickingListItem,PickingStatus
 from app.models.inventory import TransactionType
+from app.schemas.outbound import ReleaseRequest
+from app.services.outbound import release as release_inventory
 def inventory(client,seed,container='OB-CNTR',pallet=10):
  p={'container_number':container,'customer_id':seed['customer'].id,'warehouse_id':seed['warehouse'].id,'received_date':str(date.today()),'fc_code':'ONT8','pallet_qty':pallet,'carton_qty':20,'weight_lbs':1000,'cbm':5,'location_id':seed['location'].id,'status':3};i=client.post('/api/v1/inbound',json=p).json();return client.post(f"/api/v1/inbound/{i['id']}/receive-to-inventory").json()
 def ob(seed):return {'customer_id':seed['customer'].id,'warehouse_id':seed['warehouse'].id,'carrier_id':seed['carrier'].id,'ob_type':'STANDARD','delivery_type':'FTL'}
@@ -87,3 +96,79 @@ def test_inventory_batch_key_scope_isolated_by_outbound(client:TestClient,db:Ses
  for outbound in (first_ob,second_ob):
   response=client.post(f"/api/v1/outbounds/{outbound['id']}/inventory/batch",json=payload,headers={'Idempotency-Key':'shared-key'});assert response.status_code==200,response.text
  db.expire_all();stored=db.get(InventoryLot,lot['id']);assert stored.available_pallet_qty==6 and stored.allocated_pallet_qty==4
+
+@pytest.mark.parametrize('field', ['pallet_qty','carton_qty','weight_lbs','cbm'])
+def test_release_rejects_each_negative_quantity_without_side_effects(client:TestClient,db:Session,seed,field):
+ lot=inventory(client,seed,container=f'NEGATIVE-{field}',pallet=10);outbound=client.post('/api/v1/outbounds',json=ob(seed)).json();allocation=client.post(f"/api/v1/outbounds/{outbound['id']}/allocate",json={'inventory_lot_id':lot['id'],'pallet_qty':6,'carton_qty':12,'weight_lbs':600,'cbm':3}).json()
+ before_lot=(Decimal('4'),Decimal('8'),Decimal('400'),Decimal('2'));before_allocation=(Decimal('6'),Decimal('12'),Decimal('600'),Decimal('3'))
+ response=client.post(f"/api/v1/outbounds/{outbound['id']}/allocations/{allocation['id']}/release",json={field:-1});assert response.status_code==422,response.text
+ db.expire_all();stored_lot=db.get(InventoryLot,lot['id']);stored_allocation=db.get(OutboundInventoryAllocation,allocation['id'])
+ assert (stored_lot.available_pallet_qty,stored_lot.available_carton_qty,stored_lot.available_weight_lbs,stored_lot.available_cbm)==before_lot
+ assert (stored_allocation.allocated_pallet_qty,stored_allocation.allocated_carton_qty,stored_allocation.allocated_weight_lbs,stored_allocation.allocated_cbm)==before_allocation
+ assert db.scalar(select(InventoryTransaction).where(InventoryTransaction.reference_id==outbound['id'],InventoryTransaction.transaction_type==TransactionType.OUTBOUND_RELEASE)) is None
+
+@pytest.mark.parametrize('payload', [{}, {'pallet_qty':None,'carton_qty':None,'weight_lbs':None,'cbm':None}])
+def test_release_with_omitted_or_null_quantities_still_releases_all(client:TestClient,db:Session,seed,payload):
+ lot=inventory(client,seed,container='RELEASE-ALL-COMPAT',pallet=10);outbound=client.post('/api/v1/outbounds',json=ob(seed)).json();allocation=client.post(f"/api/v1/outbounds/{outbound['id']}/allocate",json={'inventory_lot_id':lot['id'],'pallet_qty':6,'carton_qty':12,'weight_lbs':600,'cbm':3}).json()
+ response=client.post(f"/api/v1/outbounds/{outbound['id']}/allocations/{allocation['id']}/release",json=payload);assert response.status_code==200,response.text
+ db.expire_all();stored_lot=db.get(InventoryLot,lot['id']);stored_allocation=db.get(OutboundInventoryAllocation,allocation['id']);assert stored_allocation is not None
+ assert (stored_lot.available_pallet_qty,stored_lot.available_carton_qty,stored_lot.available_weight_lbs,stored_lot.available_cbm)==(Decimal('10'),Decimal('20'),Decimal('1000'),Decimal('5'))
+ assert (stored_allocation.allocated_pallet_qty,stored_allocation.allocated_carton_qty,stored_allocation.allocated_weight_lbs,stored_allocation.allocated_cbm)==(Decimal('0'),Decimal('0'),Decimal('0'),Decimal('0'))
+
+def test_release_service_rejects_unvalidated_negative_quantity(client:TestClient,db:Session,seed):
+ lot=inventory(client,seed,container='NEGATIVE-SERVICE',pallet=10);outbound=client.post('/api/v1/outbounds',json=ob(seed)).json();allocation=client.post(f"/api/v1/outbounds/{outbound['id']}/allocate",json={'inventory_lot_id':lot['id'],'pallet_qty':6}).json()
+ payload=ReleaseRequest.model_construct(pallet_qty=Decimal('-1'),carton_qty=None,weight_lbs=None,cbm=None,remark=None)
+ with pytest.raises(HTTPException) as caught:release_inventory(db,outbound['id'],allocation['id'],payload,seed['admin'].id)
+ assert caught.value.status_code==422;db.rollback();db.expire_all();stored=db.get(InventoryLot,lot['id']);assert stored.available_pallet_qty==4 and stored.allocated_pallet_qty==6
+ assert db.scalar(select(InventoryTransaction).where(InventoryTransaction.reference_id==outbound['id'],InventoryTransaction.transaction_type==TransactionType.OUTBOUND_RELEASE)) is None
+
+def test_fba_release_service_rejects_unvalidated_negative_quantity(client:TestClient,db:Session,seed):
+ lot=inventory(client,seed,container='NEGATIVE-FBA-SERVICE',pallet=10);shipment=client.post('/api/v1/fba',json={'warehouse_id':seed['warehouse'].id,'customer_id':seed['customer'].id,'amazon_fc_code':'ONT8'}).json();fba_allocation=client.post(f"/api/v1/fba/{shipment['id']}/allocate",json={'inventory_lot_id':lot['id'],'pallet_qty':10}).json();outbound=client.post('/api/v1/outbounds',json={**ob(seed),'ob_type':'FBA','fba_shipment_id':shipment['id'],'fc_code':'ONT8'}).json();allocation=client.post(f"/api/v1/outbounds/{outbound['id']}/allocate",json={'inventory_lot_id':lot['id'],'fba_allocation_id':fba_allocation['id'],'pallet_qty':6}).json()
+ payload=ReleaseRequest.model_construct(pallet_qty=Decimal('-1'),carton_qty=None,weight_lbs=None,cbm=None,remark=None)
+ with pytest.raises(HTTPException) as caught:release_inventory(db,outbound['id'],allocation['id'],payload,seed['admin'].id)
+ assert caught.value.status_code==422;db.rollback();db.expire_all();stored_lot=db.get(InventoryLot,lot['id']);stored_fba=db.get(FBAInventoryAllocation,fba_allocation['id']);stored_allocation=db.get(OutboundInventoryAllocation,allocation['id'])
+ assert stored_lot.allocated_pallet_qty==10 and stored_fba.allocated_pallet_qty==10 and stored_allocation.allocated_pallet_qty==6
+ assert db.scalar(select(InventoryTransaction).where(InventoryTransaction.reference_id==outbound['id'],InventoryTransaction.transaction_type==TransactionType.OUTBOUND_RELEASE)) is None
+
+def test_inventory_batch_negative_release_rolls_back_and_same_key_can_retry(client:TestClient,db:Session,seed):
+ lot=inventory(client,seed,container='NEGATIVE-BATCH',pallet=10);outbound=client.post('/api/v1/outbounds',json=ob(seed)).json();allocation=client.post(f"/api/v1/outbounds/{outbound['id']}/allocate",json={'inventory_lot_id':lot['id'],'pallet_qty':6}).json();url=f"/api/v1/outbounds/{outbound['id']}/inventory/batch";key={'Idempotency-Key':'negative-release-retry'}
+ invalid={'action':'release','items':[{'id':allocation['id'],'data':{'allocation_id':allocation['id'],'pallet_qty':-1}}]};failed=client.post(url,json=invalid,headers=key);assert failed.status_code==409,failed.text;assert failed.json()['detail']['message']=='Invalid inventory batch item'
+ db.expire_all();stored=db.get(InventoryLot,lot['id']);assert stored.available_pallet_qty==4 and stored.allocated_pallet_qty==6;assert db.scalar(select(OutboundInventoryIdempotency).where(OutboundInventoryIdempotency.idempotency_key=='negative-release-retry')) is None
+ assert db.scalar(select(InventoryTransaction).where(InventoryTransaction.reference_id==outbound['id'],InventoryTransaction.transaction_type==TransactionType.OUTBOUND_RELEASE)) is None
+ valid={'action':'release','items':[{'id':allocation['id'],'data':{'allocation_id':allocation['id'],'pallet_qty':2}}]};retried=client.post(url,json=valid,headers=key);assert retried.status_code==200,retried.text
+ db.expire_all();stored=db.get(InventoryLot,lot['id']);assert stored.available_pallet_qty==6 and stored.allocated_pallet_qty==4
+
+def test_workbench_batch_hides_unexpected_exception_and_logs_reference(client:TestClient,db:Session,seed,monkeypatch,caplog):
+ outbound=client.post('/api/v1/outbounds',json=ob(seed)).json();secret='private-workbench-trace-value'
+ def fail(*_args,**_kwargs):raise RuntimeError(secret)
+ monkeypatch.setattr(outbound_endpoints,'generate_picking',fail);caplog.set_level(logging.ERROR,logger=outbound_endpoints.__name__)
+ response=client.post('/api/v1/outbounds/workbench/batch',json={'action':'picking','ids':[outbound['id']]});assert response.status_code==200,response.text;body=response.json();item=body['results'][0]
+ assert item['status']=='failed' and item['reason']=='Unexpected batch failure';assert secret not in response.text;assert re.fullmatch(r'[0-9a-f]{32}',item['error_reference']);assert secret in caplog.text and item['error_reference'] in caplog.text
+
+@pytest.mark.parametrize('ids', [['not-an-id'], {'not':'a-list'}])
+def test_workbench_batch_hides_malformed_ids_and_logs_reference(client:TestClient,seed,caplog,ids):
+ caplog.set_level(logging.ERROR,logger=outbound_endpoints.__name__)
+ response=client.post('/api/v1/outbounds/workbench/batch',json={'action':'picking','ids':ids});assert response.status_code==200,response.text;item=response.json()['results'][0]
+ assert item['status']=='failed' and item['reason']=='Unexpected batch failure';assert 'not-an-id' not in item['reason'];assert re.fullmatch(r'[0-9a-f]{32}',item['error_reference']);assert item['error_reference'] in caplog.text
+
+def test_workbench_batch_preserves_actionable_business_error(client:TestClient,seed,monkeypatch):
+ outbound=client.post('/api/v1/outbounds',json=ob(seed)).json()
+ def blocked(*_args,**_kwargs):raise HTTPException(409,{'blocking_reasons':['Documents missing']})
+ monkeypatch.setattr(outbound_endpoints,'generate_picking',blocked);response=client.post('/api/v1/outbounds/workbench/batch',json={'action':'picking','ids':[outbound['id']]});assert response.status_code==200,response.text
+ assert response.json()['results'][0]['reason']=='Documents missing'
+
+def test_inventory_batch_hides_unexpected_exception_rolls_back_and_logs_reference(client:TestClient,db:Session,seed,monkeypatch,caplog):
+ lot=inventory(client,seed,container='BATCH-PRIVATE-ERROR',pallet=10);outbound=client.post('/api/v1/outbounds',json=ob(seed)).json();secret='private-inventory-trace-value'
+ def fail(*_args,**_kwargs):raise RuntimeError(secret)
+ monkeypatch.setattr(outbound_endpoints,'allocate',fail);caplog.set_level(logging.ERROR,logger=outbound_endpoints.__name__);key='private-error'
+ response=client.post(f"/api/v1/outbounds/{outbound['id']}/inventory/batch",json=batch_allocate_payload(lot['id']),headers={'Idempotency-Key':key});assert response.status_code==409,response.text;detail=response.json()['detail']
+ assert detail['message']=='Unable to process inventory batch item';assert secret not in response.text;assert re.fullmatch(r'[0-9a-f]{32}',detail['error_reference']);assert secret in caplog.text and detail['error_reference'] in caplog.text
+ db.expire_all();stored=db.get(InventoryLot,lot['id']);assert stored.available_pallet_qty==10 and stored.allocated_pallet_qty==0;assert db.scalar(select(OutboundInventoryIdempotency).where(OutboundInventoryIdempotency.idempotency_key==key)) is None
+
+def test_inventory_batch_hides_setup_exception_and_logs_reference(client:TestClient,db:Session,seed,monkeypatch,caplog):
+ lot=inventory(client,seed,container='BATCH-SETUP-PRIVATE',pallet=10);outbound=client.post('/api/v1/outbounds',json=ob(seed)).json();secret='private-idempotency-setup-value'
+ def fail(*_args,**_kwargs):raise RuntimeError(secret)
+ monkeypatch.setattr(outbound_endpoints,'acquire_command_lock',fail);caplog.set_level(logging.ERROR,logger=outbound_endpoints.__name__);key='private-setup-error'
+ response=client.post(f"/api/v1/outbounds/{outbound['id']}/inventory/batch",json=batch_allocate_payload(lot['id']),headers={'Idempotency-Key':key});assert response.status_code==409,response.text;detail=response.json()['detail']
+ assert detail['message']=='Unable to process inventory batch item';assert secret not in response.text;assert re.fullmatch(r'[0-9a-f]{32}',detail['error_reference']);assert secret in caplog.text and detail['error_reference'] in caplog.text
+ assert db.scalar(select(OutboundInventoryIdempotency).where(OutboundInventoryIdempotency.idempotency_key==key)) is None

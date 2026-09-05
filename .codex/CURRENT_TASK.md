@@ -1,21 +1,31 @@
-TASK_ID: RECOVERY-2G
-STATUS: INTEGRATION_VALIDATED_PENDING_MAIN_UPDATE
+TASK_ID: RECOVERY-2H1
+STATUS: DRAFT_PR_FIXED_PENDING_REVIEW
 LEVEL: L3
+PR: https://github.com/XL3000-Bit/dlx-yuki-wms/pull/3
 BRANCH: integration/outbound-recovery-repaired-bf1ca5f
 BASE_BRANCH: main
-NEXT_TASK: RECOVERY-2G — final main update and push/PR decision
+NEXT_TASK: Draft PR #3 read-only re-review and explicit merge decision
 INTEGRATION_BASE: bf1ca5f481b1bb41376af4f0509154bb5f7dcb1c
 BASELINE_REPAIR_HEAD: fe9a87bd1853cd624c1f99afb16ecb070d87f3dd
 INTEGRATION_IMPLEMENTATION_HEAD: 0fc8725a07e6308b12ecd77ad853670d3e1069c4
 INTEGRATION_DOCUMENT_HEAD: 099b8d08c5edb0f60633fa3be4e5058e71f6e493
+PRE_FIX_HEAD: 4ea0ce94dd4ea3a40bdd9e2ce98b536820ec6892
+FIX_HEAD: CURRENT_BRANCH_HEAD
+POSTGRESQL_TARGETED: 2_PASSED
+BACKEND: 191_PASSED_11_SKIPPED_ISOLATED_POSTGRESQL_GATES
+OUTBOUND: 28_PASSED
+THREEPL_NON_DATABASE: 6_PASSED
+FRONTEND_BUILD: PASS
+BROWSER: PASS
 MAIN_UPDATE: NOT_PERFORMED
-PUSH: NOT_PERFORMED
+PUSH: INTEGRATION_BRANCH_ONLY
 PRODUCTION_DATABASE: NOT_ACCESSED
-PHASE_INBOUND_1A: BLOCKED_PENDING_MAIN_UPDATE
+PHASE_INBOUND_1A: BLOCKED_PENDING_PR_MERGE_AND_POST_MERGE_ACCEPTANCE
 WALLBOARD_1: NOT_AUTHORIZED_IN_THIS_SLICE
 ACTIVE_BRAND: DLX Yuki WMS
 REJECTED_COMMIT: QUARANTINED_DO_NOT_INTEGRATE
 
-The repaired-main baseline, prerequisite migration, accepted outbound recovery chain,
-parity documentation, PostgreSQL gates, complete regression, and dedicated browser
-acceptance are validated. RECOVERY-2G is the next authorized decision slice.
+Draft PR #3 has been hardened for outbound release validation and batch error
+boundaries, Los Angeles business-date handling, and view-scoped 3PL queries. The
+fix is validated and remains a draft pending a fresh read-only review and an
+explicit merge decision.
