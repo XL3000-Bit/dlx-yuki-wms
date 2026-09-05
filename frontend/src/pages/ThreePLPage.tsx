@@ -90,7 +90,11 @@ export function ThreePLPage() {
     customer_id: customerId,
     warehouse_id: warehouseId,
   }), [customerId, warehouseId, search.get('date_from'), search.get('date_to')])
-  const query = useQuery({ queryKey: ['3pl-overview', params], queryFn: () => getThreePLOverview(params) })
+  const query = useQuery({
+    queryKey: ['3pl-overview', params],
+    queryFn: () => getThreePLOverview(params),
+    enabled: view === 'clients',
+  })
   const dispatchParams = useMemo(() => ({
     customer_id: customerId, warehouse_id: warehouseId, status, readiness, blocker, priority,
     search: searchText.trim() || undefined,
@@ -100,6 +104,7 @@ export function ThreePLPage() {
   const dispatchQuery = useQuery({
     queryKey: ['3pl-dispatch-queue', dispatchParams],
     queryFn: () => getThreePLDispatchQueue(dispatchParams),
+    enabled: view === 'dispatch',
   })
   const issueDocuments = useMutation({
     mutationFn: ensureOutboundDocuments,
