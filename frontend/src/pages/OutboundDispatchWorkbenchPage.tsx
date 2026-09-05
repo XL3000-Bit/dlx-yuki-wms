@@ -26,7 +26,7 @@ import {
   message,
 } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTableScrollHeight } from "../hooks/useTableScrollHeight";
 import {
@@ -43,6 +43,8 @@ import {
   getOutboundWorkbenchDetail,
   releaseOutbound,
   resolveOutbound,
+  runOutboundInventoryBatch,
+  runOutboundWorkbenchBatch,
   updateOutboundSchedule,
 } from "../api/outbound";
 import { generateBol, generatePicking } from "../api/pickingBol";
@@ -93,12 +95,17 @@ export function OutboundDispatchWorkbenchPage() {
   const [sp, setSp] = useSearchParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [modal, modalContextHolder] = Modal.useModal();
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [rightHidden, setRightHidden] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedAllocationIds, setSelectedAllocationIds] = useState<number[]>(
+    [],
+  );
+  const [selectedSourceIds, setSelectedSourceIds] = useState<number[]>([]);
   const horizontalSplitRef = useRef<OutboundSplitLayoutHandle>(null);
   const verticalSplitRef = useRef<OutboundVerticalSplitLayoutHandle>(null);
   const [ordersTableRef, ordersScrollY] = useTableScrollHeight(98, 128);
@@ -152,9 +159,50 @@ export function OutboundDispatchWorkbenchPage() {
   const rows = list.data?.data || [];
   const selected =
     detail.data?.basic || rows.find((row: any) => row.id === selectedId);
+  const selectedRows = rows.filter((row: any) => selectedIds.includes(row.id));
+  const lifecycleRows = selectedIds.length
+    ? selectedRows
+    : selected
+      ? [selected]
+      : [];
+  const lifecycleIds = lifecycleRows.map((row: any) => row.id);
+  const canRunLifecycle = (name: string) =>
+    lifecycleRows.some((row: any) => row.allowed_actions?.[name]);
+
+  useEffect(() => {
+    setSelectedAllocationIds([]);
+    setSelectedSourceIds([]);
+  }, [selectedId]);
 
   const patch = (values: any) => {
+    const selectionScopeKeys = new Set([
+      "page",
+      "per_page",
+      "q",
+      "id",
+      "status",
+      "ob_type",
+      "warehouse",
+      "carrier_id",
+      "bol_no",
+      "container_number",
+      "delivery_location",
+      "reference_search",
+      "del_ref",
+      "agent_code",
+      "pickup_location",
+      "redirect_location",
+      "sort_by",
+      "sort_order",
+    ]);
+    const selectionScopeChanged = Object.keys(values).some((key) =>
+      selectionScopeKeys.has(key),
+    );
+    if (selectionScopeChanged) {
+      setSelectedIds([]);
+    }
     const query = new URLSearchParams(sp);
+    if (selectionScopeChanged) query.delete("selected_ob");
     Object.entries(values).forEach(([key, value]) =>
       value === undefined || value === ""
         ? query.delete(key)
@@ -183,6 +231,215 @@ export function OutboundDispatchWorkbenchPage() {
     },
     onError: () => message.error("Operation rejected"),
   });
+  const batchAction = useMutation({
+    mutationFn: async ({ name, ids }: any) => {
+      if (name === "dispatch") {
+        const readiness = await Promise.all(
+          ids.map(async (id: number) => ({
+            id,
+            readiness: await getOutboundDispatchReadiness(id),
+          })),
+        );
+        const blocked = readiness.filter(
+          ({ readiness: result }: any) => result.status !== "READY",
+        );
+        if (blocked.length) {
+          const error: any = new Error("Dispatch blocked by readiness checks");
+          error.blocked = blocked;
+          throw error;
+        }
+      }
+      return runOutboundWorkbenchBatch(name, ids);
+    },
+    onSuccess: (result: any, variables: any) => {
+      if (variables.name === "delete") {
+        const deletedIds = result.results
+          .filter((item: any) => item.status === "success")
+          .map((item: any) => item.id);
+        if (deletedIds.length) {
+          setSelectedIds((current) =>
+            current.filter((id) => !deletedIds.includes(id)),
+          );
+          const currentSelectedId = Number(sp.get("selected_ob") || 0);
+          if (deletedIds.includes(currentSelectedId)) {
+            const query = new URLSearchParams(sp);
+            query.delete("selected_ob");
+            setSp(query, { replace: true });
+          }
+        }
+      }
+      const failedResults = result.results.filter(
+        (item: any) => item.status === "failed",
+      );
+      if (result.failed > 0) {
+        modal.warning({
+          title:
+            result.successful > 0
+              ? "Batch completed with blocked outbound orders"
+              : "Batch operation blocked",
+          content: (
+            <div>
+              <p>
+                Successful: {result.successful}; Failed: {result.failed}
+              </p>
+              <ul>
+                {failedResults.map((item: any) => (
+                  <li key={item.id}>
+                    OB {item.id}: {item.reason || "Operation rejected"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ),
+        });
+      } else {
+        message.success(
+          `Batch operation completed for ${result.successful} outbound order${result.successful === 1 ? "" : "s"}`,
+        );
+      }
+      refresh();
+    },
+    onError: (error: any) => {
+      if (error.blocked?.length) {
+        modal.warning({
+          title: "Dispatch blocked",
+          content: (
+            <ul>
+              {error.blocked.flatMap(({ id, readiness }: any) =>
+                readiness.blocking_reasons.map((reason: string, index: number) => (
+                  <li key={`${id}-${index}`}>
+                    OB {id}: {reason}
+                  </li>
+                )),
+              )}
+            </ul>
+          ),
+        });
+        return;
+      }
+      message.error(error?.message || "Batch operation rejected");
+    },
+  });
+  const inventoryRetryRef = useRef<{ signature: string; key: string } | null>(null);
+  const inventoryMove = useMutation({
+    mutationFn: async ({
+      direction,
+      rows: moveRows,
+    }: {
+      direction: "allocate" | "release";
+      rows: any[];
+    }) => {
+      const items = moveRows.map((row) => ({
+        id: row.id,
+        data:
+          direction === "allocate"
+            ? {
+              inventory_lot_id: row.inventory_lot_id || row.id,
+              fba_allocation_id: row.fba_allocation_id,
+              pallet_qty:
+                row.available_pallet_qty ?? row.remaining_pallet_qty ?? 0,
+              carton_qty:
+                row.available_carton_qty ?? row.remaining_carton_qty ?? 0,
+              weight_lbs:
+                row.available_weight_lbs ?? row.remaining_weight_lbs ?? 0,
+              cbm: row.available_cbm ?? row.remaining_cbm ?? 0,
+            }
+            : { allocation_id: row.id },
+      }));
+      const signature = JSON.stringify({ selectedId, direction, items });
+      if (inventoryRetryRef.current?.signature !== signature) {
+        inventoryRetryRef.current = { signature, key: crypto.randomUUID() };
+      }
+      const result = await runOutboundInventoryBatch(
+        selectedId,
+        direction,
+        items,
+        inventoryRetryRef.current.key,
+      );
+      return { ...result, direction };
+    },
+    onSuccess: (result) => {
+      inventoryRetryRef.current = null;
+      const successfulIds = result.results
+        .filter((item) => item.status === "success")
+        .map((item) => item.id);
+      if (result.direction === "allocate") {
+        setSelectedSourceIds((current) =>
+          current.filter((id) => !successfulIds.includes(id)),
+        );
+      } else {
+        setSelectedAllocationIds((current) =>
+          current.filter((id) => !successfulIds.includes(id)),
+        );
+      }
+      if (result.failed) {
+        modal.warning({
+          title: result.successful
+            ? "Batch move completed with blocked rows"
+            : "Batch move blocked",
+          content: (
+            <div>
+              <p>
+                Successful: {result.successful}; Failed: {result.failed}
+              </p>
+              <ul>
+                {result.results
+                  .filter((item) => item.status === "failed")
+                  .map((item) => (
+                    <li key={item.id}>
+                      Row {item.id}: {item.reason}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ),
+        });
+      } else {
+        message.success(
+          `${result.successful} row${result.successful === 1 ? "" : "s"} ${
+            result.direction === "allocate" ? "moved" : "removed"
+          }`,
+        );
+      }
+      refresh();
+    },
+    onError: (error: any) => {
+      const status = error?.response?.status;
+      if (status && ![408, 429].includes(status) && status < 500) inventoryRetryRef.current = null;
+      const detail = error?.response?.data?.detail;
+      message.error(detail?.message || detail || "Batch move rejected");
+    },
+  });
+
+  const runInventoryMove = (direction: "allocate" | "release") => {
+    if (!selectedId || inventoryMove.isPending) return;
+    const ids =
+      direction === "allocate" ? selectedSourceIds : selectedAllocationIds;
+    const data =
+      direction === "allocate"
+        ? detail.data?.remaining_sources || []
+        : activeAllocations;
+    const moveRows = data.filter((row: any) => ids.includes(row.id));
+    if (moveRows.length) inventoryMove.mutate({ direction, rows: moveRows });
+  };
+
+  const hasReleasableQuantity = (row: any) =>
+    ["pallet_qty", "carton_qty", "weight_lbs", "cbm"].some(
+      (metric) =>
+        Number(row[`allocated_${metric}`] || 0) -
+          Number(row[`completed_${metric}`] || 0) >
+        0,
+    );
+  const activeAllocations = (detail.data?.allocations || []).filter((row: any) =>
+    ["pallet_qty", "carton_qty", "weight_lbs", "cbm"].some(
+      (metric) =>
+        Number(row[`allocated_${metric}`] || 0) > 0 ||
+        Number(row[`completed_${metric}`] || 0) > 0,
+    ),
+  );
+  const runLifecycle = (name: string) => {
+    if (lifecycleIds.length) batchAction.mutate({ name, ids: lifecycleIds });
+  };
   const create = useMutation({
     mutationFn: createOutbound,
     onSuccess: () => {
@@ -383,9 +640,12 @@ export function OutboundDispatchWorkbenchPage() {
       render: (_: any, row: any) => (
         <Button
           size="small"
+          disabled={
+            !selected?.allowed_actions?.release || !hasReleasableQuantity(row)
+          }
           onClick={() => releaseOutbound(selectedId, row.id, {}).then(refresh)}
         >
-          Release
+          Remove
         </Button>
       ),
     },
@@ -431,31 +691,34 @@ export function OutboundDispatchWorkbenchPage() {
     },
     {
       title: "",
-      width: 78,
+      width: 96,
       fixed: "right",
       render: (_: any, row: any) => (
         <Button
           className="source-allocate-button"
           size="small"
+          disabled={!selected?.allowed_actions?.allocate}
           onClick={() =>
             allocateOutbound(selectedId, {
               inventory_lot_id: row.inventory_lot_id || row.id,
               fba_allocation_id: row.fba_allocation_id,
-              pallet_qty: row.available_pallet_qty || row.remaining_pallet_qty,
-              carton_qty: row.available_carton_qty || row.remaining_carton_qty,
-              weight_lbs: row.weight_lbs || 0,
-              cbm: row.cbm || 0,
+              pallet_qty:
+                row.available_pallet_qty ?? row.remaining_pallet_qty ?? 0,
+              carton_qty:
+                row.available_carton_qty ?? row.remaining_carton_qty ?? 0,
+              weight_lbs:
+                row.available_weight_lbs ?? row.remaining_weight_lbs ?? 0,
+              cbm: row.available_cbm ?? row.remaining_cbm ?? 0,
             }).then(refresh)
           }
         >
-          Allocate
+          Drag BOL
         </Button>
       ),
     },
   ];
 
   const summary = list.data?.summary || {};
-  const selectedRows = rows.filter((row: any) => selectedIds.includes(row.id));
   const selectedPallets = selectedRows.reduce(
     (total: number, row: any) => total + Number(row.allocated_pallet_qty || 0),
     0,
@@ -466,6 +729,20 @@ export function OutboundDispatchWorkbenchPage() {
       <div className="panel-title">
         <h3>OB Allocation / Picking / BOL</h3>
         <Space size={6} wrap>
+          <Button
+            disabled={
+              !selected?.allowed_actions?.release ||
+              selectedAllocationIds.length === 0 ||
+              inventoryMove.isPending
+            }
+            loading={
+              inventoryMove.isPending &&
+              inventoryMove.variables?.direction === "release"
+            }
+            onClick={() => runInventoryMove("release")}
+          >
+            Remove Selected ({selectedAllocationIds.length})
+          </Button>
           <Button
             disabled={!selected?.allowed_actions?.picking}
             onClick={() => action.mutate({ name: "picking", id: selected.id })}
@@ -491,7 +768,17 @@ export function OutboundDispatchWorkbenchPage() {
           sticky
           pagination={false}
           rowKey="id"
-          dataSource={detail.data?.allocations || []}
+          rowSelection={{
+            selectedRowKeys: selectedAllocationIds,
+            onChange: (keys) =>
+              setSelectedAllocationIds(keys.map((key) => Number(key))),
+            getCheckboxProps: (row: any) => ({
+              disabled:
+                !selected?.allowed_actions?.release ||
+                !hasReleasableQuantity(row),
+            }),
+          }}
+          dataSource={activeAllocations}
           columns={allocCols}
           scroll={{ x: 690, y: allocationScrollY }}
           locale={{
@@ -506,6 +793,11 @@ export function OutboundDispatchWorkbenchPage() {
         {n(selected?.allocated_carton_qty)} CTN <span>/</span>{" "}
         {n(selected?.allocated_weight_lbs)} LB <span>/</span>{" "}
         {n(selected?.allocated_cbm)} CBM
+        {selectedAllocationIds.length > 0 && (
+          <span className="inventory-drag-hint">
+            {selectedAllocationIds.length} selected — choose Remove Selected
+          </span>
+        )}
       </div>
     </div>
   );
@@ -514,6 +806,26 @@ export function OutboundDispatchWorkbenchPage() {
     <div className="dispatch-panel dispatch-panel-lower">
       <div className="panel-title">
         <h3>Remaining Source</h3>
+        <Space size={6} wrap>
+          <span className="inventory-drag-help">
+            Select rows, then choose Drag BOL
+          </span>
+          <Button
+            type="primary"
+            disabled={
+              !selected?.allowed_actions?.allocate ||
+              selectedSourceIds.length === 0 ||
+              inventoryMove.isPending
+            }
+            loading={
+              inventoryMove.isPending &&
+              inventoryMove.variables?.direction === "allocate"
+            }
+            onClick={() => runInventoryMove("allocate")}
+          >
+            Drag BOL ({selectedSourceIds.length})
+          </Button>
+        </Space>
       </div>
       {selected && <EntityDocuments relation={{ outbound_id: selected.id }} />}
       <div
@@ -526,6 +838,14 @@ export function OutboundDispatchWorkbenchPage() {
           sticky
           pagination={false}
           rowKey="id"
+          rowSelection={{
+            selectedRowKeys: selectedSourceIds,
+            onChange: (keys) =>
+              setSelectedSourceIds(keys.map((key) => Number(key))),
+            getCheckboxProps: () => ({
+              disabled: !selected?.allowed_actions?.allocate,
+            }),
+          }}
           dataSource={detail.data?.remaining_sources || []}
           columns={sourceCols}
           scroll={{ x: 870, y: sourceScrollY }}
@@ -541,6 +861,7 @@ export function OutboundDispatchWorkbenchPage() {
 
   return (
     <div className="dispatch-workbench">
+      {modalContextHolder}
       <OutboundSplitLayout
         left={
           <div className="dispatch-left-workspace">
@@ -562,28 +883,50 @@ export function OutboundDispatchWorkbenchPage() {
               }}
               warehouses={warehouses.data || []}
               carriers={carriers.data || []}
-              selectedCount={selectedIds.length}
-              canConfirm={!!selected?.allowed_actions?.confirm}
-              canCancel={!!selected?.allowed_actions?.cancel}
+              selectedCount={selectedIds.length || (selected ? 1 : 0)}
+              canConfirm={canRunLifecycle("confirm")}
+              canCancel={canRunLifecycle("cancel")}
               canException={!!selected?.allowed_actions?.exception}
-              canDispatch={!!selected?.allowed_actions?.dispatch}
+              canDispatch={canRunLifecycle("dispatch")}
               rightHidden={rightHidden}
               onChange={patch}
               onRefresh={() => list.refetch()}
-              onResetFilters={() => setSp(new URLSearchParams())}
+              onResetFilters={() => {
+                setSelectedIds([]);
+                setSp(new URLSearchParams());
+              }}
               onResetWindow={resetWindow}
               onToggleRight={() => horizontalSplitRef.current?.toggleRight()}
               onCreate={() => setCreateOpen(true)}
-              onConfirm={() => action.mutate({ name: "confirm", id: selected.id })}
-              onCancel={() => action.mutate({ name: "cancel", id: selected.id })}
-              onDispatch={() => action.mutate({ name: "dispatch", id: selected.id })}
+              onConfirm={() => runLifecycle("confirm")}
+              onCancel={() => runLifecycle("cancel")}
+              onDispatch={() => runLifecycle("dispatch")}
               onException={() => setExceptionOpen(true)}
               onDelete={() => {
-                if (!selected) return;
-                Modal.confirm({
-                  title: "Delete / cancel this OB?",
-                  content: "Yuki has no hard-delete API. This runs Cancel.",
-                  onOk: () => action.mutate({ name: "cancel", id: selected.id }),
+                const ids = selectedIds.length
+                  ? selectedIds
+                  : selected
+                    ? [selected.id]
+                    : [];
+                if (!ids.length) return;
+                const labels = rows
+                  .filter((row: any) => ids.includes(row.id))
+                  .map((row: any) => row.ob_no);
+                modal.confirm({
+                  title: `Delete ${ids.length} outbound order${ids.length === 1 ? "" : "s"}?`,
+                  content: (
+                    <div>
+                      <p>
+                        This permanently deletes only pristine New drafts. Any
+                        outbound with allocations or execution records will be
+                        rejected and kept.
+                      </p>
+                      {labels.length > 0 && <p>{labels.join(", ")}</p>}
+                    </div>
+                  ),
+                  okText: "Delete",
+                  okButtonProps: { danger: true },
+                  onOk: () => batchAction.mutateAsync({ name: "delete", ids }),
                 });
               }}
             />
@@ -664,7 +1007,12 @@ export function OutboundDispatchWorkbenchPage() {
                   label: warehouse.warehouse_code,
                 }))}
               />
-              <Button onClick={() => setSp(new URLSearchParams())}>
+              <Button
+                onClick={() => {
+                  setSelectedIds([]);
+                  setSp(new URLSearchParams());
+                }}
+              >
                 Reset
               </Button>
             </div>

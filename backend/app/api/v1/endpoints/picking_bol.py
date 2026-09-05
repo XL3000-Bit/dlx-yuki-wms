@@ -5,8 +5,8 @@ from sqlalchemy import select
 from fastapi.responses import Response,StreamingResponse
 from app.api.deps import CurrentUser,DbSession,require_outbound_write
 from app.models import User,PickingList,BOL,OutboundOrder
-from app.schemas.picking_bol import BOLRead,PickComplete,PickingRead
-from app.services.picking_bol import bol_pdf,bol_read,bol_xlsx,complete_picking,generate_bol,generate_picking,picking_read
+from app.schemas.picking_bol import BOLRead,OutboundDocumentsRead,PickComplete,PickingRead
+from app.services.picking_bol import bol_pdf,bol_read,bol_xlsx,complete_picking,ensure_outbound_documents,generate_bol,generate_picking,picking_read
 from app.services.access_policy import customer_clause, warehouse_clause
 from app.services.outbound import get_ob
 router=APIRouter(tags=['Picking and BOL']);Writer=Depends(require_outbound_write)
@@ -37,6 +37,16 @@ def picking_excel(pid:int,db:DbSession,user:CurrentUser):
  s=BytesIO();wb.save(s);s.seek(0);return StreamingResponse(s,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename={p.picking_no}.xlsx'})
 @router.post('/outbounds/{ob_id}/bol',response_model=BOLRead)
 def create_bol(ob_id:int,db:DbSession,user:User=Writer):get_ob(db,ob_id,user=user);return bol_read(generate_bol(db,ob_id,user.id))
+@router.post('/outbounds/{ob_id}/documents/ensure',response_model=OutboundDocumentsRead)
+def ensure_documents(ob_id:int,db:DbSession,user:User=Writer):
+ try:
+  get_ob(db,ob_id,user=user)
+  result=ensure_outbound_documents(db,ob_id,user.id)
+  db.commit()
+ except Exception:
+  db.rollback()
+  raise
+ return {'outbound_order_id':ob_id,'picking_list_id':result.picking.id,'picking_list_number':result.picking.picking_no,'bol_id':result.bol.id,'bol_number':result.bol.bol_no,'picking_list_created':result.picking_list_created,'bol_created':result.bol_created,'documents_reused':result.documents_reused,'picking':picking_read(result.picking),'bol':bol_read(result.bol)}
 @router.get('/bols',response_model=list[BOLRead])
 def bols(db:DbSession,user:CurrentUser):return[bol_read(x) for x in db.scalars(_scoped_query(select(BOL).join(OutboundOrder,OutboundOrder.id==BOL.outbound_order_id),user).order_by(BOL.id.desc()).limit(200)).all()]
 @router.get('/bols/{bid}',response_model=BOLRead)

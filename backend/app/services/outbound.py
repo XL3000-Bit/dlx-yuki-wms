@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func,or_,select
 from sqlalchemy.orm import Session,joinedload,selectinload
-from app.models import AuditLog,Carrier,Customer,ExceptionSeverity,ExceptionStatus,ExceptionType,FBAInventoryAllocation,FBAShipment,InventoryLot,InventoryTransaction,OperationalException,OutboundInventoryAllocation,OutboundOrder,User,Warehouse
+from app.models import AuditLog,BOL,Carrier,Customer,ExceptionSeverity,ExceptionStatus,ExceptionType,FBAInventoryAllocation,FBAShipment,InventoryLot,InventoryTransaction,LoadVerificationTransaction,OperationalDocument,OperationalException,OutboundInventoryAllocation,OutboundOrder,PickingList,ScanSession,StageTransaction,User,Warehouse,WorkOrder
 from app.models.inventory import TransactionType
 from app.models.outbound import OBStatus
 from app.schemas.inbound import NamedRef,PaginationMeta
@@ -34,6 +34,36 @@ def get_ob(db:Session,id:int,lock=False,user:User|None=None):
  o=db.scalar(q)
  if not o:raise HTTPException(404,'Outbound order not found')
  return o
+OUTBOUND_DELETE_LINKS=(
+ ('inventory allocation',OutboundInventoryAllocation,OutboundInventoryAllocation.outbound_order_id),
+ ('picking list',PickingList,PickingList.outbound_order_id),
+ ('BOL',BOL,BOL.outbound_order_id),
+ ('scan session',ScanSession,ScanSession.outbound_id),
+ ('staging transaction',StageTransaction,StageTransaction.outbound_id),
+ ('load verification',LoadVerificationTransaction,LoadVerificationTransaction.outbound_id),
+ ('work order',WorkOrder,WorkOrder.outbound_id),
+ ('exception',OperationalException,OperationalException.outbound_id),
+ ('document',OperationalDocument,OperationalDocument.outbound_id),
+)
+def outbound_delete_blockers(db:Session,o:OutboundOrder)->list[str]:
+ blockers=[]
+ if o.status!=OBStatus.NEW:blockers.append(f'Status {STATUS[o.status]} is not New')
+ if o.load_id is not None:blockers.append('Outbound is assigned to a load')
+ for label,model,column in OUTBOUND_DELETE_LINKS:
+  if db.scalar(select(model.id).where(column==o.id).limit(1)) is not None:blockers.append(f'Outbound has a linked {label}')
+ return blockers
+def outbound_ids_with_delete_links(db:Session,ids:list[int])->set[int]:
+ linked=set()
+ if not ids:return linked
+ for _,_,column in OUTBOUND_DELETE_LINKS:linked.update(db.scalars(select(column).where(column.in_(ids))).all())
+ return linked
+def delete_outbound_draft(db:Session,ob_id:int,user_id:int,user:User|None=None,commit=True):
+ o=get_ob(db,ob_id,True,user=user);blockers=outbound_delete_blockers(db,o)
+ if blockers:raise HTTPException(409,detail={'message':'Only pristine New outbound drafts can be deleted','blocking_reasons':blockers})
+ before=jsonable_encoder({'id':o.id,'ob_no':o.ob_no,'status':o.status,'customer_id':o.customer_id,'warehouse_id':o.warehouse_id,'reference_no':o.reference_no})
+ db.add(AuditLog(user_id=user_id,action='DELETE_OUTBOUND',entity_type='OUTBOUND',entity_id=o.id,before_data=before));db.delete(o);db.flush()
+ if commit:db.commit()
+ return before
 FIELDS={'pallet':'pallet_qty','carton':'carton_qty','weight_lbs':'weight_lbs','cbm':'cbm'}
 def totals(o):return tuple(sum((getattr(a,f'allocated_{FIELDS[x]}')-getattr(a,f'completed_{FIELDS[x]}') for a in o.allocations),ZERO) for x in FIELDS)
 def read_ob(db:Session,o):
@@ -77,6 +107,7 @@ def release(db:Session,ob_id:int,allocation_id:int,p:ReleaseRequest,user_id:int,
  if not a:raise HTTPException(404,'Outbound allocation not found')
  if o.status in (OBStatus.COMPLETED,OBStatus.DISPATCHED):raise HTTPException(409,'Completed or dispatched outbound is immutable')
  vals=(p.pallet_qty if p.pallet_qty is not None else a.allocated_pallet_qty-a.completed_pallet_qty,p.carton_qty if p.carton_qty is not None else a.allocated_carton_qty-a.completed_carton_qty,p.weight_lbs if p.weight_lbs is not None else a.allocated_weight_lbs-a.completed_weight_lbs,p.cbm if p.cbm is not None else a.allocated_cbm-a.completed_cbm);remain=(a.allocated_pallet_qty-a.completed_pallet_qty,a.allocated_carton_qty-a.completed_carton_qty,a.allocated_weight_lbs-a.completed_weight_lbs,a.allocated_cbm-a.completed_cbm)
+ if any(v<ZERO for v in vals):raise HTTPException(422,'Release quantities must be non-negative')
  if any(v>r for v,r in zip(vals,remain)):raise HTTPException(409,'Release exceeds remaining allocation')
  if a.fba_allocation_id is None:
   lot=get_lot(db,a.inventory_lot_id,True);before=snapshot(lot);lot.available_pallet_qty+=vals[0];lot.available_carton_qty+=vals[1];lot.available_weight_lbs+=vals[2];lot.available_cbm+=vals[3];lot.allocated_pallet_qty-=vals[0];lot.allocated_carton_qty-=vals[1];lot.allocated_weight_lbs-=vals[2];lot.allocated_cbm-=vals[3];derive_status(lot);_tx(db,lot,TransactionType.OUTBOUND_RELEASE,user_id,before,p=vals[0],c=vals[1],w=vals[2],v=vals[3],reference_type='OUTBOUND',reference_id=o.id,remark=p.remark or 'Released')
@@ -86,7 +117,7 @@ def release(db:Session,ob_id:int,allocation_id:int,p:ReleaseRequest,user_id:int,
 def allocation_read(a):
  lot=a.inventory_lot;return AllocationRead.model_validate({**a.__dict__,'lot_no':lot.lot_no,'container_number':lot.container_number,'fc_code':lot.fc_code,'location':named(lot.location,'location'),'source_type':'FBA' if a.fba_allocation_id else 'INVENTORY','fba_no':a.outbound.fba_shipment.fba_no if a.fba_allocation_id and a.outbound.fba_shipment else None})
 def allocations(db:Session,o):return[allocation_read(a) for a in db.scalars(select(OutboundInventoryAllocation).options(joinedload(OutboundInventoryAllocation.inventory_lot).joinedload(InventoryLot.location),joinedload(OutboundInventoryAllocation.outbound).joinedload(OutboundOrder.fba_shipment)).where(OutboundInventoryAllocation.outbound_order_id==o.id).order_by(OutboundInventoryAllocation.id)).all()]
-def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionRequest|None=None):
+def _change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionRequest|None=None):
  o=get_ob(db,ob_id,True)
  if target==OBStatus.DISPATCHED:require_dispatch_ready(db,o)
  if target not in TRANS.get(o.status,set()):raise HTTPException(409,f'Invalid status transition: {STATUS[o.status]} to {STATUS.get(target)}')
@@ -100,11 +131,19 @@ def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionReques
  if before==OBStatus.EXCEPTION and target==OBStatus.CONFIRMED:
   for incident in db.scalars(select(OperationalException).where(OperationalException.outbound_id==o.id,OperationalException.exception_type==ExceptionType.OUTBOUND,OperationalException.status.in_((ExceptionStatus.OPEN,ExceptionStatus.INVESTIGATING))).with_for_update()).all():
    transition_exception(db,incident,ExceptionStatus.RESOLVED,user_id,'Resolved through Outbound action',commit=False)
+ if target==OBStatus.CONFIRMED:
+  from app.services.picking_bol import ensure_outbound_documents
+  ensure_outbound_documents(db,o.id,user_id)
  if target==OBStatus.COMPLETED:complete_all(db,o,user_id);o.completed_at=now;o.completed_by=user_id
  if target==OBStatus.CANCELED:
   for a in list(o.allocations):
    if any((a.allocated_pallet_qty-a.completed_pallet_qty,a.allocated_carton_qty-a.completed_carton_qty,a.allocated_weight_lbs-a.completed_weight_lbs,a.allocated_cbm-a.completed_cbm)):release(db,o.id,a.id,ReleaseRequest(),user_id,False)
  o.canceled_at=now if target==OBStatus.CANCELED else o.canceled_at;o.canceled_by=user_id if target==OBStatus.CANCELED else o.canceled_by;db.add(AuditLog(user_id=user_id,action='CANCEL_OUTBOUND' if target==6 else 'CHANGE_OUTBOUND_STATUS',entity_type='OUTBOUND',entity_id=o.id,before_data={'status':before},after_data={'status':target}));db.commit();return get_ob(db,o.id)
+def change(db:Session,ob_id:int,target:int,user_id:int,exception:ExceptionRequest|None=None):
+ try:return _change(db,ob_id,target,user_id,exception)
+ except Exception:
+  db.rollback()
+  raise
 def complete_all(db,o,user_id):
  for a in o.allocations:
   rem=(a.allocated_pallet_qty-a.completed_pallet_qty,a.allocated_carton_qty-a.completed_carton_qty,a.allocated_weight_lbs-a.completed_weight_lbs,a.allocated_cbm-a.completed_cbm)

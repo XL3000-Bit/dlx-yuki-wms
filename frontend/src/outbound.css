@@ -677,6 +677,16 @@
   flex: 1 1 auto;
 }
 
+.inventory-drag-help,
+.inventory-drag-hint {
+  color: #8a5a20;
+  font-size: 11px;
+}
+
+.inventory-drag-hint {
+  margin-left: 8px;
+}
+
 .source-allocate-button {
   opacity: .42;
   transition: opacity .12s ease, border-color .12s ease, color .12s ease;

@@ -35,7 +35,9 @@ export function DispatchCommandBar(props: Props) {
       <div className="dispatch-command-top">
         <div className="dispatch-crumb">Home <span>/</span> Outbound <span>/</span> Dispatch</div>
         <Space size={6} wrap className="dispatch-command-actions">
-          <Button danger disabled={!props.selectedCount} onClick={props.onDelete}>Delete</Button>
+          <Button danger disabled={!props.selectedCount} onClick={props.onDelete}>
+            {props.selectedCount > 1 ? `Delete Selected (${props.selectedCount})` : "Delete"}
+          </Button>
           <Button disabled={!props.canCancel} onClick={props.onCancel}>Cancel</Button>
           <Button disabled={!props.canConfirm} onClick={props.onConfirm}>Confirm OB</Button>
           <Button disabled={!props.canException} onClick={props.onException}>Exception</Button>
