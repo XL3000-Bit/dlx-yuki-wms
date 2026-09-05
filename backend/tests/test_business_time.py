@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -56,6 +56,11 @@ def test_business_day_range_handles_dst_without_fixed_24_hours():
     assert start.isoformat()=='2026-03-08T00:00:00-08:00'
     assert end.isoformat()=='2026-03-09T00:00:00-07:00'
     assert (end.astimezone(UTC)-start.astimezone(UTC)).total_seconds()==23*60*60
+
+    start,end=business_day_range(date(2026,11,1))
+    assert start.utcoffset()==timedelta(hours=-7)
+    assert end.utcoffset()==timedelta(hours=-8)
+    assert (end.astimezone(UTC)-start.astimezone(UTC)).total_seconds()==25*60*60
 
 
 def test_inventory_aging_uses_business_today(client:TestClient,seed,monkeypatch):

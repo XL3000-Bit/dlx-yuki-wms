@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -13,7 +13,15 @@ from app.models.operational_exception import (
     OperationalException,
 )
 from app.models.work_order import WorkOrder, WorkOrderPriority, WorkOrderStatus, WorkOrderType
+from app.services.threepl import _within
 from app.utils.business_time import get_business_now, get_business_today
+
+
+def test_threepl_overview_datetime_boundaries_use_business_timezone():
+    selected_day = date(2026, 9, 4)
+
+    assert _within(datetime(2026, 9, 5, 6, 59, tzinfo=UTC), selected_day, selected_day)
+    assert not _within(datetime(2026, 9, 5, 7, 0, tzinfo=UTC), selected_day, selected_day)
 
 
 def test_threepl_overview_aggregates_client_operations(client, db: Session, seed):

@@ -4,7 +4,7 @@ import os
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -231,4 +231,85 @@ def test_postgres_dispatch_queue_is_scoped_deterministic_and_zero_write(threepl_
     with sessions() as db:
         after_statuses = db.execute(select(OutboundOrder.id, OutboundOrder.status).order_by(OutboundOrder.id)).all()
     assert after_statuses == before_statuses
+    assert _table_counts(threepl_pg_engine) == before_counts
+
+
+@pytest.mark.parametrize(
+    ("selected_day", "range_start", "range_end"),
+    (
+        (
+            date(2026, 3, 8),
+            datetime(2026, 3, 8, 8, 0, tzinfo=UTC),
+            datetime(2026, 3, 9, 7, 0, tzinfo=UTC),
+        ),
+        (
+            date(2026, 11, 1),
+            datetime(2026, 11, 1, 7, 0, tzinfo=UTC),
+            datetime(2026, 11, 2, 8, 0, tzinfo=UTC),
+        ),
+    ),
+)
+def test_postgres_dispatch_date_filter_uses_business_day_half_open_utc_range(
+    threepl_pg_engine: Engine,
+    selected_day: date,
+    range_start: datetime,
+    range_end: datetime,
+) -> None:
+    sessions = sessionmaker(threepl_pg_engine, expire_on_commit=False)
+    user_id, token, _ = _seed(sessions)
+    date_token = f"DATE{token}"
+    with sessions.begin() as db:
+        user = db.get(User, user_id)
+        customer_id = user.customers[0].id
+        warehouse_id = user.warehouses[0].id
+        boundary_orders = [
+            OutboundOrder(
+                ob_no=f"3PL-{date_token}-{index}",
+                customer_id=customer_id,
+                warehouse_id=warehouse_id,
+                status=OBStatus.IN_PROGRESS,
+                loading_team="Dispatch Team",
+                schedule_pickup_at=due_at,
+                created_by=user_id,
+            )
+            for index, due_at in enumerate(
+                (
+                    range_start - timedelta(microseconds=1),
+                    range_start,
+                    range_end - timedelta(microseconds=1),
+                    range_end,
+                )
+            )
+        ]
+        db.add_all(boundary_orders)
+        db.flush()
+        expected_ids = [boundary_orders[1].id, boundary_orders[2].id]
+
+    before_counts = _table_counts(threepl_pg_engine)
+    results = []
+    for session_timezone in ("UTC", "America/Los_Angeles", "Asia/Tokyo"):
+        with sessions.begin() as db:
+            db.execute(
+                text("SELECT set_config('TimeZone', :timezone, true)"),
+                {"timezone": session_timezone},
+            )
+            result = build_threepl_dispatch_queue(
+                db,
+                db.get(User, user_id),
+                None,
+                None,
+                search=date_token,
+                date_from=selected_day,
+                date_to=selected_day,
+                page=1,
+                page_size=100,
+                sort="due_at",
+            )
+            results.append(result)
+
+    for result in results:
+        assert result["total"] == result["summary"]["total"] == 2
+        assert len(result["tasks"]) == 2
+        assert [task["id"] for task in result["tasks"]] == expected_ids
+    assert all(result["summary"] == results[0]["summary"] for result in results)
     assert _table_counts(threepl_pg_engine) == before_counts
