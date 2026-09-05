@@ -1,21 +1,21 @@
-TASK_ID: RECOVERY-2G
-STATUS: INTEGRATION_VALIDATED_PENDING_MAIN_UPDATE
+TASK_ID: RECOVERY-2H1A
+STATUS: REPLACEMENT_DRAFT_PR_PENDING_REVIEW
 LEVEL: L3
-BRANCH: integration/outbound-recovery-repaired-bf1ca5f
+BRANCH: remediation/outbound-pr3-review-findings-20260904
 BASE_BRANCH: main
-NEXT_TASK: RECOVERY-2G — final main update and push/PR decision
-INTEGRATION_BASE: bf1ca5f481b1bb41376af4f0509154bb5f7dcb1c
-BASELINE_REPAIR_HEAD: fe9a87bd1853cd624c1f99afb16ecb070d87f3dd
-INTEGRATION_IMPLEMENTATION_HEAD: 0fc8725a07e6308b12ecd77ad853670d3e1069c4
-INTEGRATION_DOCUMENT_HEAD: 099b8d08c5edb0f60633fa3be4e5058e71f6e493
+NEXT_TASK: RECOVERY-2H2A — replacement Draft PR read-only review
+ACCEPTED_BASE: 4ea0ce94dd4ea3a40bdd9e2ce98b536820ec6892
+OLD_PR: #3 / OPEN_DRAFT / UNACCEPTED_REMEDIATION_ATTEMPT
+OLD_PR_HEAD: 166ab121eedf96d95f3fd06efa260f528652dc18
 MAIN_UPDATE: NOT_PERFORMED
-PUSH: NOT_PERFORMED
+MAIN_PUSH: NOT_PERFORMED
+PR_MERGE: NOT_PERFORMED
 PRODUCTION_DATABASE: NOT_ACCESSED
-PHASE_INBOUND_1A: BLOCKED_PENDING_MAIN_UPDATE
-WALLBOARD_1: NOT_AUTHORIZED_IN_THIS_SLICE
+INBOUND: BLOCKED
+WALLBOARD: DESIGN_ONLY
 ACTIVE_BRAND: DLX Yuki WMS
 REJECTED_COMMIT: QUARANTINED_DO_NOT_INTEGRATE
 
-The repaired-main baseline, prerequisite migration, accepted outbound recovery chain,
-parity documentation, PostgreSQL gates, complete regression, and dedicated browser
-acceptance are validated. RECOVERY-2G is the next authorized decision slice.
+The replacement remediation branch was rebuilt from the last accepted integration
+head. PR #3 remains an open Draft and an unaccepted remediation attempt that must
+not be merged. RECOVERY-2H2A is the next authorized read-only review slice.
