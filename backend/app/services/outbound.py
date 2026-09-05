@@ -1,5 +1,5 @@
 from datetime import UTC,datetime,date
-from decimal import Decimal
+from decimal import Decimal,InvalidOperation
 from math import ceil
 from typing import Any
 from fastapi import HTTPException
@@ -103,6 +103,13 @@ def allocate(db:Session,ob_id:int,p:AllocateRequest,user_id:int,commit=True):
  if commit:db.commit()
  return a
 def release(db:Session,ob_id:int,allocation_id:int,p:ReleaseRequest,user_id:int,commit=True):
+ for field in ('pallet_qty','carton_qty','weight_lbs','cbm'):
+  value=getattr(p,field)
+  if value is not None:
+   try:value=Decimal(str(value))
+   except (InvalidOperation,TypeError,ValueError):raise HTTPException(422,'Release quantities must be finite and greater than zero')
+   if not value.is_finite() or value<=ZERO:raise HTTPException(422,'Release quantities must be finite and greater than zero')
+   setattr(p,field,value)
  o=get_ob(db,ob_id,True);a=db.scalar(select(OutboundInventoryAllocation).where(OutboundInventoryAllocation.id==allocation_id,OutboundInventoryAllocation.outbound_order_id==ob_id).with_for_update())
  if not a:raise HTTPException(404,'Outbound allocation not found')
  if o.status in (OBStatus.COMPLETED,OBStatus.DISPATCHED):raise HTTPException(409,'Completed or dispatched outbound is immutable')
