@@ -1,5 +1,6 @@
 import { api } from './client'
 import type { OutboundAllocation, OutboundParams, OutboundRecord, OutboundResponse } from '../types/outbound'
+import type { OutboundAllocationSources } from '../types/outboundAllocation'
 export type DispatchReadinessCheck = { key: string; code?: string | null; label: string; passed: boolean; reason: string | null; route: string | null }
 export type DispatchReadiness = { status: 'READY' | 'NOT_READY'; checks: DispatchReadinessCheck[]; blocking_codes: string[]; blocking_reasons: string[]; error_code?: string | null }
 export type OutboundBatchAction = 'confirm' | 'dispatch' | 'complete' | 'cancel' | 'delete'
@@ -11,6 +12,7 @@ export type OutboundInventoryBatchResponse = OutboundBatchResponse & { action: O
 export const getOutbounds = async (params: OutboundParams) => (await api.get<OutboundResponse>('/outbounds', { params })).data
 export const getOutboundWorkbench = async (params: Record<string, unknown>) => (await api.get('/outbounds/workbench', { params })).data
 export const getOutboundWorkbenchDetail = async (id: number) => (await api.get(`/outbounds/${id}/workbench-detail`)).data
+export const getOutboundAllocationSources = async (id: number) => (await api.get<OutboundAllocationSources>(`/outbounds/${id}/workbench-detail`)).data
 export const getOutboundDispatchReadiness = async (id: number) => (await api.get<DispatchReadiness>(`/outbounds/${id}/dispatch-readiness`)).data
 export const runOutboundWorkbenchBatch = async (action: OutboundBatchAction, ids: number[]) => (await api.post<OutboundBatchResponse>('/outbounds/workbench/batch', { action, ids })).data
 export const runOutboundInventoryBatch = async (id: number, action: OutboundInventoryBatchAction, items: OutboundInventoryBatchItem[], idempotencyKey: string) => (await api.post<OutboundInventoryBatchResponse>(`/outbounds/${id}/inventory/batch`, { action, items }, { headers: { 'Idempotency-Key': idempotencyKey } })).data

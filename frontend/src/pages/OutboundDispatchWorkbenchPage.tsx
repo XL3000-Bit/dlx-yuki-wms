@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   CheckOutlined,
   CloseCircleOutlined,
@@ -25,6 +24,7 @@ import {
   Typography,
   message,
 } from "antd";
+import type { TableColumnsType } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -39,6 +39,7 @@ import {
   exceptionOutbound,
   exportOutbounds,
   exportOutboundSelected,
+  getOutboundDispatchReadiness,
   getOutboundWorkbench,
   getOutboundWorkbenchDetail,
   releaseOutbound,
@@ -47,10 +48,16 @@ import {
   runOutboundWorkbenchBatch,
   updateOutboundSchedule,
 } from "../api/outbound";
+import type {
+  OutboundAllocation,
+  OutboundParams,
+  OutboundRecord,
+} from "../types/outbound";
 import { generateBol, generatePicking } from "../api/pickingBol";
 import { getCarriers, getCustomers, getWarehouses } from "../api/masterData";
 import { EntityDocuments } from "../components/EntityDocuments";
 import { createLoad } from "../api/loads";
+import { getFBAAllocations } from "../api/fba";
 import { ImportWizard } from "../components/ImportWizard";
 import {
   OutboundSplitLayout,
@@ -59,11 +66,19 @@ import {
   type OutboundVerticalSplitLayoutHandle,
 } from "../components/outbound-workbench/OutboundSplitLayout";
 import { DispatchCommandBar } from "../components/outbound-workbench/DispatchCommandBar";
+import { RemainingSourceTable } from "../components/outbound-workbench/RemainingSourceTable";
 import {
   DispatchPriorityTag,
   DispatchReadinessTag,
   OutboundDateCell,
 } from "../components/DispatchIndicators";
+import type { OutboundRemainingSource } from "../types/outboundAllocation";
+import {
+  classifyFbaAllocationSources,
+  FBA_MAPPING_INVALID_MESSAGE,
+  retainValidSourceSelection,
+  workbenchSourceAllocationData,
+} from "../utils/outboundAllocation";
 
 const statuses = [
   "New",
@@ -112,8 +127,9 @@ export function OutboundDispatchWorkbenchPage() {
   const [allocationTableRef, allocationScrollY] = useTableScrollHeight(48, 44);
   const [sourceTableRef, sourceScrollY] = useTableScrollHeight(48, 64);
 
-  const params = useMemo(
-    () => ({
+  const params = useMemo(() => {
+    const requestedSortOrder = sp.get("sort_order");
+    return {
       page: Number(sp.get("page") || 1),
       per_page: Number(sp.get("per_page") || 20),
       q:
@@ -136,10 +152,9 @@ export function OutboundDispatchWorkbenchPage() {
         ? Number(sp.get("carrier_id"))
         : undefined,
       sort_by: sp.get("sort_by") || "created_at",
-      sort_order: sp.get("sort_order") || "desc",
-    }),
-    [sp],
-  );
+      sort_order: requestedSortOrder === "asc" ? "asc" : "desc",
+    } satisfies OutboundParams;
+  }, [sp]);
 
   const list = useQuery({
     queryKey: ["outbound-workbench", params],
@@ -159,6 +174,40 @@ export function OutboundDispatchWorkbenchPage() {
   const rows = list.data?.data || [];
   const selected =
     detail.data?.basic || rows.find((row: any) => row.id === selectedId);
+  const isFba = selected?.ob_type === "FBA";
+  const fbaId = isFba ? Number(selected?.fba_id || 0) : 0;
+  const fbaSources = useQuery({
+    queryKey: ["outbound-fba-source-map", fbaId],
+    queryFn: () => getFBAAllocations(fbaId),
+    enabled: !!selectedId && isFba && fbaId > 0,
+  });
+  const rawSourceRows = (detail.data?.remaining_sources || []) as OutboundRemainingSource[];
+  const fbaClassification = useMemo(
+    () =>
+      isFba && fbaSources.isSuccess
+        ? classifyFbaAllocationSources(fbaSources.data || [], rawSourceRows)
+        : { sources: [], mappingError: null },
+    [isFba, fbaSources.isSuccess, fbaSources.data, rawSourceRows],
+  );
+  const sourceMappingError = isFba
+    ? !fbaId
+      ? FBA_MAPPING_INVALID_MESSAGE
+      : fbaSources.isError
+        ? "Unable to validate the FBA source mapping. Refresh this list and try again."
+        : fbaSources.isSuccess
+          ? fbaClassification.mappingError
+          : null
+    : null;
+  const sourceErrorMessage = detail.isError
+    ? "Unable to load source inventory. Refresh this list and try again."
+    : sourceMappingError;
+  const sourceReady =
+    !!selectedId &&
+    detail.isSuccess &&
+    (!isFba || fbaSources.isSuccess) &&
+    !sourceErrorMessage;
+  const sourceRows = sourceReady ? rawSourceRows : [];
+  const sourceSelectionSignature = sourceRows.map((row) => row.id).join("|");
   const selectedRows = rows.filter((row: any) => selectedIds.includes(row.id));
   const lifecycleRows = selectedIds.length
     ? selectedRows
@@ -173,6 +222,12 @@ export function OutboundDispatchWorkbenchPage() {
     setSelectedAllocationIds([]);
     setSelectedSourceIds([]);
   }, [selectedId]);
+
+  useEffect(() => {
+    setSelectedSourceIds((current) =>
+      retainValidSourceSelection(current, sourceRows, sourceReady),
+    );
+  }, [sourceReady, sourceSelectionSignature]);
 
   const patch = (values: any) => {
     const selectionScopeKeys = new Set([
@@ -213,18 +268,24 @@ export function OutboundDispatchWorkbenchPage() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["outbound-workbench"] });
     qc.invalidateQueries({ queryKey: ["outbound-workbench-detail"] });
+    qc.invalidateQueries({ queryKey: ["outbound-fba-source-map"] });
   };
+  const actionHandlers = {
+    confirm: confirmOutbound,
+    dispatch: dispatchOutbound,
+    complete: completeOutbound,
+    cancel: cancelOutbound,
+    resolve: resolveOutbound,
+    picking: generatePicking,
+    bol: generateBol,
+  };
+  const isActionName = (name: string): name is keyof typeof actionHandlers =>
+    name in actionHandlers;
   const action = useMutation({
-    mutationFn: ({ name, id }: any) =>
-      ({
-        confirm: confirmOutbound,
-        dispatch: dispatchOutbound,
-        complete: completeOutbound,
-        cancel: cancelOutbound,
-        resolve: resolveOutbound,
-        picking: generatePicking,
-        bol: generateBol,
-      })[name](id),
+    mutationFn: ({ name, id }: { name: string; id: number }) => {
+      if (!isActionName(name)) throw new Error("Unknown outbound action");
+      return actionHandlers[name](id);
+    },
     onSuccess: () => {
       message.success("Operation completed");
       refresh();
@@ -333,17 +394,7 @@ export function OutboundDispatchWorkbenchPage() {
         id: row.id,
         data:
           direction === "allocate"
-            ? {
-              inventory_lot_id: row.inventory_lot_id || row.id,
-              fba_allocation_id: row.fba_allocation_id,
-              pallet_qty:
-                row.available_pallet_qty ?? row.remaining_pallet_qty ?? 0,
-              carton_qty:
-                row.available_carton_qty ?? row.remaining_carton_qty ?? 0,
-              weight_lbs:
-                row.available_weight_lbs ?? row.remaining_weight_lbs ?? 0,
-              cbm: row.available_cbm ?? row.remaining_cbm ?? 0,
-            }
+            ? workbenchSourceAllocationData(row)
             : { allocation_id: row.id },
       }));
       const signature = JSON.stringify({ selectedId, direction, items });
@@ -417,7 +468,7 @@ export function OutboundDispatchWorkbenchPage() {
       direction === "allocate" ? selectedSourceIds : selectedAllocationIds;
     const data =
       direction === "allocate"
-        ? detail.data?.remaining_sources || []
+        ? sourceRows
         : activeAllocations;
     const moveRows = data.filter((row: any) => ids.includes(row.id));
     if (moveRows.length) inventoryMove.mutate({ direction, rows: moveRows });
@@ -478,7 +529,7 @@ export function OutboundDispatchWorkbenchPage() {
     verticalSplitRef.current?.reset();
   };
 
-  const cols = [
+  const cols: TableColumnsType<OutboundRecord> = [
     {
       title: "OB#",
       dataIndex: "ob_no",
@@ -499,7 +550,9 @@ export function OutboundDispatchWorkbenchPage() {
       title: "Status",
       dataIndex: "status_name",
       width: 88,
-      render: (value: any) => <Tag color={colors[value]}>{value}</Tag>,
+      render: (value: keyof typeof colors) => (
+        <Tag color={colors[value]}>{value}</Tag>
+      ),
     },
     { title: "FC", dataIndex: "fc_code", width: 72, className: "ops-key-cell" },
     {
@@ -589,7 +642,7 @@ export function OutboundDispatchWorkbenchPage() {
     { title: "APT", dataIndex: "delivery_appointment_time", width: 150 },
   ];
 
-  const allocCols = [
+  const allocCols: TableColumnsType<OutboundAllocation> = [
     {
       title: "Lot",
       dataIndex: "lot_no",
@@ -646,73 +699,6 @@ export function OutboundDispatchWorkbenchPage() {
           onClick={() => releaseOutbound(selectedId, row.id, {}).then(refresh)}
         >
           Remove
-        </Button>
-      ),
-    },
-  ];
-
-  const sourceCols = [
-    {
-      title: "Container",
-      dataIndex: "container_number",
-      width: 132,
-      className: "ops-key-cell",
-    },
-    { title: "FC", dataIndex: "fc_code", width: 68, className: "ops-key-cell" },
-    { title: "Location", dataIndex: "location", width: 92 },
-    {
-      title: "Available PLT",
-      width: 94,
-      align: "right",
-      render: (_: any, row: any) =>
-        n(row.available_pallet_qty ?? row.remaining_pallet_qty),
-    },
-    { title: "Inbound", dataIndex: "inbound_date", width: 92 },
-    {
-      title: "Warehouse Days",
-      dataIndex: "warehouse_days",
-      width: 100,
-      align: "right",
-      render: (value: any) => value ?? "--",
-    },
-    {
-      title: "Earliest Outbound",
-      dataIndex: "earliest_outbound_date",
-      width: 112,
-      render: (value: any, row: any) => (
-        <OutboundDateCell value={value} days={row.outbound_days_remaining} />
-      ),
-    },
-    {
-      title: "Priority",
-      dataIndex: "dispatch_priority",
-      width: 96,
-      render: (value: any) => <DispatchPriorityTag value={value} />,
-    },
-    {
-      title: "",
-      width: 96,
-      fixed: "right",
-      render: (_: any, row: any) => (
-        <Button
-          className="source-allocate-button"
-          size="small"
-          disabled={!selected?.allowed_actions?.allocate}
-          onClick={() =>
-            allocateOutbound(selectedId, {
-              inventory_lot_id: row.inventory_lot_id || row.id,
-              fba_allocation_id: row.fba_allocation_id,
-              pallet_qty:
-                row.available_pallet_qty ?? row.remaining_pallet_qty ?? 0,
-              carton_qty:
-                row.available_carton_qty ?? row.remaining_carton_qty ?? 0,
-              weight_lbs:
-                row.available_weight_lbs ?? row.remaining_weight_lbs ?? 0,
-              cbm: row.available_cbm ?? row.remaining_cbm ?? 0,
-            }).then(refresh)
-          }
-        >
-          Drag BOL
         </Button>
       ),
     },
@@ -814,6 +800,7 @@ export function OutboundDispatchWorkbenchPage() {
             type="primary"
             disabled={
               !selected?.allowed_actions?.allocate ||
+              !sourceReady ||
               selectedSourceIds.length === 0 ||
               inventoryMove.isPending
             }
@@ -832,28 +819,25 @@ export function OutboundDispatchWorkbenchPage() {
         ref={sourceTableRef}
         className="dispatch-table-host dispatch-panel-table-host"
       >
-        <Table
-          className="dispatch-dense-table remaining-source-table"
-          size="small"
-          sticky
-          pagination={false}
-          rowKey="id"
-          rowSelection={{
-            selectedRowKeys: selectedSourceIds,
-            onChange: (keys) =>
-              setSelectedSourceIds(keys.map((key) => Number(key))),
-            getCheckboxProps: () => ({
-              disabled: !selected?.allowed_actions?.allocate,
-            }),
+        <RemainingSourceTable
+          rows={sourceRows}
+          selectedIds={selectedSourceIds}
+          ready={sourceReady}
+          loading={detail.isLoading || (isFba && fbaSources.isLoading)}
+          canAllocate={!!selected?.allowed_actions?.allocate}
+          errorMessage={sourceErrorMessage}
+          scrollY={sourceScrollY}
+          onSelectionChange={setSelectedSourceIds}
+          onRefresh={() => {
+            detail.refetch();
+            if (isFba) fbaSources.refetch();
           }}
-          dataSource={detail.data?.remaining_sources || []}
-          columns={sourceCols}
-          scroll={{ x: 870, y: sourceScrollY }}
-          locale={{
-            emptyText: detail.isLoading
-              ? "Loading source inventory..."
-              : "No remaining source inventory",
-          }}
+          onAllocate={(row) =>
+            allocateOutbound(
+              selectedId,
+              workbenchSourceAllocationData(row),
+            ).then(refresh)
+          }
         />
       </div>
     </div>
