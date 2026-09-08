@@ -269,7 +269,7 @@ export function ThreePLPage() {
           />
         </section>
 
-        {selectedClient && <ClientDetail
+        {data && selectedClient && <ClientDetail
           client={selectedClient}
           data={data}
           attention={clientAttention}
