@@ -116,7 +116,7 @@ def pg_engine() -> Engine:
 
 @pytest.fixture(scope="session")
 def sessions(pg_engine: Engine):
-    return sessionmaker(pg_engine, expire_on_commit=False)
+    return sessionmaker(pg_engine, autoflush=False, expire_on_commit=False, autocommit=False, future=True)
 
 
 def test_migration_upgrade_downgrade_upgrade_preserves_existing_data(pg_engine: Engine) -> None:

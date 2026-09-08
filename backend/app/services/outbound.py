@@ -4,7 +4,7 @@ from math import ceil
 from typing import Any
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import func,or_,select
+from sqlalchemy import func,inspect,or_,select
 from sqlalchemy.orm import Session,joinedload,selectinload
 from app.models import AuditLog,BOL,Carrier,Customer,ExceptionSeverity,ExceptionStatus,ExceptionType,FBAInventoryAllocation,FBAShipment,InventoryLot,InventoryTransaction,LoadVerificationTransaction,OperationalDocument,OperationalException,OutboundInventoryAllocation,OutboundOrder,PickingList,ScanSession,StageTransaction,User,Warehouse,WorkOrder
 from app.models.inventory import TransactionType
@@ -78,23 +78,39 @@ def create_ob(db:Session,p:OBCreate,user_id:int,ob_no=None,commit=True):
  data=p.model_dump();data['schedule_pickup_at']=to_business_datetime(data.get('schedule_pickup_at'));data['delivery_appointment_time']=to_business_datetime(data.get('delivery_appointment_time'));o=OutboundOrder(**data,ob_no=ob_no or generate_ob_no(db),created_by=user_id);db.add(o);db.flush();db.add(AuditLog(user_id=user_id,action='CREATE_OUTBOUND',entity_type='OUTBOUND',entity_id=o.id,after_data=jsonable_encoder(data)))
  if commit:db.commit()
  return o
-def allocate(db:Session,ob_id:int,p:AllocateRequest,user_id:int,commit=True):
+def _lock_allocation_order(db:Session,ob_id:int):
  o=get_ob(db,ob_id,True)
+ # Refresh locked validation fields, preserving changes owned by this transaction.
+ # In particular, cancel sets status before its nested releases with autoflush off.
+ state=inspect(o)
+ fresh=[field for field in ('status','warehouse_id','ob_type','fba_shipment_id') if not state.attrs[field].history.has_changes()]
+ if fresh:db.refresh(o,attribute_names=fresh)
+ return o
+
+def _lock_allocation_source(db:Session,lot_id:int,fba_allocation_id:int|None):
+ # Both writers lock order -> lot -> optional FBA source -> outbound allocation.
+ # FOR UPDATE alone does not replace entities already in the Session identity map.
+ lot=get_lot(db,lot_id,True);db.refresh(lot)
+ fba=db.scalar(select(FBAInventoryAllocation).where(FBAInventoryAllocation.id==fba_allocation_id).with_for_update().execution_options(populate_existing=True)) if fba_allocation_id else None
+ return lot,fba
+
+def allocate(db:Session,ob_id:int,p:AllocateRequest,user_id:int,commit=True):
+ o=_lock_allocation_order(db,ob_id)
  if o.status in (OBStatus.COMPLETED,OBStatus.CANCELED,OBStatus.DISPATCHED):raise HTTPException(409,'Outbound status does not allow allocation')
- lot=get_lot(db,p.inventory_lot_id,True)
+ lot,fba=_lock_allocation_source(db,p.inventory_lot_id,p.fba_allocation_id if o.ob_type=='FBA' else None)
  if lot.warehouse_id!=o.warehouse_id:raise HTTPException(409,'Inventory and Outbound warehouses differ')
- req=(p.pallet_qty,p.carton_qty,p.weight_lbs,p.cbm);fba=None
+ req=(p.pallet_qty,p.carton_qty,p.weight_lbs,p.cbm)
  if o.ob_type=='FBA':
   if not o.fba_shipment_id or not p.fba_allocation_id:raise HTTPException(422,'FBA outbound requires FBA allocation')
-  fba=db.scalar(select(FBAInventoryAllocation).where(FBAInventoryAllocation.id==p.fba_allocation_id,FBAInventoryAllocation.fba_shipment_id==o.fba_shipment_id).with_for_update())
-  if not fba or fba.inventory_lot_id!=lot.id:raise HTTPException(409,'Invalid FBA inventory source')
-  used=[sum((getattr(a,f'allocated_{x}_qty')-getattr(a,f'completed_{x}_qty') for a in db.scalars(select(OutboundInventoryAllocation).where(OutboundInventoryAllocation.fba_allocation_id==fba.id))),ZERO) for x in ('pallet','carton','weight_lbs','cbm')]
+  if not fba or fba.fba_shipment_id!=o.fba_shipment_id or fba.inventory_lot_id!=lot.id:raise HTTPException(409,'Invalid FBA inventory source')
+  # Read scalar totals after the source lock, including allocations on other orders.
+  used=db.execute(select(*(func.coalesce(func.sum(getattr(OutboundInventoryAllocation,f'allocated_{field}')-getattr(OutboundInventoryAllocation,f'completed_{field}')),ZERO) for field in FIELDS.values())).where(OutboundInventoryAllocation.fba_allocation_id==fba.id)).one()
   if any(r>getattr(fba,f'allocated_{FIELDS[x]}')-u for r,x,u in zip(req,('pallet','carton','weight_lbs','cbm'),used)):raise HTTPException(409,'Allocation exceeds remaining FBA allocation')
  else:
   avail=(lot.available_pallet_qty,lot.available_carton_qty,lot.available_weight_lbs,lot.available_cbm)
   if any(r>a for r,a in zip(req,avail)):raise HTTPException(409,'Allocation exceeds available inventory')
   before=snapshot(lot);lot.available_pallet_qty-=p.pallet_qty;lot.available_carton_qty-=p.carton_qty;lot.available_weight_lbs-=p.weight_lbs;lot.available_cbm-=p.cbm;lot.allocated_pallet_qty+=p.pallet_qty;lot.allocated_carton_qty+=p.carton_qty;lot.allocated_weight_lbs+=p.weight_lbs;lot.allocated_cbm+=p.cbm;derive_status(lot);_tx(db,lot,TransactionType.OUTBOUND_ALLOCATE,user_id,before,p=-p.pallet_qty,c=-p.carton_qty,w=-p.weight_lbs,v=-p.cbm,reference_type='OUTBOUND',reference_id=o.id,remark=f'Allocated to {o.ob_no}')
- a=db.scalar(select(OutboundInventoryAllocation).where(OutboundInventoryAllocation.outbound_order_id==o.id,OutboundInventoryAllocation.inventory_lot_id==lot.id).with_for_update())
+ a=db.scalar(select(OutboundInventoryAllocation).where(OutboundInventoryAllocation.outbound_order_id==o.id,OutboundInventoryAllocation.inventory_lot_id==lot.id).with_for_update().execution_options(populate_existing=True))
  if a:
   if a.fba_allocation_id!=p.fba_allocation_id:raise HTTPException(409,'Lot already allocated from a different source')
   a.allocated_pallet_qty+=p.pallet_qty;a.allocated_carton_qty+=p.carton_qty;a.allocated_weight_lbs+=p.weight_lbs;a.allocated_cbm+=p.cbm
@@ -110,13 +126,17 @@ def release(db:Session,ob_id:int,allocation_id:int,p:ReleaseRequest,user_id:int,
    except (InvalidOperation,TypeError,ValueError):raise HTTPException(422,'Release quantities must be finite and greater than zero')
    if not value.is_finite() or value<=ZERO:raise HTTPException(422,'Release quantities must be finite and greater than zero')
    setattr(p,field,value)
- o=get_ob(db,ob_id,True);a=db.scalar(select(OutboundInventoryAllocation).where(OutboundInventoryAllocation.id==allocation_id,OutboundInventoryAllocation.outbound_order_id==ob_id).with_for_update())
- if not a:raise HTTPException(404,'Outbound allocation not found')
+ o=_lock_allocation_order(db,ob_id)
+ # Only immutable source identifiers are read before the shared source locks.
+ source=db.execute(select(OutboundInventoryAllocation.inventory_lot_id,OutboundInventoryAllocation.fba_allocation_id).where(OutboundInventoryAllocation.id==allocation_id,OutboundInventoryAllocation.outbound_order_id==ob_id)).one_or_none()
+ if not source:raise HTTPException(404,'Outbound allocation not found')
  if o.status in (OBStatus.COMPLETED,OBStatus.DISPATCHED):raise HTTPException(409,'Completed or dispatched outbound is immutable')
+ lot,_=_lock_allocation_source(db,source.inventory_lot_id,source.fba_allocation_id)
+ a=db.scalar(select(OutboundInventoryAllocation).where(OutboundInventoryAllocation.id==allocation_id,OutboundInventoryAllocation.outbound_order_id==ob_id).with_for_update().execution_options(populate_existing=True))
  vals=(p.pallet_qty if p.pallet_qty is not None else a.allocated_pallet_qty-a.completed_pallet_qty,p.carton_qty if p.carton_qty is not None else a.allocated_carton_qty-a.completed_carton_qty,p.weight_lbs if p.weight_lbs is not None else a.allocated_weight_lbs-a.completed_weight_lbs,p.cbm if p.cbm is not None else a.allocated_cbm-a.completed_cbm);remain=(a.allocated_pallet_qty-a.completed_pallet_qty,a.allocated_carton_qty-a.completed_carton_qty,a.allocated_weight_lbs-a.completed_weight_lbs,a.allocated_cbm-a.completed_cbm)
  if any(v>r for v,r in zip(vals,remain)):raise HTTPException(409,'Release exceeds remaining allocation')
  if a.fba_allocation_id is None:
-  lot=get_lot(db,a.inventory_lot_id,True);before=snapshot(lot);lot.available_pallet_qty+=vals[0];lot.available_carton_qty+=vals[1];lot.available_weight_lbs+=vals[2];lot.available_cbm+=vals[3];lot.allocated_pallet_qty-=vals[0];lot.allocated_carton_qty-=vals[1];lot.allocated_weight_lbs-=vals[2];lot.allocated_cbm-=vals[3];derive_status(lot);_tx(db,lot,TransactionType.OUTBOUND_RELEASE,user_id,before,p=vals[0],c=vals[1],w=vals[2],v=vals[3],reference_type='OUTBOUND',reference_id=o.id,remark=p.remark or 'Released')
+  before=snapshot(lot);lot.available_pallet_qty+=vals[0];lot.available_carton_qty+=vals[1];lot.available_weight_lbs+=vals[2];lot.available_cbm+=vals[3];lot.allocated_pallet_qty-=vals[0];lot.allocated_carton_qty-=vals[1];lot.allocated_weight_lbs-=vals[2];lot.allocated_cbm-=vals[3];derive_status(lot);_tx(db,lot,TransactionType.OUTBOUND_RELEASE,user_id,before,p=vals[0],c=vals[1],w=vals[2],v=vals[3],reference_type='OUTBOUND',reference_id=o.id,remark=p.remark or 'Released')
  a.allocated_pallet_qty-=vals[0];a.allocated_carton_qty-=vals[1];a.allocated_weight_lbs-=vals[2];a.allocated_cbm-=vals[3];db.add(AuditLog(user_id=user_id,action='RELEASE_OUTBOUND_INVENTORY',entity_type='OUTBOUND',entity_id=o.id,after_data={'allocation_id':a.id}));db.flush()
  if commit:db.commit()
  return a
