@@ -148,11 +148,18 @@ def update(ob_id:int,payload:OBUpdate,db:DbSession,user:Writer):
  for k,v in data.items():setattr(o,k,v)
  db.commit();return read_ob(db,get_ob(db,ob_id,user=user))
 @router.post('/{ob_id}/allocate',response_model=AllocationRead)
-def add_alloc(ob_id:int,payload:AllocateRequest,db:DbSession,user:Writer):get_ob(db,ob_id,user=user);get_lot(db,payload.inventory_lot_id,user=user);return AllocationRead.model_validate(allocations(db,get_ob(db,ob_id,user=user))[-1] if allocate(db,ob_id,payload,user.id) else None)
+def add_alloc(ob_id:int,payload:AllocateRequest,db:DbSession,user:Writer):
+ get_ob(db,ob_id,user=user)
+ get_lot(db,payload.inventory_lot_id,user=user)
+ affected_id=allocate(db,ob_id,payload,user.id).id
+ return next(row for row in allocations(db,get_ob(db,ob_id,user=user)) if row.id==affected_id)
 @router.get('/{ob_id}/allocations',response_model=list[AllocationRead])
 def list_alloc(ob_id:int,db:DbSession,user:CurrentUser):return allocations(db,get_ob(db,ob_id,user=user))
 @router.post('/{ob_id}/allocations/{allocation_id}/release',response_model=AllocationRead)
-def release_alloc(ob_id:int,allocation_id:int,payload:ReleaseRequest,db:DbSession,user:Writer):get_ob(db,ob_id,user=user);release(db,ob_id,allocation_id,payload,user.id);return allocations(db,get_ob(db,ob_id,user=user))[0]
+def release_alloc(ob_id:int,allocation_id:int,payload:ReleaseRequest,db:DbSession,user:Writer):
+ get_ob(db,ob_id,user=user)
+ affected_id=release(db,ob_id,allocation_id,payload,user.id).id
+ return next(row for row in allocations(db,get_ob(db,ob_id,user=user)) if row.id==affected_id)
 @router.post('/{ob_id}/confirm',response_model=OBRead)
 def confirm(ob_id:int,db:DbSession,user:Writer):get_ob(db,ob_id,user=user);return read_ob(db,change(db,ob_id,3,user.id))
 @router.post('/{ob_id}/dispatch',response_model=OBRead)
