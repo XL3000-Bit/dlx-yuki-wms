@@ -1,15 +1,16 @@
-from datetime import datetime
+from datetime import datetime,timezone
+import logging
 from typing import Annotated,Literal
-from fastapi import APIRouter,Depends,Query
+from fastapi import APIRouter,Depends,Header,HTTPException,Query,Response
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 from openpyxl import Workbook
 from app.api.deps import CurrentUser,DbSession,require_outbound_write
-from app.models import AuditLog,User
+from app.models import AuditLog,OutboundInventoryIdempotency,User
 from fastapi.encoders import jsonable_encoder
-from app.schemas.outbound import AllocateRequest,AllocationRead,CompleteRequest,ExceptionRequest,OBCreate,OBListResponse,OBRead,OBUpdate,ReleaseRequest
+from app.schemas.outbound import AllocateRequest,AllocationRead,CompleteRequest,ExceptionRequest,InventoryBatchRequest,OBCreate,OBListResponse,OBRead,OBUpdate,ReleaseRequest
 from pydantic import BaseModel
-from app.services.outbound import allocate,allocations,change,complete_partial,create_ob,get_ob,list_outbounds,release,read_ob
+from app.services.outbound import allocate,allocations,change,complete_partial,create_ob,delete_outbound_draft,get_ob,list_outbounds,release,read_ob
 from app.schemas.outbound_workbench import OutboundWorkbenchResponse,OutboundWorkbenchDetail
 from app.services.outbound_workbench import list_workbench,detail as workbench_detail
 from app.schemas.dispatch_readiness import DispatchReadinessRead
@@ -18,7 +19,17 @@ from app.services.picking_bol import generate_picking,generate_bol
 from app.utils.business_time import to_business_datetime
 from app.services.access_policy import assert_customer_access,assert_warehouse_access
 from app.services.inventory import get_lot
+from app.services.idempotency import acquire_command_lock,find_receipt,request_fingerprint,validate_idempotency_key
 router=APIRouter(prefix='/outbounds',tags=['Outbound']);files_router=APIRouter(prefix='/outbounds',tags=['Outbound Files']);Writer=Annotated[User,Depends(require_outbound_write)]
+logger=logging.getLogger(__name__)
+GENERIC_BATCH_ERROR='OUTBOUND_BATCH_OPERATION_FAILED'
+def _business_error_message(exc:HTTPException)->str:
+ detail=exc.detail
+ if isinstance(detail,dict):
+  reasons=detail.get('blocking_reasons')
+  if reasons:return '; '.join(str(reason) for reason in reasons)
+  return str(detail.get('message') or detail.get('code') or 'Request failed')
+ return str(detail)
 class SchedulePatch(BaseModel):
  carrier_id:int|None=None; schedule_pickup_at:datetime|None=None; delivery_appointment_time:datetime|None=None; driver_name:str|None=None; driver_phone:str|None=None; truck_number:str|None=None; trailer_number:str|None=None; remark:str|None=None
 @files_router.get('/files/export.xlsx')
@@ -58,17 +69,69 @@ def workbench_export_selected(payload:dict,db:DbSession,user:CurrentUser):
 def workbench_batch(payload:dict,db:DbSession,user:Writer):
  action=payload.get('action'); results=[]
  for raw in payload.get('ids') or []:
-  oid=int(raw)
+  oid=raw
   try:
+   oid=int(raw)
    get_ob(db,oid,user=user)
    if action=='picking': generate_picking(db,oid,user.id)
    elif action=='bol': generate_bol(db,oid,user.id)
+   elif action=='delete': delete_outbound_draft(db,oid,user.id,user=user)
    elif action in {'confirm','dispatch','complete','cancel'}: change(db,oid,{'confirm':3,'dispatch':4,'complete':5,'cancel':6}[action],user.id)
    else: raise ValueError('Unsupported batch action')
    results.append({'id':oid,'status':'success'})
-  except Exception as exc:
-   db.rollback();detail=getattr(exc,'detail',None);reasons=detail.get('blocking_reasons',[]) if isinstance(detail,dict) else [];results.append({'id':oid,'status':'failed','reason':'; '.join(reasons) if reasons else str(detail or exc)})
+  except HTTPException as exc:
+   db.rollback();results.append({'id':oid,'status':'failed','reason':_business_error_message(exc)})
+  except Exception:
+   db.rollback();logger.exception('Unexpected outbound workbench batch failure',extra={'outbound_id':oid,'action':action});results.append({'id':oid,'status':'failed','reason':GENERIC_BATCH_ERROR})
  return {'results':results,'successful':sum(r['status']=='success' for r in results),'failed':sum(r['status']=='failed' for r in results)}
+@router.post('/{ob_id}/inventory/batch')
+def inventory_batch(ob_id:int,payload:InventoryBatchRequest,response:Response,db:DbSession,user:Writer,idempotency_key:str|None=Header(None,alias='Idempotency-Key')):
+ item_id=None
+ try:
+  commands=[]
+  for item in payload.items:
+   item_id=item.id
+   if payload.action=='allocate':
+    commands.append((item.id,None,AllocateRequest.model_validate(item.data)))
+   else:
+    data=dict(item.data);allocation_id=int(data.pop('allocation_id',item.id))
+    commands.append((item.id,allocation_id,ReleaseRequest.model_validate(data)))
+  item_id=None
+  key=validate_idempotency_key(idempotency_key)
+  outbound=get_ob(db,ob_id,user=user)
+  scope=f'warehouse:{outbound.warehouse_id}:outbound:{ob_id}'
+  fingerprint=request_fingerprint({'action':payload.action,'outbound_order_id':ob_id,'warehouse_id':outbound.warehouse_id,'items':payload.model_dump(mode='json')['items']})
+  acquire_command_lock(db,scope,payload.action,key)
+  receipt=find_receipt(db,scope,payload.action,key)
+  if receipt:
+   if receipt.request_hash!=fingerprint:
+    raise HTTPException(409,{'code':'OUTBOUND_IDEMPOTENCY_CONFLICT','message':'IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_REQUEST'})
+   if receipt.status=='COMPLETED' and receipt.response_payload is not None:
+    response.headers['Idempotency-Replayed']='true'
+    return receipt.response_payload
+   raise HTTPException(409,{'code':'OUTBOUND_IDEMPOTENCY_IN_PROGRESS','message':'The idempotent operation is still in progress'})
+  receipt=OutboundInventoryIdempotency(scope=scope,action=payload.action,idempotency_key=key,request_hash=fingerprint,status='PENDING')
+  db.add(receipt);db.flush();results=[]
+  for command_item_id,allocation_id,request in commands:
+   item_id=command_item_id
+   if payload.action=='allocate':
+    get_lot(db,request.inventory_lot_id,user=user);allocate(db,ob_id,request,user.id,commit=False)
+   else:
+    release(db,ob_id,allocation_id,request,user.id,commit=False)
+   results.append({'id':command_item_id,'status':'success'})
+   item_id=None
+  result={'action':payload.action,'results':results,'successful':len(results),'failed':0}
+  receipt.status='COMPLETED';receipt.response_status=200;receipt.response_payload=result;receipt.completed_at=datetime.now(timezone.utc)
+  db.commit()
+  response.headers['Idempotency-Replayed']='false'
+  return result
+ except HTTPException as exc:
+  db.rollback()
+  if item_id is None:raise
+  raise HTTPException(exc.status_code,{'code':'OUTBOUND_INVENTORY_BATCH_FAILED','item_id':item_id,'message':_business_error_message(exc)}) from exc
+ except Exception:
+  db.rollback();logger.exception('Unexpected outbound inventory batch failure',extra={'outbound_id':ob_id,'item_id':item_id,'action':payload.action})
+  raise HTTPException(409,{'code':GENERIC_BATCH_ERROR,'item_id':item_id,'message':GENERIC_BATCH_ERROR})
 @router.post('',response_model=OBRead,status_code=201)
 def create(payload:OBCreate,db:DbSession,user:Writer):assert_warehouse_access(user,payload.warehouse_id);assert_customer_access(user,payload.customer_id);return read_ob(db,create_ob(db,payload,user.id))
 @router.get('/{ob_id}/dispatch-readiness',response_model=DispatchReadinessRead)
@@ -85,11 +148,18 @@ def update(ob_id:int,payload:OBUpdate,db:DbSession,user:Writer):
  for k,v in data.items():setattr(o,k,v)
  db.commit();return read_ob(db,get_ob(db,ob_id,user=user))
 @router.post('/{ob_id}/allocate',response_model=AllocationRead)
-def add_alloc(ob_id:int,payload:AllocateRequest,db:DbSession,user:Writer):get_ob(db,ob_id,user=user);get_lot(db,payload.inventory_lot_id,user=user);return AllocationRead.model_validate(allocations(db,get_ob(db,ob_id,user=user))[-1] if allocate(db,ob_id,payload,user.id) else None)
+def add_alloc(ob_id:int,payload:AllocateRequest,db:DbSession,user:Writer):
+ get_ob(db,ob_id,user=user)
+ get_lot(db,payload.inventory_lot_id,user=user)
+ affected_id=allocate(db,ob_id,payload,user.id).id
+ return next(row for row in allocations(db,get_ob(db,ob_id,user=user)) if row.id==affected_id)
 @router.get('/{ob_id}/allocations',response_model=list[AllocationRead])
 def list_alloc(ob_id:int,db:DbSession,user:CurrentUser):return allocations(db,get_ob(db,ob_id,user=user))
 @router.post('/{ob_id}/allocations/{allocation_id}/release',response_model=AllocationRead)
-def release_alloc(ob_id:int,allocation_id:int,payload:ReleaseRequest,db:DbSession,user:Writer):get_ob(db,ob_id,user=user);release(db,ob_id,allocation_id,payload,user.id);return allocations(db,get_ob(db,ob_id,user=user))[0]
+def release_alloc(ob_id:int,allocation_id:int,payload:ReleaseRequest,db:DbSession,user:Writer):
+ get_ob(db,ob_id,user=user)
+ affected_id=release(db,ob_id,allocation_id,payload,user.id).id
+ return next(row for row in allocations(db,get_ob(db,ob_id,user=user)) if row.id==affected_id)
 @router.post('/{ob_id}/confirm',response_model=OBRead)
 def confirm(ob_id:int,db:DbSession,user:Writer):get_ob(db,ob_id,user=user);return read_ob(db,change(db,ob_id,3,user.id))
 @router.post('/{ob_id}/dispatch',response_model=OBRead)

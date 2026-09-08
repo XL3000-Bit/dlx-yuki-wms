@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 from pydantic import BaseModel,ConfigDict,Field
 from app.schemas.inbound import NamedRef,PaginationMeta,UserRef
 class OBBase(BaseModel):
@@ -7,7 +8,14 @@ class OBBase(BaseModel):
 class OBCreate(OBBase):pass
 class OBUpdate(OBBase):pass
 class AllocateRequest(BaseModel):inventory_lot_id:int;fba_allocation_id:int|None=None;pallet_qty:Decimal=Field(Decimal('0'),ge=0);carton_qty:Decimal=Field(Decimal('0'),ge=0);weight_lbs:Decimal=Field(Decimal('0'),ge=0);cbm:Decimal=Field(Decimal('0'),ge=0)
-class ReleaseRequest(BaseModel):pallet_qty:Decimal|None=None;carton_qty:Decimal|None=None;weight_lbs:Decimal|None=None;cbm:Decimal|None=None;remark:str|None=None
+class ReleaseRequest(BaseModel):
+ pallet_qty:Decimal|None=Field(default=None,gt=0,allow_inf_nan=False)
+ carton_qty:Decimal|None=Field(default=None,gt=0,allow_inf_nan=False)
+ weight_lbs:Decimal|None=Field(default=None,gt=0,allow_inf_nan=False)
+ cbm:Decimal|None=Field(default=None,gt=0,allow_inf_nan=False)
+ remark:str|None=None
+class InventoryBatchItem(BaseModel):id:int;data:dict=Field(default_factory=dict)
+class InventoryBatchRequest(BaseModel):action:Literal['allocate','release'];items:list[InventoryBatchItem]=Field(min_length=1)
 class ExceptionRequest(BaseModel):reason:str=Field(min_length=1);remark:str|None=None
 class CompleteRequest(BaseModel):allocation_id:int|None=None;pallet_qty:Decimal|None=None;carton_qty:Decimal|None=None;weight_lbs:Decimal|None=None;cbm:Decimal|None=None
 class OBStatusResponse(BaseModel):status:int;status_name:str

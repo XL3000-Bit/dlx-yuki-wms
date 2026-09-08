@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   CheckOutlined,
   CloseCircleOutlined,
@@ -25,8 +24,9 @@ import {
   Typography,
   message,
 } from "antd";
+import type { TableColumnsType } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTableScrollHeight } from "../hooks/useTableScrollHeight";
 import {
@@ -39,16 +39,25 @@ import {
   exceptionOutbound,
   exportOutbounds,
   exportOutboundSelected,
+  getOutboundDispatchReadiness,
   getOutboundWorkbench,
   getOutboundWorkbenchDetail,
   releaseOutbound,
   resolveOutbound,
+  runOutboundInventoryBatch,
+  runOutboundWorkbenchBatch,
   updateOutboundSchedule,
 } from "../api/outbound";
+import type {
+  OutboundAllocation,
+  OutboundParams,
+  OutboundRecord,
+} from "../types/outbound";
 import { generateBol, generatePicking } from "../api/pickingBol";
 import { getCarriers, getCustomers, getWarehouses } from "../api/masterData";
 import { EntityDocuments } from "../components/EntityDocuments";
 import { createLoad } from "../api/loads";
+import { getFBAAllocations } from "../api/fba";
 import { ImportWizard } from "../components/ImportWizard";
 import {
   OutboundSplitLayout,
@@ -57,11 +66,19 @@ import {
   type OutboundVerticalSplitLayoutHandle,
 } from "../components/outbound-workbench/OutboundSplitLayout";
 import { DispatchCommandBar } from "../components/outbound-workbench/DispatchCommandBar";
+import { RemainingSourceTable } from "../components/outbound-workbench/RemainingSourceTable";
 import {
   DispatchPriorityTag,
   DispatchReadinessTag,
   OutboundDateCell,
 } from "../components/DispatchIndicators";
+import type { OutboundRemainingSource } from "../types/outboundAllocation";
+import {
+  classifyFbaAllocationSources,
+  FBA_MAPPING_INVALID_MESSAGE,
+  retainValidSourceSelection,
+  workbenchSourceAllocationData,
+} from "../utils/outboundAllocation";
 
 const statuses = [
   "New",
@@ -93,20 +110,26 @@ export function OutboundDispatchWorkbenchPage() {
   const [sp, setSp] = useSearchParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [modal, modalContextHolder] = Modal.useModal();
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [rightHidden, setRightHidden] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedAllocationIds, setSelectedAllocationIds] = useState<number[]>(
+    [],
+  );
+  const [selectedSourceIds, setSelectedSourceIds] = useState<number[]>([]);
   const horizontalSplitRef = useRef<OutboundSplitLayoutHandle>(null);
   const verticalSplitRef = useRef<OutboundVerticalSplitLayoutHandle>(null);
   const [ordersTableRef, ordersScrollY] = useTableScrollHeight(98, 128);
   const [allocationTableRef, allocationScrollY] = useTableScrollHeight(48, 44);
   const [sourceTableRef, sourceScrollY] = useTableScrollHeight(48, 64);
 
-  const params = useMemo(
-    () => ({
+  const params = useMemo(() => {
+    const requestedSortOrder = sp.get("sort_order");
+    return {
       page: Number(sp.get("page") || 1),
       per_page: Number(sp.get("per_page") || 20),
       q:
@@ -129,10 +152,9 @@ export function OutboundDispatchWorkbenchPage() {
         ? Number(sp.get("carrier_id"))
         : undefined,
       sort_by: sp.get("sort_by") || "created_at",
-      sort_order: sp.get("sort_order") || "desc",
-    }),
-    [sp],
-  );
+      sort_order: requestedSortOrder === "asc" ? "asc" : "desc",
+    } satisfies OutboundParams;
+  }, [sp]);
 
   const list = useQuery({
     queryKey: ["outbound-workbench", params],
@@ -152,9 +174,90 @@ export function OutboundDispatchWorkbenchPage() {
   const rows = list.data?.data || [];
   const selected =
     detail.data?.basic || rows.find((row: any) => row.id === selectedId);
+  const isFba = selected?.ob_type === "FBA";
+  const fbaId = isFba ? Number(selected?.fba_id || 0) : 0;
+  const fbaSources = useQuery({
+    queryKey: ["outbound-fba-source-map", fbaId],
+    queryFn: () => getFBAAllocations(fbaId),
+    enabled: !!selectedId && isFba && fbaId > 0,
+  });
+  const rawSourceRows = (detail.data?.remaining_sources || []) as OutboundRemainingSource[];
+  const fbaClassification = useMemo(
+    () =>
+      isFba && fbaSources.isSuccess
+        ? classifyFbaAllocationSources(fbaSources.data || [], rawSourceRows)
+        : { sources: [], mappingError: null },
+    [isFba, fbaSources.isSuccess, fbaSources.data, rawSourceRows],
+  );
+  const sourceMappingError = isFba
+    ? !fbaId
+      ? FBA_MAPPING_INVALID_MESSAGE
+      : fbaSources.isError
+        ? "Unable to validate the FBA source mapping. Refresh this list and try again."
+        : fbaSources.isSuccess
+          ? fbaClassification.mappingError
+          : null
+    : null;
+  const sourceErrorMessage = detail.isError
+    ? "Unable to load source inventory. Refresh this list and try again."
+    : sourceMappingError;
+  const sourceReady =
+    !!selectedId &&
+    detail.isSuccess &&
+    (!isFba || fbaSources.isSuccess) &&
+    !sourceErrorMessage;
+  const sourceRows = sourceReady ? rawSourceRows : [];
+  const sourceSelectionSignature = sourceRows.map((row) => row.id).join("|");
+  const selectedRows = rows.filter((row: any) => selectedIds.includes(row.id));
+  const lifecycleRows = selectedIds.length
+    ? selectedRows
+    : selected
+      ? [selected]
+      : [];
+  const lifecycleIds = lifecycleRows.map((row: any) => row.id);
+  const canRunLifecycle = (name: string) =>
+    lifecycleRows.some((row: any) => row.allowed_actions?.[name]);
+
+  useEffect(() => {
+    setSelectedAllocationIds([]);
+    setSelectedSourceIds([]);
+  }, [selectedId]);
+
+  useEffect(() => {
+    setSelectedSourceIds((current) =>
+      retainValidSourceSelection(current, sourceRows, sourceReady),
+    );
+  }, [sourceReady, sourceSelectionSignature]);
 
   const patch = (values: any) => {
+    const selectionScopeKeys = new Set([
+      "page",
+      "per_page",
+      "q",
+      "id",
+      "status",
+      "ob_type",
+      "warehouse",
+      "carrier_id",
+      "bol_no",
+      "container_number",
+      "delivery_location",
+      "reference_search",
+      "del_ref",
+      "agent_code",
+      "pickup_location",
+      "redirect_location",
+      "sort_by",
+      "sort_order",
+    ]);
+    const selectionScopeChanged = Object.keys(values).some((key) =>
+      selectionScopeKeys.has(key),
+    );
+    if (selectionScopeChanged) {
+      setSelectedIds([]);
+    }
     const query = new URLSearchParams(sp);
+    if (selectionScopeChanged) query.delete("selected_ob");
     Object.entries(values).forEach(([key, value]) =>
       value === undefined || value === ""
         ? query.delete(key)
@@ -165,24 +268,229 @@ export function OutboundDispatchWorkbenchPage() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["outbound-workbench"] });
     qc.invalidateQueries({ queryKey: ["outbound-workbench-detail"] });
+    qc.invalidateQueries({ queryKey: ["outbound-fba-source-map"] });
   };
+  const actionHandlers = {
+    confirm: confirmOutbound,
+    dispatch: dispatchOutbound,
+    complete: completeOutbound,
+    cancel: cancelOutbound,
+    resolve: resolveOutbound,
+    picking: generatePicking,
+    bol: generateBol,
+  };
+  const isActionName = (name: string): name is keyof typeof actionHandlers =>
+    name in actionHandlers;
   const action = useMutation({
-    mutationFn: ({ name, id }: any) =>
-      ({
-        confirm: confirmOutbound,
-        dispatch: dispatchOutbound,
-        complete: completeOutbound,
-        cancel: cancelOutbound,
-        resolve: resolveOutbound,
-        picking: generatePicking,
-        bol: generateBol,
-      })[name](id),
+    mutationFn: ({ name, id }: { name: string; id: number }) => {
+      if (!isActionName(name)) throw new Error("Unknown outbound action");
+      return actionHandlers[name](id);
+    },
     onSuccess: () => {
       message.success("Operation completed");
       refresh();
     },
     onError: () => message.error("Operation rejected"),
   });
+  const batchAction = useMutation({
+    mutationFn: async ({ name, ids }: any) => {
+      if (name === "dispatch") {
+        const readiness = await Promise.all(
+          ids.map(async (id: number) => ({
+            id,
+            readiness: await getOutboundDispatchReadiness(id),
+          })),
+        );
+        const blocked = readiness.filter(
+          ({ readiness: result }: any) => result.status !== "READY",
+        );
+        if (blocked.length) {
+          const error: any = new Error("Dispatch blocked by readiness checks");
+          error.blocked = blocked;
+          throw error;
+        }
+      }
+      return runOutboundWorkbenchBatch(name, ids);
+    },
+    onSuccess: (result: any, variables: any) => {
+      if (variables.name === "delete") {
+        const deletedIds = result.results
+          .filter((item: any) => item.status === "success")
+          .map((item: any) => item.id);
+        if (deletedIds.length) {
+          setSelectedIds((current) =>
+            current.filter((id) => !deletedIds.includes(id)),
+          );
+          const currentSelectedId = Number(sp.get("selected_ob") || 0);
+          if (deletedIds.includes(currentSelectedId)) {
+            const query = new URLSearchParams(sp);
+            query.delete("selected_ob");
+            setSp(query, { replace: true });
+          }
+        }
+      }
+      const failedResults = result.results.filter(
+        (item: any) => item.status === "failed",
+      );
+      if (result.failed > 0) {
+        modal.warning({
+          title:
+            result.successful > 0
+              ? "Batch completed with blocked outbound orders"
+              : "Batch operation blocked",
+          content: (
+            <div>
+              <p>
+                Successful: {result.successful}; Failed: {result.failed}
+              </p>
+              <ul>
+                {failedResults.map((item: any) => (
+                  <li key={item.id}>
+                    OB {item.id}: {item.reason || "Operation rejected"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ),
+        });
+      } else {
+        message.success(
+          `Batch operation completed for ${result.successful} outbound order${result.successful === 1 ? "" : "s"}`,
+        );
+      }
+      refresh();
+    },
+    onError: (error: any) => {
+      if (error.blocked?.length) {
+        modal.warning({
+          title: "Dispatch blocked",
+          content: (
+            <ul>
+              {error.blocked.flatMap(({ id, readiness }: any) =>
+                readiness.blocking_reasons.map((reason: string, index: number) => (
+                  <li key={`${id}-${index}`}>
+                    OB {id}: {reason}
+                  </li>
+                )),
+              )}
+            </ul>
+          ),
+        });
+        return;
+      }
+      message.error(error?.message || "Batch operation rejected");
+    },
+  });
+  const inventoryRetryRef = useRef<{ signature: string; key: string } | null>(null);
+  const inventoryMove = useMutation({
+    mutationFn: async ({
+      direction,
+      rows: moveRows,
+    }: {
+      direction: "allocate" | "release";
+      rows: any[];
+    }) => {
+      const items = moveRows.map((row) => ({
+        id: row.id,
+        data:
+          direction === "allocate"
+            ? workbenchSourceAllocationData(row)
+            : { allocation_id: row.id },
+      }));
+      const signature = JSON.stringify({ selectedId, direction, items });
+      if (inventoryRetryRef.current?.signature !== signature) {
+        inventoryRetryRef.current = { signature, key: crypto.randomUUID() };
+      }
+      const result = await runOutboundInventoryBatch(
+        selectedId,
+        direction,
+        items,
+        inventoryRetryRef.current.key,
+      );
+      return { ...result, direction };
+    },
+    onSuccess: (result) => {
+      inventoryRetryRef.current = null;
+      const successfulIds = result.results
+        .filter((item) => item.status === "success")
+        .map((item) => item.id);
+      if (result.direction === "allocate") {
+        setSelectedSourceIds((current) =>
+          current.filter((id) => !successfulIds.includes(id)),
+        );
+      } else {
+        setSelectedAllocationIds((current) =>
+          current.filter((id) => !successfulIds.includes(id)),
+        );
+      }
+      if (result.failed) {
+        modal.warning({
+          title: result.successful
+            ? "Batch move completed with blocked rows"
+            : "Batch move blocked",
+          content: (
+            <div>
+              <p>
+                Successful: {result.successful}; Failed: {result.failed}
+              </p>
+              <ul>
+                {result.results
+                  .filter((item) => item.status === "failed")
+                  .map((item) => (
+                    <li key={item.id}>
+                      Row {item.id}: {item.reason}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ),
+        });
+      } else {
+        message.success(
+          `${result.successful} row${result.successful === 1 ? "" : "s"} ${
+            result.direction === "allocate" ? "moved" : "removed"
+          }`,
+        );
+      }
+      refresh();
+    },
+    onError: (error: any) => {
+      const status = error?.response?.status;
+      if (status && ![408, 429].includes(status) && status < 500) inventoryRetryRef.current = null;
+      const detail = error?.response?.data?.detail;
+      message.error(detail?.message || detail || "Batch move rejected");
+    },
+  });
+
+  const runInventoryMove = (direction: "allocate" | "release") => {
+    if (!selectedId || inventoryMove.isPending) return;
+    const ids =
+      direction === "allocate" ? selectedSourceIds : selectedAllocationIds;
+    const data =
+      direction === "allocate"
+        ? sourceRows
+        : activeAllocations;
+    const moveRows = data.filter((row: any) => ids.includes(row.id));
+    if (moveRows.length) inventoryMove.mutate({ direction, rows: moveRows });
+  };
+
+  const hasReleasableQuantity = (row: any) =>
+    ["pallet_qty", "carton_qty", "weight_lbs", "cbm"].some(
+      (metric) =>
+        Number(row[`allocated_${metric}`] || 0) -
+          Number(row[`completed_${metric}`] || 0) >
+        0,
+    );
+  const activeAllocations = (detail.data?.allocations || []).filter((row: any) =>
+    ["pallet_qty", "carton_qty", "weight_lbs", "cbm"].some(
+      (metric) =>
+        Number(row[`allocated_${metric}`] || 0) > 0 ||
+        Number(row[`completed_${metric}`] || 0) > 0,
+    ),
+  );
+  const runLifecycle = (name: string) => {
+    if (lifecycleIds.length) batchAction.mutate({ name, ids: lifecycleIds });
+  };
   const create = useMutation({
     mutationFn: createOutbound,
     onSuccess: () => {
@@ -221,7 +529,7 @@ export function OutboundDispatchWorkbenchPage() {
     verticalSplitRef.current?.reset();
   };
 
-  const cols = [
+  const cols: TableColumnsType<OutboundRecord> = [
     {
       title: "OB#",
       dataIndex: "ob_no",
@@ -242,7 +550,9 @@ export function OutboundDispatchWorkbenchPage() {
       title: "Status",
       dataIndex: "status_name",
       width: 88,
-      render: (value: any) => <Tag color={colors[value]}>{value}</Tag>,
+      render: (value: keyof typeof colors) => (
+        <Tag color={colors[value]}>{value}</Tag>
+      ),
     },
     { title: "FC", dataIndex: "fc_code", width: 72, className: "ops-key-cell" },
     {
@@ -332,7 +642,7 @@ export function OutboundDispatchWorkbenchPage() {
     { title: "APT", dataIndex: "delivery_appointment_time", width: 150 },
   ];
 
-  const allocCols = [
+  const allocCols: TableColumnsType<OutboundAllocation> = [
     {
       title: "Lot",
       dataIndex: "lot_no",
@@ -383,79 +693,18 @@ export function OutboundDispatchWorkbenchPage() {
       render: (_: any, row: any) => (
         <Button
           size="small"
+          disabled={
+            !selected?.allowed_actions?.release || !hasReleasableQuantity(row)
+          }
           onClick={() => releaseOutbound(selectedId, row.id, {}).then(refresh)}
         >
-          Release
-        </Button>
-      ),
-    },
-  ];
-
-  const sourceCols = [
-    {
-      title: "Container",
-      dataIndex: "container_number",
-      width: 132,
-      className: "ops-key-cell",
-    },
-    { title: "FC", dataIndex: "fc_code", width: 68, className: "ops-key-cell" },
-    { title: "Location", dataIndex: "location", width: 92 },
-    {
-      title: "Available PLT",
-      width: 94,
-      align: "right",
-      render: (_: any, row: any) =>
-        n(row.available_pallet_qty ?? row.remaining_pallet_qty),
-    },
-    { title: "Inbound", dataIndex: "inbound_date", width: 92 },
-    {
-      title: "Warehouse Days",
-      dataIndex: "warehouse_days",
-      width: 100,
-      align: "right",
-      render: (value: any) => value ?? "--",
-    },
-    {
-      title: "Earliest Outbound",
-      dataIndex: "earliest_outbound_date",
-      width: 112,
-      render: (value: any, row: any) => (
-        <OutboundDateCell value={value} days={row.outbound_days_remaining} />
-      ),
-    },
-    {
-      title: "Priority",
-      dataIndex: "dispatch_priority",
-      width: 96,
-      render: (value: any) => <DispatchPriorityTag value={value} />,
-    },
-    {
-      title: "",
-      width: 78,
-      fixed: "right",
-      render: (_: any, row: any) => (
-        <Button
-          className="source-allocate-button"
-          size="small"
-          onClick={() =>
-            allocateOutbound(selectedId, {
-              inventory_lot_id: row.inventory_lot_id || row.id,
-              fba_allocation_id: row.fba_allocation_id,
-              pallet_qty: row.available_pallet_qty || row.remaining_pallet_qty,
-              carton_qty: row.available_carton_qty || row.remaining_carton_qty,
-              weight_lbs: row.weight_lbs || 0,
-              cbm: row.cbm || 0,
-            }).then(refresh)
-          }
-        >
-          Allocate
+          Remove
         </Button>
       ),
     },
   ];
 
   const summary = list.data?.summary || {};
-  const selectedRows = rows.filter((row: any) => selectedIds.includes(row.id));
   const selectedPallets = selectedRows.reduce(
     (total: number, row: any) => total + Number(row.allocated_pallet_qty || 0),
     0,
@@ -466,6 +715,20 @@ export function OutboundDispatchWorkbenchPage() {
       <div className="panel-title">
         <h3>OB Allocation / Picking / BOL</h3>
         <Space size={6} wrap>
+          <Button
+            disabled={
+              !selected?.allowed_actions?.release ||
+              selectedAllocationIds.length === 0 ||
+              inventoryMove.isPending
+            }
+            loading={
+              inventoryMove.isPending &&
+              inventoryMove.variables?.direction === "release"
+            }
+            onClick={() => runInventoryMove("release")}
+          >
+            Remove Selected ({selectedAllocationIds.length})
+          </Button>
           <Button
             disabled={!selected?.allowed_actions?.picking}
             onClick={() => action.mutate({ name: "picking", id: selected.id })}
@@ -491,7 +754,17 @@ export function OutboundDispatchWorkbenchPage() {
           sticky
           pagination={false}
           rowKey="id"
-          dataSource={detail.data?.allocations || []}
+          rowSelection={{
+            selectedRowKeys: selectedAllocationIds,
+            onChange: (keys) =>
+              setSelectedAllocationIds(keys.map((key) => Number(key))),
+            getCheckboxProps: (row: any) => ({
+              disabled:
+                !selected?.allowed_actions?.release ||
+                !hasReleasableQuantity(row),
+            }),
+          }}
+          dataSource={activeAllocations}
           columns={allocCols}
           scroll={{ x: 690, y: allocationScrollY }}
           locale={{
@@ -506,6 +779,11 @@ export function OutboundDispatchWorkbenchPage() {
         {n(selected?.allocated_carton_qty)} CTN <span>/</span>{" "}
         {n(selected?.allocated_weight_lbs)} LB <span>/</span>{" "}
         {n(selected?.allocated_cbm)} CBM
+        {selectedAllocationIds.length > 0 && (
+          <span className="inventory-drag-hint">
+            {selectedAllocationIds.length} selected — choose Remove Selected
+          </span>
+        )}
       </div>
     </div>
   );
@@ -514,26 +792,52 @@ export function OutboundDispatchWorkbenchPage() {
     <div className="dispatch-panel dispatch-panel-lower">
       <div className="panel-title">
         <h3>Remaining Source</h3>
+        <Space size={6} wrap>
+          <span className="inventory-drag-help">
+            Select rows, then choose Drag BOL
+          </span>
+          <Button
+            type="primary"
+            disabled={
+              !selected?.allowed_actions?.allocate ||
+              !sourceReady ||
+              selectedSourceIds.length === 0 ||
+              inventoryMove.isPending
+            }
+            loading={
+              inventoryMove.isPending &&
+              inventoryMove.variables?.direction === "allocate"
+            }
+            onClick={() => runInventoryMove("allocate")}
+          >
+            Drag BOL ({selectedSourceIds.length})
+          </Button>
+        </Space>
       </div>
       {selected && <EntityDocuments relation={{ outbound_id: selected.id }} />}
       <div
         ref={sourceTableRef}
         className="dispatch-table-host dispatch-panel-table-host"
       >
-        <Table
-          className="dispatch-dense-table remaining-source-table"
-          size="small"
-          sticky
-          pagination={false}
-          rowKey="id"
-          dataSource={detail.data?.remaining_sources || []}
-          columns={sourceCols}
-          scroll={{ x: 870, y: sourceScrollY }}
-          locale={{
-            emptyText: detail.isLoading
-              ? "Loading source inventory..."
-              : "No remaining source inventory",
+        <RemainingSourceTable
+          rows={sourceRows}
+          selectedIds={selectedSourceIds}
+          ready={sourceReady}
+          loading={detail.isLoading || (isFba && fbaSources.isLoading)}
+          canAllocate={!!selected?.allowed_actions?.allocate}
+          errorMessage={sourceErrorMessage}
+          scrollY={sourceScrollY}
+          onSelectionChange={setSelectedSourceIds}
+          onRefresh={() => {
+            detail.refetch();
+            if (isFba) fbaSources.refetch();
           }}
+          onAllocate={(row) =>
+            allocateOutbound(
+              selectedId,
+              workbenchSourceAllocationData(row),
+            ).then(refresh)
+          }
         />
       </div>
     </div>
@@ -541,6 +845,7 @@ export function OutboundDispatchWorkbenchPage() {
 
   return (
     <div className="dispatch-workbench">
+      {modalContextHolder}
       <OutboundSplitLayout
         left={
           <div className="dispatch-left-workspace">
@@ -562,28 +867,50 @@ export function OutboundDispatchWorkbenchPage() {
               }}
               warehouses={warehouses.data || []}
               carriers={carriers.data || []}
-              selectedCount={selectedIds.length}
-              canConfirm={!!selected?.allowed_actions?.confirm}
-              canCancel={!!selected?.allowed_actions?.cancel}
+              selectedCount={selectedIds.length || (selected ? 1 : 0)}
+              canConfirm={canRunLifecycle("confirm")}
+              canCancel={canRunLifecycle("cancel")}
               canException={!!selected?.allowed_actions?.exception}
-              canDispatch={!!selected?.allowed_actions?.dispatch}
+              canDispatch={canRunLifecycle("dispatch")}
               rightHidden={rightHidden}
               onChange={patch}
               onRefresh={() => list.refetch()}
-              onResetFilters={() => setSp(new URLSearchParams())}
+              onResetFilters={() => {
+                setSelectedIds([]);
+                setSp(new URLSearchParams());
+              }}
               onResetWindow={resetWindow}
               onToggleRight={() => horizontalSplitRef.current?.toggleRight()}
               onCreate={() => setCreateOpen(true)}
-              onConfirm={() => action.mutate({ name: "confirm", id: selected.id })}
-              onCancel={() => action.mutate({ name: "cancel", id: selected.id })}
-              onDispatch={() => action.mutate({ name: "dispatch", id: selected.id })}
+              onConfirm={() => runLifecycle("confirm")}
+              onCancel={() => runLifecycle("cancel")}
+              onDispatch={() => runLifecycle("dispatch")}
               onException={() => setExceptionOpen(true)}
               onDelete={() => {
-                if (!selected) return;
-                Modal.confirm({
-                  title: "Delete / cancel this OB?",
-                  content: "Yuki has no hard-delete API. This runs Cancel.",
-                  onOk: () => action.mutate({ name: "cancel", id: selected.id }),
+                const ids = selectedIds.length
+                  ? selectedIds
+                  : selected
+                    ? [selected.id]
+                    : [];
+                if (!ids.length) return;
+                const labels = rows
+                  .filter((row: any) => ids.includes(row.id))
+                  .map((row: any) => row.ob_no);
+                modal.confirm({
+                  title: `Delete ${ids.length} outbound order${ids.length === 1 ? "" : "s"}?`,
+                  content: (
+                    <div>
+                      <p>
+                        This permanently deletes only pristine New drafts. Any
+                        outbound with allocations or execution records will be
+                        rejected and kept.
+                      </p>
+                      {labels.length > 0 && <p>{labels.join(", ")}</p>}
+                    </div>
+                  ),
+                  okText: "Delete",
+                  okButtonProps: { danger: true },
+                  onOk: () => batchAction.mutateAsync({ name: "delete", ids }),
                 });
               }}
             />
@@ -664,7 +991,12 @@ export function OutboundDispatchWorkbenchPage() {
                   label: warehouse.warehouse_code,
                 }))}
               />
-              <Button onClick={() => setSp(new URLSearchParams())}>
+              <Button
+                onClick={() => {
+                  setSelectedIds([]);
+                  setSp(new URLSearchParams());
+                }}
+              >
                 Reset
               </Button>
             </div>
