@@ -5,8 +5,9 @@ from typing import Any
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func,or_,select,text
-from sqlalchemy.orm import Session,joinedload
-from app.models import AuditLog,InboundRecord,InventoryLot,InventoryPriorityRule,InventoryTransaction,User,WarehouseLocation
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session,joinedload,selectinload
+from app.models import AuditLog,InboundLine,InboundRecord,InventoryLot,InventoryPriorityRule,InventoryTransaction,User,WarehouseLocation
 from app.services.access_policy import customer_clause,warehouse_clause
 from app.models.inventory import InventoryStatus,TransactionType
 from app.schemas.inbound import NamedRef,PaginationMeta,UserRef
@@ -45,15 +46,52 @@ def get_lot(db:Session,lot_id:int,lock:bool=False,user:User|None=None)->Inventor
     lot=db.scalar(query)
     if lot is None:raise HTTPException(404,"Inventory lot not found")
     return lot
-def receive_inbound(db:Session,inbound_id:int,user_id:int,commit:bool=True)->InventoryLot:
-    inbound=db.scalar(select(InboundRecord).where(InboundRecord.id==inbound_id).with_for_update())
-    if inbound is None:raise HTTPException(404,"Inbound record not found")
-    if inbound.status not in (3,4):raise HTTPException(409,"Inbound must be Put Away or Completed")
-    if db.scalar(select(InventoryLot.id).where(InventoryLot.source_inbound_id==inbound.id)):raise HTTPException(409,"Inventory already created for this inbound")
-    p=inbound.pallet_qty or ZERO;c=inbound.carton_qty or ZERO;w=inbound.weight_lbs or ZERO;v=inbound.cbm or ZERO
-    lot=InventoryLot(lot_no=generate_lot_no(db),customer_id=inbound.customer_id,warehouse_id=inbound.warehouse_id,source_inbound_id=inbound.id,container_number=inbound.container_number,fc_code=inbound.fc_code,marking=inbound.marking,location_id=inbound.location_id,raw_location_text=inbound.raw_location_text,import_row_id=inbound.import_row_id,original_pallet_qty=p,original_carton_qty=c,original_weight_lbs=w,original_cbm=v,available_pallet_qty=p,available_carton_qty=c,available_weight_lbs=w,available_cbm=v,allocated_pallet_qty=ZERO,allocated_carton_qty=ZERO,allocated_weight_lbs=ZERO,allocated_cbm=ZERO,hold_pallet_qty=ZERO,hold_carton_qty=ZERO,inbound_date=inbound.received_date or inbound.unload_date,status=InventoryStatus.AVAILABLE,remark=inbound.remark,created_by=user_id);db.add(lot);db.flush();after=snapshot(lot);db.add(InventoryTransaction(inventory_lot_id=lot.id,transaction_type=TransactionType.INBOUND,pallet_delta=p,carton_delta=c,weight_delta=w,cbm_delta=v,to_location_id=lot.location_id,reference_type="INBOUND",reference_id=inbound.id,after_snapshot=after,remark="Received from inbound",created_by=user_id));db.add(AuditLog(user_id=user_id,action="CREATE_INVENTORY_FROM_INBOUND",entity_type="INVENTORY",entity_id=lot.id,after_data=after));
-    if commit:db.commit();return get_lot(db,lot.id)
+def _receive_lot(db:Session,inbound:InboundRecord,line:InboundLine,user_id:int)->InventoryLot:
+    p=line.pallet_qty or ZERO;c=line.carton_qty or ZERO;w=line.weight_lbs or ZERO;v=line.cbm or ZERO
+    lot=InventoryLot(lot_no=generate_lot_no(db),customer_id=inbound.customer_id,warehouse_id=inbound.warehouse_id,source_inbound_id=inbound.id,inbound_line_id=line.id,container_number=inbound.container_number,fc_code=line.fc_code,marking=inbound.marking,location_id=line.location_id,raw_location_text=inbound.raw_location_text,import_row_id=inbound.import_row_id,original_pallet_qty=p,original_carton_qty=c,original_weight_lbs=w,original_cbm=v,available_pallet_qty=p,available_carton_qty=c,available_weight_lbs=w,available_cbm=v,allocated_pallet_qty=ZERO,allocated_carton_qty=ZERO,allocated_weight_lbs=ZERO,allocated_cbm=ZERO,hold_pallet_qty=ZERO,hold_carton_qty=ZERO,inbound_date=inbound.received_date or inbound.unload_date,status=InventoryStatus.AVAILABLE,remark=line.remark or inbound.remark,created_by=user_id)
+    db.add(lot);db.flush();after=snapshot(lot)
+    db.add(InventoryTransaction(inventory_lot_id=lot.id,transaction_type=TransactionType.INBOUND,pallet_delta=p,carton_delta=c,weight_delta=w,cbm_delta=v,to_location_id=lot.location_id,reference_type="INBOUND",reference_id=inbound.id,after_snapshot=after,remark=f"Received from inbound line {line.line_no}",created_by=user_id))
+    db.add(AuditLog(user_id=user_id,action="CREATE_INVENTORY_FROM_INBOUND",entity_type="INVENTORY",entity_id=lot.id,after_data=after))
     return lot
+
+def receive_inbound_lines(db:Session,inbound_id:int,user_id:int,commit:bool=True,user:User|None=None)->list[InventoryLot]:
+    filters=[InboundRecord.id==inbound_id]
+    if user:filters.extend(x for x in (warehouse_clause(user,InboundRecord.warehouse_id),customer_clause(user,InboundRecord.customer_id)) if x is not None)
+    inbound=db.scalar(select(InboundRecord).options(selectinload(InboundRecord.lines),selectinload(InboundRecord.inventory_lots)).where(*filters).with_for_update())
+    if inbound is None:raise HTTPException(404,"Inbound record not found")
+    if inbound.status in (2,6):raise HTTPException(409,"Inbound is already received or canceled")
+    if inbound.status not in (0,1,3,4):raise HTTPException(409,"Inbound cannot be received in its current status")
+    if inbound.inventory_lots:raise HTTPException(409,"Inventory already created for this inbound")
+    if not inbound.lines:raise HTTPException(409,"Inbound has no lines")
+    try:
+        lots=[_receive_lot(db,inbound,line,user_id) for line in inbound.lines]
+        inbound.status=2
+        inbound.received_date=inbound.received_date or get_business_today()
+        db.add(AuditLog(user_id=user_id,action="RECEIVE",entity_type="INBOUND",entity_id=inbound.id,after_data={"inventory_lot_ids":[lot.id for lot in lots]}))
+        if commit:db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409,"Inbound was received concurrently")
+    except Exception:
+        db.rollback()
+        raise
+    if commit:return [get_lot(db,lot.id,user=user) for lot in lots]
+    return lots
+
+def receive_inbound(db:Session,inbound_id:int,user_id:int,commit:bool=True)->InventoryLot:
+    return receive_inbound_lines(db,inbound_id,user_id,commit=commit)[0]
+
+def cancel_inbound(db:Session,inbound_id:int,user_id:int,user:User|None=None)->InboundRecord:
+    filters=[InboundRecord.id==inbound_id]
+    if user:filters.extend(x for x in (warehouse_clause(user,InboundRecord.warehouse_id),customer_clause(user,InboundRecord.customer_id)) if x is not None)
+    inbound=db.scalar(select(InboundRecord).where(*filters).with_for_update())
+    if inbound is None:raise HTTPException(404,"Inbound record not found")
+    if inbound.status!=0:raise HTTPException(409,"Only draft inbound records can be canceled")
+    if db.scalar(select(InventoryLot.id).where(InventoryLot.source_inbound_id==inbound.id).limit(1)):raise HTTPException(409,"Inbound with inventory cannot be canceled")
+    inbound.status=6
+    db.add(AuditLog(user_id=user_id,action="CANCEL",entity_type="INBOUND",entity_id=inbound.id,after_data={"status":6}))
+    db.commit()
+    return inbound
 def list_inventory(db:Session,*,page:int=1,per_page:int=20,q:str|None=None,container_number:str|None=None,fc_code:str|None=None,customer_id:int|None=None,warehouse_id:int|None=None,location_id:int|None=None,status:int|None=None,priority_level:str|None=None,inbound_date_from:date|None=None,inbound_date_to:date|None=None,aging_min:int|None=None,aging_max:int|None=None,has_available:bool|None=None,sort_by:str="id",sort_order:str="desc",user:User|None=None)->InventoryListResponse:
     filters=[]
     if user:filters.extend(x for x in (warehouse_clause(user,InventoryLot.warehouse_id),customer_clause(user,InventoryLot.customer_id)) if x is not None)

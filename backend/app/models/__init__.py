@@ -4,7 +4,7 @@ from app.models.customer import Customer
 from app.models.user import ScopeMode, User, UserRole
 from app.models.warehouse import Warehouse, WarehouseArea, WarehouseLocation
 from app.models.import_job import ImportError, ImportJob, ImportRow
-from app.models.inbound import AuditLog, InboundRecord
+from app.models.inbound import AuditLog, InboundLine, InboundRecord
 from app.models.inventory import InventoryLot, InventoryLotLocation, InventoryPriorityRule, InventoryTransaction
 from app.models.fba import FBAInventoryAllocation, FBAShipment
 from app.models.outbound import OBStatus, OBType, OutboundInventoryAllocation, OutboundOrder
@@ -30,7 +30,7 @@ from app.models.scan_execution import (
     ScanType,
 )
 
-__all__ = ["AmazonFCAddress", "Carrier", "Customer", "User", "UserRole", "ScopeMode", "Warehouse", "WarehouseArea", "WarehouseLocation", "ImportJob", "ImportRow", "ImportError", "InboundRecord", "AuditLog", "InventoryLot", "InventoryLotLocation", "InventoryTransaction", "InventoryPriorityRule", "FBAShipment", "FBAInventoryAllocation"]
+__all__ = ["AmazonFCAddress", "Carrier", "Customer", "User", "UserRole", "ScopeMode", "Warehouse", "WarehouseArea", "WarehouseLocation", "ImportJob", "ImportRow", "ImportError", "InboundRecord", "InboundLine", "AuditLog", "InventoryLot", "InventoryLotLocation", "InventoryTransaction", "InventoryPriorityRule", "FBAShipment", "FBAInventoryAllocation"]
 __all__ += ["OBStatus", "OBType", "OutboundOrder", "OutboundInventoryAllocation"]
 __all__ += ["PickingList", "PickingListItem", "PickingStatus", "BOL", "BOLItem", "BOLStatus"]
 __all__ += ["ContainerTracking", "TrackingStatus"]
