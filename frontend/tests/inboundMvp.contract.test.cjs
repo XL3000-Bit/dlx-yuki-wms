@@ -47,6 +47,9 @@ test('inbound UI provides two initial lines and required workflow actions', () =
   for (const action of ['Refresh', 'Receive', 'Cancel', 'View Inventory']) {
     assert.match(page, new RegExp(`>\\s*${action}\\s*<`))
   }
+  assert.match(page, /const \[modal, modalContextHolder\] = Modal\.useModal\(\)/)
+  assert.match(page, /modal\.confirm\(\{/)
+  assert.match(page, /\{modalContextHolder\}/)
   assert.match(page, /navigate\(`\/inventory\?container_number=/)
 })
 
