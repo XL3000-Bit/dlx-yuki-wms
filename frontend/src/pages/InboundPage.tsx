@@ -130,6 +130,7 @@ export function InboundPage() {
   const columns: ColumnsType<InboundRecord> = [
     { title: 'Inbound No', dataIndex: 'inbound_no', fixed: 'left', width: 130, sorter: true },
     { title: 'Container', dataIndex: 'container_number', width: 140 },
+    { title: 'PO Number', dataIndex: 'po_number', width: 130, render: (value) => value ?? '—' },
     { title: 'Customer', width: 130, render: (_, record) => record.customer?.name ?? '—' },
     { title: 'Warehouse', width: 105, render: (_, record) => record.warehouse.code },
     {
@@ -363,7 +364,7 @@ export function InboundPage() {
         loading={list.isLoading}
         dataSource={list.data?.data ?? []}
         columns={columns}
-        scroll={{ x: 1660, y: 'calc(100vh - 345px)' }}
+        scroll={{ x: 1790, y: 'calc(100vh - 345px)' }}
         sticky
         pagination={{
           current: list.data?.meta.page,

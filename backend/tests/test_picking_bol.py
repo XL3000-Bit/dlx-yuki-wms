@@ -1,7 +1,9 @@
 from datetime import date
+from io import BytesIO
 
 import pytest
 from fastapi.testclient import TestClient
+from openpyxl import load_workbook
 from sqlalchemy import func, select
 
 from app.core.security import create_access_token, hash_password
@@ -88,8 +90,22 @@ def test_picking_and_bol_snapshot(client: TestClient, seed):
     outbound, _ = make_ob(client, seed)
     picking = client.post(f"/api/v1/outbounds/{outbound['id']}/picking-lists")
     assert picking.status_code == 200, picking.text
-    assert picking.json()["picking_no"].startswith("PK")
-    assert picking.json()["planned_pallet_qty"] == "10.00"
+    body = picking.json()
+    assert body["picking_no"].startswith("PK")
+    assert body["planned_pallet_qty"] == "10.00"
+    assert body["ob_no"] == outbound["ob_no"]
+    assert body["outbound_order_id"] == outbound["id"]
+    detail = client.get(f"/api/v1/picking-lists/{body['id']}").json()
+    assert detail["ob_no"] == outbound["ob_no"]
+    assert detail["outbound_order_id"] == outbound["id"]
+    listed = client.get("/api/v1/picking-lists").json()
+    assert next(row for row in listed if row["id"] == body["id"])["ob_no"] == outbound["ob_no"]
+    export = client.get(f"/api/v1/picking-lists/{body['id']}/xlsx")
+    assert export.status_code == 200
+    sheet = load_workbook(BytesIO(export.content), data_only=True).active
+    assert sheet["B1"].value == "OB No"
+    assert sheet["B2"].value == outbound["ob_no"]
+    assert sheet["B2"].value != outbound["id"]
     second = client.post(f"/api/v1/outbounds/{outbound['id']}/picking-lists")
     assert second.status_code == 200, second.text
     assert second.json()["id"] == picking.json()["id"]

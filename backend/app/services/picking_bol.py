@@ -66,7 +66,7 @@ def number(db, model, prefix):
 
 
 def picking_read(p):
-    return PickingRead.model_validate({**p.__dict__, "status_name": PICK_NAMES[p.status], "planned_pallet_qty": sum((i.planned_pallet_qty for i in p.items), Decimal(0)), "planned_carton_qty": sum((i.planned_carton_qty for i in p.items), Decimal(0)), "picked_pallet_qty": sum((i.picked_pallet_qty for i in p.items), Decimal(0)), "picked_carton_qty": sum((i.picked_carton_qty for i in p.items), Decimal(0))})
+    return PickingRead.model_validate({**p.__dict__, "ob_no": p.outbound.ob_no, "status_name": PICK_NAMES[p.status], "planned_pallet_qty": sum((i.planned_pallet_qty for i in p.items), Decimal(0)), "planned_carton_qty": sum((i.planned_carton_qty for i in p.items), Decimal(0)), "picked_pallet_qty": sum((i.picked_pallet_qty for i in p.items), Decimal(0)), "picked_carton_qty": sum((i.picked_carton_qty for i in p.items), Decimal(0))})
 
 
 def generate_picking(db: Session, ob_id, user_id, *, commit: bool = True):

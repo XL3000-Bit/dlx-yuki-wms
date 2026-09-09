@@ -32,8 +32,8 @@ def picking_detail(pid:int,db:DbSession,user:CurrentUser):return picking_read(_p
 def picking_complete(pid:int,payload:PickComplete|None,db:DbSession,user:User=Writer):_picking(db,user,pid);return picking_read(complete_picking(db,pid,user.id,payload))
 @router.get('/picking-lists/{pid}/xlsx')
 def picking_excel(pid:int,db:DbSession,user:CurrentUser):
- p=_picking(db,user,pid);wb=Workbook();ws=wb.active;ws.append(['Picking No','OB ID','Sequence','Location','Container','FC','Marking','Pallet','Carton','Weight LBS','CBM'])
- for i in p.items:ws.append([p.picking_no,p.outbound_order_id,i.sequence_no,i.location.location_code if i.location else '',i.container_number,i.fc_code,i.marking,i.planned_pallet_qty,i.planned_carton_qty,i.planned_weight_lbs,i.planned_cbm])
+ p=_picking(db,user,pid);wb=Workbook();ws=wb.active;ws.append(['Picking No','OB No','Sequence','Location','Container','FC','Marking','Pallet','Carton','Weight LBS','CBM'])
+ for i in p.items:ws.append([p.picking_no,p.outbound.ob_no,i.sequence_no,i.location.location_code if i.location else '',i.container_number,i.fc_code,i.marking,i.planned_pallet_qty,i.planned_carton_qty,i.planned_weight_lbs,i.planned_cbm])
  s=BytesIO();wb.save(s);s.seek(0);return StreamingResponse(s,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename={p.picking_no}.xlsx'})
 @router.post('/outbounds/{ob_id}/bol',response_model=BOLRead)
 def create_bol(ob_id:int,db:DbSession,user:User=Writer):get_ob(db,ob_id,user=user);return bol_read(generate_bol(db,ob_id,user.id))
