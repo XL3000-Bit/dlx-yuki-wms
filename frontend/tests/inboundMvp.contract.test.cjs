@@ -34,6 +34,8 @@ test('inbound types preserve all seven numeric states and line fields', () => {
   }
   assert.match(source, /lines: InboundLine\[\]/)
   assert.match(source, /lines: InboundLineInput\[\]/)
+  assert.match(source, /po_number: string \| null/)
+  assert.match(source, /po_number\?: string/)
 })
 
 test('inbound UI provides two initial lines and required workflow actions', () => {
@@ -42,6 +44,8 @@ test('inbound UI provides two initial lines and required workflow actions', () =
 
   assert.match(drawer, /lines: \[emptyLine\(\), emptyLine\(\)\]/)
   assert.match(drawer, /<Form\.List name="lines">/)
+  assert.match(drawer, /<Form\.Item name="po_number" label="PO Number">/)
+  assert.match(page, /title: 'PO Number', dataIndex: 'po_number'/)
   assert.match(drawer, />\s*Add Line\s*</)
   assert.match(drawer, />\s*Save Draft\s*</)
   for (const action of ['Refresh', 'Receive', 'Cancel', 'View Inventory']) {
@@ -60,4 +64,10 @@ test('inventory handoff consumes and displays the container URL filter', () => {
   assert.match(inventory, /searchParams\.get\('container_number'\)/)
   assert.match(inventory, /container_number:initialContainerNumber/)
   assert.match(inventory, /initialValues=\{\{container_number:initialContainerNumber\}\}/)
+})
+
+test('picking list renders the business outbound number', () => {
+  const page = read('src/pages/PickingPage.tsx')
+  assert.match(page, /title:'OB No',render:\(_:any,r:any\)=>r\.ob_no/)
+  assert.doesNotMatch(page, /title:'OB No',render:\(_:any,r:any\)=>r\.outbound_order_id/)
 })

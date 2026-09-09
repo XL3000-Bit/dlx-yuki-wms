@@ -32,6 +32,7 @@ class InboundLineInput(BaseModel):
 
 class InboundBase(BaseModel):
     container_number: str = Field(min_length=1, max_length=50)
+    po_number: str | None = None
     customer_id: int | None = None
     warehouse_id: int
     unload_date: date | None = None
@@ -68,6 +69,7 @@ class InboundUpdate(InboundBase):
 
 class InboundPatch(BaseModel):
     container_number: str | None = Field(None, min_length=1, max_length=50)
+    po_number: str | None = None
     customer_id: int | None = None
     warehouse_id: int | None = None
     unload_date: date | None = None
@@ -112,6 +114,7 @@ class InboundRead(BaseModel):
     id: int
     inbound_no: str
     container_number: str
+    po_number: str | None
     unload_date: date | None
     received_date: date | None
     fc_code: str | None

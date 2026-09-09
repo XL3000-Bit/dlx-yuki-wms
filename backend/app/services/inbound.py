@@ -237,6 +237,7 @@ def list_inbounds(
             or_(
                 InboundRecord.inbound_no.ilike(term),
                 InboundRecord.container_number.ilike(term),
+                InboundRecord.po_number.ilike(term),
                 InboundRecord.fc_code.ilike(term),
                 InboundRecord.marking.ilike(term),
                 InboundRecord.remark.ilike(term),

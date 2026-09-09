@@ -44,6 +44,7 @@ function valuesForRecord(record: InboundRecord | null): Partial<InboundInput> {
 
   return {
     container_number: record.container_number,
+    po_number: record.po_number ?? undefined,
     customer_id: record.customer?.id,
     warehouse_id: record.warehouse.id,
     unload_date: record.unload_date ?? undefined,
@@ -119,6 +120,9 @@ export function InboundFormDrawer({
       <Form form={form} layout="vertical" onFinish={submit}>
         <div className="two-col-form">
           <Form.Item name="container_number" label="Container Number" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="po_number" label="PO Number">
             <Input />
           </Form.Item>
           <Form.Item name="customer_id" label="Customer">

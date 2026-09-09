@@ -38,6 +38,7 @@ export interface InboundRecord {
   id: number
   inbound_no: string
   container_number: string
+  po_number: string | null
   customer: NamedRef | null
   warehouse: NamedRef
   location: NamedRef | null
@@ -63,6 +64,7 @@ export interface InboundRecord {
 
 export interface InboundInput {
   container_number: string
+  po_number?: string
   customer_id?: number
   warehouse_id: number
   unload_date?: string
