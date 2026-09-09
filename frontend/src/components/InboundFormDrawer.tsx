@@ -111,7 +111,7 @@ export function InboundFormDrawer({
         <Space>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" loading={loading} onClick={() => form.submit()}>
-            Save
+            Save Draft
           </Button>
         </Space>
       }

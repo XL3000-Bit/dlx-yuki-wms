@@ -43,9 +43,18 @@ test('inbound UI provides two initial lines and required workflow actions', () =
   assert.match(drawer, /lines: \[emptyLine\(\), emptyLine\(\)\]/)
   assert.match(drawer, /<Form\.List name="lines">/)
   assert.match(drawer, />\s*Add Line\s*</)
-  assert.match(drawer, />\s*Save\s*</)
+  assert.match(drawer, />\s*Save Draft\s*</)
   for (const action of ['Refresh', 'Receive', 'Cancel', 'View Inventory']) {
     assert.match(page, new RegExp(`>\\s*${action}\\s*<`))
   }
   assert.match(page, /navigate\(`\/inventory\?container_number=/)
+})
+
+test('inventory handoff consumes and displays the container URL filter', () => {
+  const inventory = read('src/pages/InventoryPage.tsx')
+
+  assert.match(inventory, /useSearchParams/)
+  assert.match(inventory, /searchParams\.get\('container_number'\)/)
+  assert.match(inventory, /container_number:initialContainerNumber/)
+  assert.match(inventory, /initialValues=\{\{container_number:initialContainerNumber\}\}/)
 })
