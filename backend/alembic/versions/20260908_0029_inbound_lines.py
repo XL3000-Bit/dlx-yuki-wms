@@ -55,8 +55,13 @@ def upgrade() -> None:
     ))
     op.create_index("ix_inventory_lots_inbound_line_id", "inventory_lots", ["inbound_line_id"], unique=True)
 
+    unique_constraint_names = {
+        constraint["name"]
+        for constraint in sa.inspect(connection).get_unique_constraints("inventory_lots")
+    }
+    if "uq_inventory_lots_source_inbound_id" in unique_constraint_names:
+        op.drop_constraint("uq_inventory_lots_source_inbound_id", "inventory_lots", type_="unique")
     op.drop_index("ix_inventory_lots_source_inbound_id", table_name="inventory_lots")
-    op.drop_constraint("uq_inventory_lots_source_inbound_id", "inventory_lots", type_="unique")
     op.create_index("ix_inventory_lots_source_inbound_id", "inventory_lots", ["source_inbound_id"])
 
     op.drop_constraint("ck_inbound_records_status_range", "inbound_records", type_="check")

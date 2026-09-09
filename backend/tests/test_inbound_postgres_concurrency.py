@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 import pytest
-from sqlalchemy import create_engine, func, select, text
+from sqlalchemy import create_engine, func, inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models import (
@@ -51,6 +51,17 @@ def pg_sessions():
     with engine.connect() as connection:
         assert connection.scalar(text("select version()")).startswith("PostgreSQL")
         assert connection.scalar(text("select version_num from alembic_version")) == "20260908_0029"
+    source_indexes = [
+        index
+        for index in inspect(engine).get_indexes("inventory_lots")
+        if index["name"] == "ix_inventory_lots_source_inbound_id"
+    ]
+    assert len(source_indexes) == 1
+    assert source_indexes[0]["unique"] is False
+    assert all(
+        constraint["name"] != "uq_inventory_lots_source_inbound_id"
+        for constraint in inspect(engine).get_unique_constraints("inventory_lots")
+    )
     yield sessionmaker(bind=engine, expire_on_commit=False)
     engine.dispose()
 
