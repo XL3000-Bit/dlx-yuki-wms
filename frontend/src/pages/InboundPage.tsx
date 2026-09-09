@@ -69,6 +69,7 @@ function statusColor(status: InboundStatus) {
 export function InboundPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [modal, modalContextHolder] = Modal.useModal()
   const [params, setParams] = useState<InboundListParams>({
     page: 1,
     per_page: 20,
@@ -202,7 +203,7 @@ export function InboundPage() {
               danger
               loading={cancel.isPending && cancel.variables === record.id}
               onClick={() =>
-                Modal.confirm({
+                modal.confirm({
                   title: `Cancel ${record.inbound_no}?`,
                   content: 'The inbound will no longer be available for editing or receiving.',
                   okText: 'Cancel Inbound',
@@ -252,6 +253,7 @@ export function InboundPage() {
 
   return (
     <div className="page">
+      {modalContextHolder}
       <div className="page-heading">
         <div>
           <Typography.Title level={4}>Inbound Management</Typography.Title>
