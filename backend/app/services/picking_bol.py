@@ -231,6 +231,15 @@ def _num(value, places=2):
     return round(float(value or 0), places)
 
 
+def _bol_export_status(context):
+    if context["ready"]:
+        return "READY FOR DISPATCH"
+    # Hide the FBA seal hint only in exports; readiness remains unchanged.
+    missing = [label for label in context["missing"]
+               if not (context["is_fba"] and label == "Trailer seal number")]
+    return "PRE-DISPATCH CHECK" + (": " + "; ".join(missing) if missing else "")
+
+
 def bol_xlsx(b):
     c = amazon_bol_context(b)
     wb = Workbook()
@@ -265,7 +274,7 @@ def bol_xlsx(b):
 
     merge_value("A1:J2", "BILL OF LADING", fill=title_fill, font=Font(size=22, bold=True, color="FFFFFF"), align=Alignment(horizontal="center", vertical="center"))
     merge_value("A3:J3", f"AMAZON FBA INBOUND | {c['mode']} | WMS BOL {b.bol_no}", fill=label_fill, font=Font(size=11, bold=True, color=NAVY), align=Alignment(horizontal="center"))
-    status = "READY FOR DISPATCH" if c["ready"] else "PRE-DISPATCH CHECK: " + "; ".join(c["missing"])
+    status = _bol_export_status(c)
     merge_value("A4:J4", status, fill=PatternFill("solid", fgColor="E2F0D9" if c["ready"] else PALE_YELLOW), font=Font(bold=True, color="006100" if c["ready"] else "9C6500"), align=Alignment(horizontal="center", wrap_text=True))
     merge_value("A6:E6", "SHIP FROM", fill=section_fill, font=Font(bold=True, color="FFFFFF"))
     merge_value("F6:J6", "SHIP TO - AMAZON FULFILLMENT CENTER", fill=section_fill, font=Font(bold=True, color="FFFFFF"))
@@ -279,16 +288,16 @@ def bol_xlsx(b):
         merge_value(f"A{row_no}:B{row_no}", l1, fill=label_fill, font=Font(bold=True)); merge_value(f"C{row_no}:E{row_no}", v1 or "REQUIRED")
         merge_value(f"F{row_no}:G{row_no}", l2, fill=label_fill, font=Font(bold=True)); merge_value(f"H{row_no}:J{row_no}", v2 or "REQUIRED")
     merge_value("A15:J15", "CARRIER AND EQUIPMENT", fill=section_fill, font=Font(bold=True, color="FFFFFF"))
-    carrier_rows = [("Carrier", c["carrier_name"], "SCAC", c["scac"]), ("PRO / Tracking / Carrier BOL", c["carrier_tracking"], "Tractor / Trailer", " / ".join(filter(None, (c["tractor_no"], c["trailer_no"])))), ("Trailer Seal (FTL)", c["seal_no"], "Transport Mode", c["mode"])]
+    carrier_rows = [("Carrier", c["carrier_name"], "SCAC", c["scac"]), ("PRO / Tracking / Carrier BOL", c["carrier_tracking"], "Tractor / Trailer", " / ".join(filter(None, (c["tractor_no"], c["trailer_no"])))), ("" if c["is_fba"] else "Trailer Seal (FTL)", "" if c["is_fba"] else c["seal_no"], "Transport Mode", c["mode"])]
     for row_no, row in enumerate(carrier_rows, 16):
         l1, v1, l2, v2 = row
-        merge_value(f"A{row_no}:B{row_no}", l1, fill=label_fill, font=Font(bold=True)); merge_value(f"C{row_no}:E{row_no}", v1 or "TO BE PROVIDED")
+        merge_value(f"A{row_no}:B{row_no}", l1, fill=label_fill, font=Font(bold=True)); merge_value(f"C{row_no}:E{row_no}", (v1 or "TO BE PROVIDED") if l1 else "")
         merge_value(f"F{row_no}:G{row_no}", l2, fill=label_fill, font=Font(bold=True)); merge_value(f"H{row_no}:J{row_no}", v2 or "TO BE PROVIDED")
-    headers = ["#", "Container", "FC", "Marking", "Commodity", "Pallets", "Cartons", "Weight (lb)", "CBM", "Freight Class"]
+    headers = ["#", "" if c["is_fba"] else "Container", "FC", "Marking", "Commodity", "Pallets", "Cartons", "Weight (lb)", "CBM", "Freight Class"]
     for col, value in enumerate(headers, 1):
         cell = ws.cell(20, col, value); cell.fill = section_fill; cell.font = Font(bold=True, color="FFFFFF"); cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True); cell.border = border
     for row_no, item in enumerate(b.items, 21):
-        values = [row_no - 20, item.container_number or "", item.fc_code or b.amazon_fc_code or "", item.marking or "", item.description or "General merchandise", _num(item.pallet_qty), _num(item.carton_qty), _num(item.weight_lbs), _num(item.cbm, 4), ""]
+        values = [row_no - 20, "" if c["is_fba"] else item.container_number or "", item.fc_code or b.amazon_fc_code or "", item.marking or "", item.description or "General merchandise", _num(item.pallet_qty), _num(item.carton_qty), _num(item.weight_lbs), _num(item.cbm, 4), ""]
         for col, value in enumerate(values, 1):
             cell = ws.cell(row_no, col, value); cell.border = border; cell.alignment = Alignment(horizontal="center" if col != 5 else "left", vertical="center", wrap_text=True)
     total_row = 21 + len(b.items)
@@ -299,6 +308,8 @@ def bol_xlsx(b):
     notes_row = total_row + 2
     merge_value(f"A{notes_row}:J{notes_row}", "AMAZON DELIVERY NOTES", fill=section_fill, font=Font(bold=True, color="FFFFFF"))
     notes = "Non-partner carriers must schedule a delivery appointment. Provide the Amazon Reference ID, FBA Shipment ID, and carrier PRO/tracking/BOL number to the carrier and on delivery. Keep Amazon box and pallet labels visible. FTL/intermodal loads require a trailer seal. This WMS document does not replace an Amazon Partnered Carrier-issued BOL."
+    if c["is_fba"]:
+        notes = notes.replace(" FTL/intermodal loads require a trailer seal.", "")
     merge_value(f"A{notes_row + 1}:J{notes_row + 2}", notes); ws.row_dimensions[notes_row + 1].height = 42
     signature_row = notes_row + 4
     merge_value(f"A{signature_row}:C{signature_row}", "Shipper signature / date"); merge_value(f"D{signature_row}:G{signature_row}", "Carrier signature / pickup date"); merge_value(f"H{signature_row}:J{signature_row}", "Consignee signature / delivery date")
@@ -329,28 +340,30 @@ def bol_pdf(b):
         return table
 
     def details(rows):
-        data = [[p(l1, small), p(v1 or "REQUIRED"), p(l2, small), p(v2 or "REQUIRED")] for l1, v1, l2, v2 in rows]
+        data = [[p(l1, small), p((v1 or "REQUIRED") if l1 else ""), p(l2, small), p(v2 or "REQUIRED")] for l1, v1, l2, v2 in rows]
         table = Table(data, colWidths=[1.18 * inch, 2.64 * inch, 1.18 * inch, 2.65 * inch])
         table.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), .35, colors.HexColor("#A6A6A6")), ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#DDEBF7")), ("BACKGROUND", (2, 0), (2, -1), colors.HexColor("#DDEBF7")), ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"), ("FONTNAME", (2, 0), (2, -1), "Helvetica-Bold"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
         return table
 
     story = [p("BILL OF LADING", title), p(f"AMAZON FBA INBOUND | {c['mode']} | WMS BOL {b.bol_no}", subtitle)]
-    status_text = "READY FOR DISPATCH" if c["ready"] else "PRE-DISPATCH CHECK: " + "; ".join(c["missing"])
+    status_text = _bol_export_status(c)
     status = Table([[p(status_text, center)]], colWidths=[7.65 * inch])
     status.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#E2F0D9" if c["ready"] else "#FFF2CC")), ("BOX", (0, 0), (-1, -1), .5, colors.HexColor("#A6A6A6")), ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4)]))
     address = Table([[p("SHIP FROM", white), p("SHIP TO - AMAZON FULFILLMENT CENTER", white)], [p(f"{b.ship_from_name}\n{b.ship_from_address}"), p(f"{b.ship_to_name or 'Amazon FC'} ({b.amazon_fc_code or 'FC TBD'})\n{b.ship_to_address or 'Destination address required'}")]], colWidths=[3.825 * inch] * 2)
     address.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F4E78")), ("GRID", (0, 0), (-1, -1), .4, colors.HexColor("#A6A6A6")), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4)]))
-    story.extend([status, Spacer(1, 5), address, Spacer(1, 5), section("AMAZON DELIVERY REFERENCES"), details([("Amazon Reference ID", c["amazon_reference_id"], "FBA Shipment ID", c["shipment_id"]), ("ST Number", c["st_number"], "PO Number", c["po_number"]), ("WMS BOL Number", b.bol_no, "Outbound Number", c["outbound_no"]), ("Pickup Date", c["pickup_date"], "Appointment / Time", " / ".join(filter(None, (c["appointment_reference"], c["appointment_time"]))))]), Spacer(1, 5), section("CARRIER AND EQUIPMENT"), details([("Carrier", c["carrier_name"], "SCAC", c["scac"]), ("PRO / Tracking / Carrier BOL", c["carrier_tracking"] or "TO BE PROVIDED", "Tractor / Trailer", " / ".join(filter(None, (c["tractor_no"], c["trailer_no"]))) or "TO BE PROVIDED"), ("Trailer Seal (FTL)", c["seal_no"] or "TO BE PROVIDED", "Transport Mode", c["mode"])]), Spacer(1, 6), section("CARGO DETAILS")])
-    cargo = [[p(x, white) for x in ("#", "Container", "FC", "Marking", "Commodity", "PLT", "CTN", "Weight lb", "CBM")]]
+    story.extend([status, Spacer(1, 5), address, Spacer(1, 5), section("AMAZON DELIVERY REFERENCES"), details([("Amazon Reference ID", c["amazon_reference_id"], "FBA Shipment ID", c["shipment_id"]), ("ST Number", c["st_number"], "PO Number", c["po_number"]), ("WMS BOL Number", b.bol_no, "Outbound Number", c["outbound_no"]), ("Pickup Date", c["pickup_date"], "Appointment / Time", " / ".join(filter(None, (c["appointment_reference"], c["appointment_time"]))))]), Spacer(1, 5), section("CARRIER AND EQUIPMENT"), details([("Carrier", c["carrier_name"], "SCAC", c["scac"]), ("PRO / Tracking / Carrier BOL", c["carrier_tracking"] or "TO BE PROVIDED", "Tractor / Trailer", " / ".join(filter(None, (c["tractor_no"], c["trailer_no"]))) or "TO BE PROVIDED"), ("" if c["is_fba"] else "Trailer Seal (FTL)", "" if c["is_fba"] else c["seal_no"] or "TO BE PROVIDED", "Transport Mode", c["mode"])]), Spacer(1, 6), section("CARGO DETAILS")])
+    cargo = [[p(x, white) for x in ("#", "" if c["is_fba"] else "Container", "FC", "Marking", "Commodity", "PLT", "CTN", "Weight lb", "CBM")]]
     totals = [Decimal(0)] * 4
     for index, item in enumerate(b.items, 1):
         totals = [totals[0] + (item.pallet_qty or 0), totals[1] + (item.carton_qty or 0), totals[2] + (item.weight_lbs or 0), totals[3] + (item.cbm or 0)]
-        cargo.append([p(index, center), p(item.container_number, small), p(item.fc_code or b.amazon_fc_code, center), p(item.marking, small), p(item.description or "General merchandise", small), p(f"{_num(item.pallet_qty):g}", right), p(f"{_num(item.carton_qty):g}", right), p(f"{_num(item.weight_lbs):,.2f}", right), p(f"{_num(item.cbm, 4):,.4f}", right)])
+        cargo.append([p(index, center), p("" if c["is_fba"] else item.container_number, small), p(item.fc_code or b.amazon_fc_code, center), p(item.marking, small), p(item.description or "General merchandise", small), p(f"{_num(item.pallet_qty):g}", right), p(f"{_num(item.carton_qty):g}", right), p(f"{_num(item.weight_lbs):,.2f}", right), p(f"{_num(item.cbm, 4):,.4f}", right)])
     cargo.append([p("TOTAL", right), "", "", "", "", p(f"{_num(totals[0]):g}", right), p(f"{_num(totals[1]):g}", right), p(f"{_num(totals[2]):,.2f}", right), p(f"{_num(totals[3], 4):,.4f}", right)])
     cargo_table = Table(cargo, colWidths=[.25 * inch, 1.12 * inch, .45 * inch, .75 * inch, 2.22 * inch, .52 * inch, .52 * inch, 1.05 * inch, .77 * inch], repeatRows=1)
     cargo_table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F4E78")), ("GRID", (0, 0), (-1, -1), .35, colors.HexColor("#A6A6A6")), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("SPAN", (0, -1), (4, -1)), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#DDEBF7")), ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"), ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
     story.extend([cargo_table, Spacer(1, 6), section("AMAZON DELIVERY NOTES")])
     notes = "Non-partner carriers must schedule a delivery appointment. Provide the Amazon Reference ID, FBA Shipment ID, and carrier PRO/tracking/BOL number to the carrier and on delivery. Keep Amazon box and pallet labels visible. FTL/intermodal loads require a trailer seal. This WMS document does not replace an Amazon Partnered Carrier-issued BOL."
+    if c["is_fba"]:
+        notes = notes.replace(" FTL/intermodal loads require a trailer seal.", "")
     notes_table = Table([[p(notes, small)]], colWidths=[7.65 * inch]); notes_table.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), .35, colors.HexColor("#A6A6A6")), ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
     signature = Table([[p("Shipper signature / date", small), p("Carrier signature / pickup date", small), p("Consignee signature / delivery date", small)], ["", "", ""]], colWidths=[2.55 * inch] * 3, rowHeights=[.24 * inch, .48 * inch])
     signature.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), .35, colors.HexColor("#A6A6A6")), ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#DDEBF7")), ("VALIGN", (0, 0), (-1, -1), "TOP")]))
