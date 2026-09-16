@@ -25,9 +25,15 @@ Open `http://localhost:8000/docs` and `http://localhost:8000/health`. Create the
 
 ## Tests
 
+From the repository root, with your backend virtual environment activated, install
+the test dependencies before running tests. If already in `backend`, skip `cd backend`.
+`requirements-test.txt` includes the backend dependencies plus test-only packages
+such as `pypdf`; the production installation above remains unchanged.
+
 ```powershell
 cd backend
-pytest
+python -m pip install -r requirements-test.txt
+python -m pytest
 ```
 
 ## Frontend skeleton
