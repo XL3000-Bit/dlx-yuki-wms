@@ -1,0 +1,91 @@
+{
+  "recorded_at": "2026-10-07T23:03:25.058131+00:00",
+  "candidate": {
+    "head": "413b6dfd3f08089fe8dd87d2beb1cc232ea40fb9",
+    "source_sha256": "f026e632f0b36dbf8b13994678b171e97385222a6cc1c26582309f2f85262513",
+    "file_count": 470,
+    "manifest": "candidate.json",
+    "unchanged_after_regression": true
+  },
+  "verification": "verification.json",
+  "audit": "final-audit.json",
+  "policy": "TEST_ONLY",
+  "plan_change_scenarios": [
+    {
+      "business": "FBA",
+      "status": "PASS",
+      "legal_lifecycle": "FINAL v1 immutable -> DRAFT v2 -> edit -> quantity constraint 409 -> restore attributed quantity -> FINAL v2 revision 5",
+      "old_evidence_dispatch_status": 409,
+      "block_reasons": [
+        "EVIDENCE_STALE",
+        "LOADING_VERIFICATION_STALE_OR_UNATTRIBUTED"
+      ],
+      "refresh_and_relogin": "PASS",
+      "rejection_and_old_approval_history_retained": "PASS",
+      "renewed_execution_documents_exception_review_approval": "PASS",
+      "renewed_dispatch_status": 200,
+      "downstream_detail": "PASS",
+      "page_and_network": "browser/page-results.json",
+      "changed_plan_screenshot": "browser/011-FBA-plan-content-version-invalidates-approval.png",
+      "relogin_screenshot": "browser/FBA-plan-v2-stale-relogin.png",
+      "downstream_screenshot": "browser/012-FBA-renewed-plan-dispatch-history-downstream.png"
+    },
+    {
+      "business": "PRIVATE",
+      "status": "PASS",
+      "legal_lifecycle": "FINAL v1 immutable -> DRAFT v2 -> edit -> quantity constraint 409 -> restore attributed quantity -> FINAL v2 revision 5",
+      "old_evidence_dispatch_status": 409,
+      "block_reasons": [
+        "EVIDENCE_STALE",
+        "LOADING_VERIFICATION_STALE_OR_UNATTRIBUTED"
+      ],
+      "refresh_and_relogin": "PASS",
+      "rejection_and_old_approval_history_retained": "PASS",
+      "renewed_execution_documents_exception_review_approval": "PASS",
+      "renewed_dispatch_status": 200,
+      "downstream_detail": "PASS",
+      "page_and_network": "browser/page-results.json",
+      "changed_plan_screenshot": "browser/005-PRIVATE-plan-content-version-invalidates-approval.png",
+      "relogin_screenshot": "browser/PRIVATE-plan-v2-stale-relogin.png",
+      "downstream_screenshot": "browser/006-PRIVATE-renewed-plan-dispatch-history-downstream.png"
+    }
+  ],
+  "formal_page_flow": {
+    "FBA": "PASS",
+    "PRIVATE": "PASS",
+    "tests": 3,
+    "page_steps_passed": 16,
+    "page_steps_failed": 0,
+    "results": "browser/results.json",
+    "network_and_page_observations": "browser/page-results.json",
+    "screenshot_count": 29
+  },
+  "file_selection": {
+    "automated_input": "PASS",
+    "native_os_file_picker": "NOT_VERIFIED",
+    "existing_chrome_L_upload": "BLOCKED_PREVIOUSLY_NOT_RETRIED",
+    "previous_generic_error_does_not_establish_permission_state": true
+  },
+  "cleanup": {
+    "status": "PASS",
+    "owned_ports": [
+      50655,
+      50656,
+      50657
+    ],
+    "listeners": [],
+    "owned_processes": [],
+    "remaining_postmaster_pid": [],
+    "retained_directories": [
+      "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-browser-06rarr_v",
+      "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-pg-8kf4pnbd"
+    ]
+  },
+  "remaining_technical_gaps": [
+    "native OS file selection not verified; Chrome tool upload cause remains unknown"
+  ],
+  "minimum_business_decisions": "../../DISPATCH_DELIVERY_GATE_2026-10-07.md",
+  "production_rules_confirmed_or_enabled": false,
+  "mechanism_acceptance_complete": false,
+  "production_ready": false
+}

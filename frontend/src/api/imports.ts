@@ -1,0 +1,12 @@
+import{api}from'./client';import type{ColumnMapping,ImportError,ImportJob,ImportPreview,ImportProfile,ImportProgress,ImportRow,ImportSummary,ImportValidationResult,WorkbookInspection}from'../types/imports';export type ImportModule='inbound'|'fba'|'outbound';
+export async function previewImport(module:ImportModule,file:File){const form=new FormData();form.append('file',file);return(await api.post<ImportPreview>(`/imports/${module}/preview`,form)).data}
+export async function inspectWorkbook(file:File){const form=new FormData();form.append('file',file);return(await api.post<WorkbookInspection>('/imports/workbook/inspect',form)).data}
+export const getImportProfiles=async()=>(await api.get<ImportProfile[]>('/imports/profiles')).data;
+export const previewProfile=async(token:string,sheet:string,profile:string,warehouseId:number,batchSize=1000)=>(await api.post<ImportPreview>(`/imports/workbook/${token}/preview`,null,{params:{sheet_name:sheet,profile_code:profile,warehouse_id:warehouseId,batch_size:batchSize}})).data;
+export const validateImport=async(module:ImportModule,id:number,mapping:ColumnMapping)=>(await api.post<ImportValidationResult>(`/imports/${module}/${id}/validate`,{mapping})).data;
+export const validateImportAsync=async(id:number)=>(await api.post(`/imports/${id}/validate-async`)).data;
+export const getImportProgress=async(id:number)=>(await api.get<ImportProgress>(`/imports/${id}/progress`)).data;
+export const getValidationResult=async(id:number)=>(await api.get<ImportValidationResult>(`/imports/${id}/validation-result`)).data;
+export const confirmImport=async(module:ImportModule,id:number,mapping:ColumnMapping,strategy:'SKIP'|'UPDATE',options:Record<string,boolean>={})=>(await api.post<ImportSummary>(`/imports/${module}/${id}/confirm`,{mapping,duplicate_strategy:strategy,...options})).data;
+export async function downloadImportErrors(id:number){const response=await api.get(`/imports/${id}/errors.xlsx`,{responseType:'blob'});const url=URL.createObjectURL(response.data);const link=document.createElement('a');link.href=url;link.download=`import-${id}-errors.xlsx`;link.click();URL.revokeObjectURL(url)}
+export const getImportJobs=async()=>(await api.get<ImportJob[]>('/imports')).data;export const getImportErrors=async(id:number)=>(await api.get<ImportError[]>(`/imports/${id}/errors`)).data;export const getImportRows=async(id:number)=>(await api.get<ImportRow[]>(`/imports/${id}/rows`)).data

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Warehouse Management System">
+  <rect width="64" height="64" rx="16" fill="#2866ff"/>
+  <path d="M14 28 32 16l18 12v22H14Z" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M24 50V33h16v17M24 39h16M24 45h16" fill="none" stroke="#fff" stroke-width="3"/>
+</svg>

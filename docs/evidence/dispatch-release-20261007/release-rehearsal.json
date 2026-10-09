@@ -1,0 +1,337 @@
+{
+  "status": "COMPLETE_TEST_ONLY",
+  "production_ready": false,
+  "workspace": "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-browser-za5dvgqf\\release-rehearsal-eda50df7d246",
+  "databases": [
+    "dispatch_rehearsal_f0f7770a8cff",
+    "dispatch_rehearsal_64a7d5ee2737"
+  ],
+  "results": [
+    {
+      "name": "database_backup_restore_twice",
+      "status": "PASS",
+      "tables": 49,
+      "backup_sha256": "6c1d3c00ecefc23e4bbe6dc962a37fd7aeb2d6544a476c5db6210f5e975b85d5",
+      "snapshots": {
+        "alembic_version": {
+          "rows": 1,
+          "sha256": "69765626f228574bd1a81682252560fe0d2c9c1e9c23e67ee69461840fb1a33f"
+        },
+        "amazon_fc_addresses": {
+          "rows": 1,
+          "sha256": "c5db5c3a04e51505d22ef95829ef81104ed23194e9b05b0021cd32338d447c14"
+        },
+        "audit_logs": {
+          "rows": 26,
+          "sha256": "cdaebd61285bda18a76ea2897f538c73684e368e5c5e2c48905d0216812b3e69"
+        },
+        "bol_items": {
+          "rows": 3,
+          "sha256": "84765c9699369bf3b5bafae402f873a664032d8f2cc0c39c99c00e869ee3b092"
+        },
+        "bols": {
+          "rows": 3,
+          "sha256": "65817718a274e629c797978c0cabe84c2cbb4863ea8a6aa5d2494e656b333856"
+        },
+        "cargo_bols": {
+          "rows": 5,
+          "sha256": "1033a63f7bb701fec716c5e25483c177699571b374b7b9e43fd15c1d9b87ec46"
+        },
+        "carriers": {
+          "rows": 1,
+          "sha256": "4e1e46f057aed4d0bf67e56a98f367a72cbaa1fe0321214e199f06edb54473a9"
+        },
+        "company_profiles": {
+          "rows": 1,
+          "sha256": "a885b50eac6c2c25a11e2b652a7c0019ff1d3a01fb334384c2a06dcc63e7d04e"
+        },
+        "container_trackings": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "customers": {
+          "rows": 1,
+          "sha256": "81c595b36176f163018c469851bf0a7e215c0c8bcb845294cb5227511a6e7fd9"
+        },
+        "dispatch_evidence_policies": {
+          "rows": 3,
+          "sha256": "05cb28877bd10dd2a739b7723427b099500faf379f28a5cf05746d10abb31750"
+        },
+        "dispatch_evidence_reviews": {
+          "rows": 21,
+          "sha256": "c4174dd6b8c59c743f8418457c42459548442015d64a3a57cc05b8d6ac642bb3"
+        },
+        "document_events": {
+          "rows": 31,
+          "sha256": "db7989e3f9910a8b0e494afe85f7c22d6bb795df7c138fae57b080e26efb7ce8"
+        },
+        "fba_inventory_allocations": {
+          "rows": 1,
+          "sha256": "b9fd2b2d14c77fdc62db8e7c15a0018f0ff635daae6dd8148c0ea4eced4dafa7"
+        },
+        "fba_shipments": {
+          "rows": 1,
+          "sha256": "06d87d7b97b92e4b997f6cae0002d2a480af4283265c435d035ba27aefe7cdd1"
+        },
+        "import_errors": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "import_jobs": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "import_rows": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_records": {
+          "rows": 4,
+          "sha256": "836dd62546398df698b6c9cbeb315988e668f46ce4a75ba700246a8369eeb7c2"
+        },
+        "inventory_lot_locations": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inventory_lots": {
+          "rows": 4,
+          "sha256": "2a7fce1370e6f9df2defef92a1e6ab3c493393b156cca3cc690920141f9253ee"
+        },
+        "inventory_priority_rules": {
+          "rows": 4,
+          "sha256": "170bfa6b793a5eb4a47ff97a34862bf936b47e8971385bbe0443acb8df11b657"
+        },
+        "inventory_transactions": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "load_allocations": {
+          "rows": 3,
+          "sha256": "67c63317b97231b2f30887ce909daae9533404b79d88651b6979aef0a69bcd4f"
+        },
+        "load_dispatch_executions": {
+          "rows": 2,
+          "sha256": "52c2bdb80e4adc3357e15661294fad253e7ecb7d46edb9cd3bf08329a85c079d"
+        },
+        "load_dispatch_plan_lines": {
+          "rows": 3,
+          "sha256": "86517fb7129164e6baa157572312112881da2493b2533c96cb0be7746c8758c6"
+        },
+        "load_dispatch_plans": {
+          "rows": 3,
+          "sha256": "3f36da64e947ab6d767f10e5e41e8aaa780de1d33c001bac5b2f38c48021bd97"
+        },
+        "load_verification_transactions": {
+          "rows": 9,
+          "sha256": "086f83db0804162c205d2560d27a0bea171ba9f4e36382eec6a2c9b4ff0db769"
+        },
+        "loads": {
+          "rows": 4,
+          "sha256": "b78b7ccdcdd1506791a0fd9c12af70788496680e55a0821b84ce4e46b29f2ec6"
+        },
+        "operational_documents": {
+          "rows": 10,
+          "sha256": "4eb7b7f28bf5f087dd732e550329e78a4aac6ba6d1efaf5048d6459c4e111fe5"
+        },
+        "operational_exception_events": {
+          "rows": 4,
+          "sha256": "98b0650f07785605e0396b96c3747177421af90cf972b848caa35281bf5d67e6"
+        },
+        "operational_exceptions": {
+          "rows": 2,
+          "sha256": "cf427bf60de812601b2faca2e737f1e9f47070bdbc2f3e21106db56d7e70ad5a"
+        },
+        "operational_notifications": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "outbound_inventory_allocations": {
+          "rows": 4,
+          "sha256": "7c4e6a8faddf99671d363c71b6a3695400d5d5bda39e00db59b79dc2f0032495"
+        },
+        "outbound_orders": {
+          "rows": 4,
+          "sha256": "f95e7a3db2302288a91a38782ae5ec04fe2d0b097e626912ce1740f9d59d461c"
+        },
+        "picking_list_items": {
+          "rows": 4,
+          "sha256": "e984e3312cb21198bcb744ddd72f8e97d82386854fb8d79b3014a9fcbf2534ca"
+        },
+        "picking_lists": {
+          "rows": 4,
+          "sha256": "618e834c3af7db20d748f037aafb75eda948556556639328ec87d170e7a8d8f9"
+        },
+        "scan_events": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "scan_sessions": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stage_transactions": {
+          "rows": 3,
+          "sha256": "a7155b4ce2d53504ec38001ccccc639e2c476e2c6520f7a89bf7c99bfb71ef13"
+        },
+        "uni_fba_bols": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "user_customer_scopes": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "user_warehouse_scopes": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "users": {
+          "rows": 2,
+          "sha256": "530e6e97d268d531273380d7da2f59b2069ca6493b25b18ee283675dca70c46f"
+        },
+        "warehouse_areas": {
+          "rows": 3,
+          "sha256": "98c3061dd0ea6f1a9d17e3db3fe8ef30c685ff472e2cb85ac9f31ec2bb618150"
+        },
+        "warehouse_locations": {
+          "rows": 3,
+          "sha256": "391783972fac86f3c9b57093d47e17c37417732c1c24373c828c37dfb4b083fd"
+        },
+        "warehouses": {
+          "rows": 3,
+          "sha256": "59223732a92bd54e15ab125a72c372684846655fcfbfb805b0abd1e321e9e755"
+        },
+        "work_order_events": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "work_orders": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "name": "file_storage_restore",
+      "status": "PASS",
+      "files": 7,
+      "manifest": {
+        "2026\\10\\245a27deb9214e0eb6da64abc3abae9e.csv": "a023decd87deba5b1c077cc1543e45daa3b0b1acd4a49628eec8c40d92b30d49",
+        "2026\\10\\65e616e8786a4aed99302e5c545dad2b.csv": "f47417b502fdaebb46a346ed147b2b10e5034f193dcc9a59ea4bd6c3a28a96ec",
+        "2026\\10\\7a4a43fe84c146df8192ad420d8305eb.csv": "58c6bb984d28b80b33cb6fa5641d251d4edd8cb022d18641e6bb1967dd496a17",
+        "2026\\10\\85d8b6a8c9374b2b87084b829b79f0f6.csv": "a023decd87deba5b1c077cc1543e45daa3b0b1acd4a49628eec8c40d92b30d49",
+        "2026\\10\\aa092a9465ae422fa2a97d582bd20f91.csv": "a023decd87deba5b1c077cc1543e45daa3b0b1acd4a49628eec8c40d92b30d49",
+        "2026\\10\\b1511c0e034544dc8ffcaffc214b1f48.csv": "58c6bb984d28b80b33cb6fa5641d251d4edd8cb022d18641e6bb1967dd496a17",
+        "2026\\10\\ef184262611544b2884277967933c404.csv": "58c6bb984d28b80b33cb6fa5641d251d4edd8cb022d18641e6bb1967dd496a17"
+      }
+    },
+    {
+      "name": "restored_document_rows_match_files",
+      "status": "PASS",
+      "documents": 7
+    },
+    {
+      "name": "PRIVATE_wrong_password",
+      "status": "PASS",
+      "response": 401
+    },
+    {
+      "name": "PRIVATE_viewer_permission",
+      "status": "PASS",
+      "response": 403
+    },
+    {
+      "name": "PRIVATE_production_rejects_test_policy",
+      "status": "PASS",
+      "response": 409
+    },
+    {
+      "name": "PRIVATE_dry_run_diff_no_writes",
+      "status": "PASS",
+      "differences": {
+        "document_review": {
+          "before": {
+            "roles": [
+              "ADMIN"
+            ],
+            "valid_seconds": 3600
+          },
+          "after": {
+            "roles": [
+              "ADMIN"
+            ],
+            "valid_seconds": 7200
+          }
+        }
+      }
+    },
+    {
+      "name": "PRIVATE_publication_failure_atomic_rollback",
+      "status": "PASS"
+    },
+    {
+      "name": "PRIVATE_publish_stale_revoke_recover_history",
+      "status": "PASS",
+      "versions_preserved": 4,
+      "actions": [
+        "PUBLISH",
+        "REVOKE",
+        "PUBLISH"
+      ]
+    },
+    {
+      "name": "FBA_wrong_password",
+      "status": "PASS",
+      "response": 401
+    },
+    {
+      "name": "FBA_viewer_permission",
+      "status": "PASS",
+      "response": 403
+    },
+    {
+      "name": "FBA_production_rejects_test_policy",
+      "status": "PASS",
+      "response": 409
+    },
+    {
+      "name": "FBA_dry_run_diff_no_writes",
+      "status": "PASS",
+      "differences": {
+        "document_review": {
+          "before": {
+            "roles": [
+              "ADMIN"
+            ],
+            "valid_seconds": 3600
+          },
+          "after": {
+            "roles": [
+              "ADMIN"
+            ],
+            "valid_seconds": 7200
+          }
+        }
+      }
+    },
+    {
+      "name": "FBA_publication_failure_atomic_rollback",
+      "status": "PASS"
+    },
+    {
+      "name": "FBA_publish_stale_revoke_recover_history",
+      "status": "PASS",
+      "versions_preserved": 4,
+      "actions": [
+        "PUBLISH",
+        "REVOKE",
+        "PUBLISH"
+      ]
+    },
+    {
+      "name": "source_unchanged_and_recovery_clone_preserved",
+      "status": "PASS"
+    }
+  ],
+  "policy": "TEST ONLY mechanism rehearsal; no production authorization"
+}

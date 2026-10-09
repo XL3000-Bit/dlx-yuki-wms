@@ -1,0 +1,389 @@
+{
+  "audited_at": "2026-10-08T00:02:41.284851+00:00",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "frozen_source",
+      "status": "PASS",
+      "head": "413b6dfd3f08089fe8dd87d2beb1cc232ea40fb9",
+      "source_files": 470,
+      "source_sha256": "f026e632f0b36dbf8b13994678b171e97385222a6cc1c26582309f2f85262513",
+      "changed_paths": []
+    },
+    {
+      "name": "candidate_evidence_binding",
+      "status": "PASS"
+    },
+    {
+      "name": "recorded_checks_and_logs",
+      "status": "PASS",
+      "verification": "REUSED_FROZEN_RESULTS_NOT_RERUN",
+      "recorded_check_count": 8
+    },
+    {
+      "name": "backend_junit",
+      "status": "PASS",
+      "passed": 421,
+      "skipped": 1,
+      "failed": 0
+    },
+    {
+      "name": "sqlite_skip_postgresql_mapping",
+      "status": "PASS",
+      "test": "tests.test_migration_safety::test_concurrent_partial_cannot_overdraw",
+      "evidence": "final-postgres.log",
+      "meaning": "Same test executed on PostgreSQL; SQLite skip remains a skip"
+    },
+    {
+      "name": "formal_page_evidence",
+      "status": "PASS",
+      "reused_tests": 3,
+      "reused_steps": 16,
+      "screenshots": 29,
+      "native_file_picker": "NOT_VERIFIED",
+      "har_trace_files": []
+    },
+    {
+      "name": "dependency_lock_and_windows_entry",
+      "status": "PASS"
+    },
+    {
+      "name": "strict_check_enabled",
+      "status": "PASS",
+      "runtime_typecheck": "REUSED_FROZEN_ZERO_ERRORS_NOT_RERUN"
+    },
+    {
+      "name": "windows_entry_syntax_offline",
+      "status": "PASS"
+    },
+    {
+      "name": "migration_graph_offline",
+      "status": "PASS",
+      "head": "20261005_0039",
+      "database_access": false,
+      "env_py_loaded": false
+    },
+    {
+      "name": "FBA_unconfirmed_template_blocks_offline",
+      "status": "PASS",
+      "exit_code": 2,
+      "database_access": false,
+      "production_rule_enabled": false
+    },
+    {
+      "name": "PRIVATE_unconfirmed_template_blocks_offline",
+      "status": "PASS",
+      "exit_code": 2,
+      "database_access": false,
+      "production_rule_enabled": false
+    },
+    {
+      "name": "sanitized_replacement_contract",
+      "status": "PASS",
+      "originals_preserved": true,
+      "active_configuration_changed": false,
+      "replacements_require_secure_provisioning": true
+    },
+    {
+      "name": "credential_filename_exclusion",
+      "status": "PASS",
+      "scope": "Selected deliverable text only; excluded .env and local resources were never read",
+      "content_findings": 45,
+      "findings_require_context_review": true,
+      "unreviewed_content_findings": 0
+    },
+    {
+      "name": "git_index_unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "source_unchanged_during_audit",
+      "status": "PASS"
+    }
+  ],
+  "candidate": {
+    "head": "413b6dfd3f08089fe8dd87d2beb1cc232ea40fb9",
+    "source_sha256": "f026e632f0b36dbf8b13994678b171e97385222a6cc1c26582309f2f85262513"
+  },
+  "credential_scan_findings_redacted": [
+    {
+      "path": "backend/.env.example",
+      "line": 10,
+      "category": "database_url_with_userinfo",
+      "context": "RESTRICTED_ORIGINAL_NOT_EXPORTABLE_VALUE_VALIDITY_UNKNOWN"
+    },
+    {
+      "path": "backend/.env.example",
+      "line": 11,
+      "category": "env_secret_assignment",
+      "context": "RESTRICTED_ORIGINAL_NOT_EXPORTABLE_VALUE_VALIDITY_UNKNOWN"
+    },
+    {
+      "path": "backend/alembic.ini",
+      "line": 4,
+      "category": "database_url_with_userinfo",
+      "context": "RESTRICTED_ORIGINAL_NOT_EXPORTABLE_VALUE_VALIDITY_UNKNOWN"
+    },
+    {
+      "path": "backend/config/dev.env.example",
+      "line": 3,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_ENVIRONMENT_TEMPLATE_NOT_PRODUCTION_CONFIGURATION"
+    },
+    {
+      "path": "backend/config/test.env.example",
+      "line": 3,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_ENVIRONMENT_TEMPLATE_NOT_PRODUCTION_CONFIGURATION"
+    },
+    {
+      "path": "backend/scripts/phase11_1_postgres_smoke.py",
+      "line": 28,
+      "category": "literal_secret_assignment",
+      "context": "REVIEWED_LEGACY_TEST_FIXTURE_NOT_APPROVED_ISOLATION_ENTRY"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 9,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 10,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 42,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 50,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 92,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 93,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 104,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 131,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_database_safety.py",
+      "line": 103,
+      "category": "literal_secret_assignment",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_dispatch_policy_config.py",
+      "line": 26,
+      "category": "literal_secret_assignment",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_reset_and_reseed_dev.py",
+      "line": 9,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_reset_and_reseed_dev.py",
+      "line": 10,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_reset_and_reseed_dev.py",
+      "line": 37,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_reset_and_reseed_dev.py",
+      "line": 38,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_reset_and_reseed_dev.py",
+      "line": 39,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_reset_and_reseed_dev.py",
+      "line": 155,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_safe_alembic.py",
+      "line": 16,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_seed_dev.py",
+      "line": 20,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_seed_dev.py",
+      "line": 47,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_verify_dev_seed.py",
+      "line": 14,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_verify_dev_seed.py",
+      "line": 33,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_verify_test_unchanged.py",
+      "line": 13,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "backend/tests/test_verify_test_unchanged.py",
+      "line": 32,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-rerun-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-rerun-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-rerun-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/backend-rerun-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/final-backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/final-backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/final-backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-candidate-final-20261007-1548/final-backend-junit.xml",
+      "line": 1,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_SYNTHETIC_TEST_FIXTURE_OR_CAPTURED_TEST_EXAMPLE"
+    },
+    {
+      "path": "docs/evidence/dispatch-delivery-audit-20261007/audit.py",
+      "line": 198,
+      "category": "database_url_with_userinfo",
+      "context": "ISOLATED_TEST_OR_EVIDENCE"
+    },
+    {
+      "path": "docs/evidence/dispatch-delivery-audit-20261007/sanitized-config/.env.example",
+      "line": 10,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_REDACTED_PLACEHOLDER_TEMPLATE"
+    },
+    {
+      "path": "docs/evidence/dispatch-delivery-audit-20261007/sanitized-config/.env.example",
+      "line": 11,
+      "category": "env_secret_assignment",
+      "context": "REVIEWED_REDACTED_PLACEHOLDER_TEMPLATE"
+    },
+    {
+      "path": "docs/evidence/dispatch-delivery-audit-20261007/sanitized-config/alembic.ini",
+      "line": 4,
+      "category": "database_url_with_userinfo",
+      "context": "REVIEWED_REDACTED_PLACEHOLDER_TEMPLATE"
+    }
+  ],
+  "credential_delivery_gate": "ORIGINAL_CONFIGS_HELD_BACK_SECURE_PROVISIONING_NOT_PERFORMED",
+  "prior_test_results": "REUSED_FROZEN_EVIDENCE_NOT_CURRENT_TEST_RUNS",
+  "runtime_code_changed": false,
+  "services_started": [],
+  "cleanup": "NOT_APPLICABLE_NO_RESOURCES_CREATED",
+  "production_operations": false,
+  "native_file_picker": "NOT_VERIFIED",
+  "mechanism_acceptance_complete": false,
+  "production_ready": false
+}

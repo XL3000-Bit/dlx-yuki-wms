@@ -1,0 +1,6 @@
+
+> dlx-yuki-wms-frontend@0.1.0 test:e2e:dispatch
+> ../backend/.venv/Scripts/python.exe ../scripts/verify_dispatch_ui.py --output C:\Users\XL\dlx-yuki-wms\docs\evidence\dispatch-candidate-final-20261007-1548\browser
+
+'..' is not recognized as an internal or external command,
+operable program or batch file.

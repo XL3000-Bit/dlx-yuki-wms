@@ -1,0 +1,30 @@
+{
+  "identity": {
+    "database": null,
+    "role": null,
+    "address": null,
+    "port": null,
+    "database_oid": null,
+    "server_version_num": null
+  },
+  "migration_revision": "20260925_0037",
+  "exclusive_database": false,
+  "reviewer": null,
+  "reviewed_at": null,
+  "evidence": {
+    "database_ownership": {"path": null, "sha256": null},
+    "synthetic_fixtures": {"path": null, "sha256": null},
+    "storage_isolation": {"path": null, "sha256": null},
+    "external_effects_disabled": {"path": null, "sha256": null}
+  },
+  "fixtures": {
+    "load_id": null,
+    "no_plan_load_id": null,
+    "legacy_ready_load_id": null,
+    "outbound_id": null,
+    "inventory_allocation_id": null,
+    "allowed_user_id": null,
+    "warehouse_denied_user_id": null,
+    "customer_denied_user_id": null
+  }
+}

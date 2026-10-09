@@ -1,0 +1,30 @@
+{
+  "checked_at_utc": "2026-10-07T16:01:46.0399168Z",
+  "status": "OWNED_TEMPORARY_SERVICES_STOPPED",
+  "frontend_backend_launcher_exit_code": 0,
+  "ports": [
+    42488,
+    42489,
+    42490
+  ],
+  "listening": [],
+  "clusters": [
+    {
+      "workspace": "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-browser-za5dvgqf",
+      "postmaster_pid_present": false,
+      "retained": true
+    },
+    {
+      "workspace": "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-pg-54c0sy3_",
+      "postmaster_pid_present": false,
+      "retained": true
+    },
+    {
+      "workspace": "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-pg-2bcai_pg",
+      "postmaster_pid_present": false,
+      "retained": false
+    }
+  ],
+  "preserved": "Acceptance logs, screenshots, paired database/file backups and browser database retained; disposable regression cluster cleanup is recorded per cluster",
+  "no_existing_service_restarted": true
+}

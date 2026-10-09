@@ -1,0 +1,32 @@
+
+> dlx-yuki-wms-frontend@0.1.0 test:e2e:dispatch
+> node ../scripts/run_dispatch_ui.mjs --output C:\Users\XL\dlx-yuki-wms\docs\evidence\dispatch-candidate-final-20261007-1548\browser
+
+
+Running 3 tests using 1 worker
+
+(node:29124) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\dispatch.spec.ts:106:3 › PRIVATE formal page lifecycle and upload errors (21.7s)
+  ok 2 e2e\dispatch.spec.ts:106:3 › FBA formal page lifecycle and upload errors (21.8s)
+  ok 3 e2e\dispatch.spec.ts:238:1 › formal page ownership permission expiry and unconfigured policy (36.1s)
+
+  3 passed (1.3m)
+warning: in the working copy of 'backend/app/models/__init__.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/models/load.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/models/outbound.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/services/document_storage.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/services/fba_import.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_fba_import.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_loads.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_phase_10_7_documents.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/CURRENT_DISPATCH_READINESS_ASSESSMENT.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/CURRENT_STAGING_LOAD_VERIFICATION_ASSESSMENT.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DEV_TEST_DATABASE_WORKFLOW.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/PHASE_DISPATCH_HARDENING.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/api/containerTracking.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/components/EntityDocuments.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/DocumentsPage.tsx', LF will be replaced by CRLF the next time Git touches it
+Acceptance evidence: C:\Users\XL\dlx-yuki-wms\docs\evidence\dispatch-candidate-final-20261007-1548\browser
+Owned resource cleanup: PASS

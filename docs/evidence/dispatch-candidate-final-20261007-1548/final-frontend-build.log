@@ -1,0 +1,65 @@
+
+> dlx-yuki-wms-frontend@0.1.0 build
+> tsc -b && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5072 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                             0.61 kB │ gzip:   0.34 kB
+dist/assets/Monoton-Regular-Cz5u2lwN.ttf                   49.77 kB
+dist/assets/OceanInboundPage-CSPYPP-J.css                   2.50 kB │ gzip:   0.92 kB
+dist/assets/OutboundDispatchWorkbenchPage-BIGaKgR1.css     11.72 kB │ gzip:   2.49 kB
+dist/assets/PdaPage-BsUXOlma.css                           11.85 kB │ gzip:   2.99 kB
+dist/assets/UniBolPage-CbpSKVZ7.css                        13.19 kB │ gzip:   3.17 kB
+dist/assets/OperationsWallboardPage-COBm3J9k.css           29.36 kB │ gzip:   7.12 kB
+dist/assets/index-CuroxZX8.css                             45.45 kB │ gzip:   9.56 kB
+dist/assets/operationsDashboard-wSNW9lV6.js                 0.13 kB │ gzip:   0.14 kB
+dist/assets/containerTracking-Dv2phCc0.js                   0.31 kB │ gzip:   0.21 kB
+dist/assets/masterData-Dnuo1Dkx.js                          0.39 kB │ gzip:   0.19 kB
+dist/assets/inbound-DHen7JhR.js                             0.59 kB │ gzip:   0.35 kB
+dist/assets/inventory-C895E3ro.js                           0.71 kB │ gzip:   0.35 kB
+dist/assets/documents-6xBIlwO0.js                           0.71 kB │ gzip:   0.41 kB
+dist/assets/oceanInbound-ByO4BlPu.js                        0.96 kB │ gzip:   0.52 kB
+dist/assets/pickingBol-C8Ok5Sz-.js                          1.11 kB │ gzip:   0.56 kB
+dist/assets/outbound-D0S_2X9m.js                            1.24 kB │ gzip:   0.43 kB
+dist/assets/imports-3N93m8GI.js                             1.33 kB │ gzip:   0.57 kB
+dist/assets/DispatchIndicators-B7w6natq.js                  1.61 kB │ gzip:   0.88 kB
+dist/assets/loads-i2WduMFt.js                               1.89 kB │ gzip:   0.56 kB
+dist/assets/PickingPage-DrzRXiiq.js                         1.91 kB │ gzip:   0.87 kB
+dist/assets/WorkOrderHistory-BjdMsMjQ.js                    1.92 kB │ gzip:   0.96 kB
+dist/assets/BOLPage-V0y2zxpB.js                             1.94 kB │ gzip:   0.90 kB
+dist/assets/EntityDocuments-BaQ08dkO.js                     2.79 kB │ gzip:   1.38 kB
+dist/assets/ImportHistoryPage-CvKbaoiL.js                   2.87 kB │ gzip:   1.21 kB
+dist/assets/HistoryArchivePage-Dk1xGeTt.js                  3.20 kB │ gzip:   1.90 kB
+dist/assets/DocumentsPage-DdsB3P8_.js                       5.60 kB │ gzip:   2.34 kB
+dist/assets/CompanySettingsPage-W56gh6Vw.js                 6.15 kB │ gzip:   2.13 kB
+dist/assets/AdminDataUploadPage-98-eanaa.js                 6.83 kB │ gzip:   2.84 kB
+dist/assets/WorkOrdersPage-BmPTpHeJ.js                      6.86 kB │ gzip:   2.28 kB
+dist/assets/OperationsWallboardPage-v4KTyUjK.js             7.58 kB │ gzip:   2.65 kB
+dist/assets/ContainerTrackingPage-D7PyC4eL.js               7.76 kB │ gzip:   3.29 kB
+dist/assets/InboundPage-B0Oo5Wi0.js                         8.49 kB │ gzip:   2.89 kB
+dist/assets/OceanInboundListPage-IqlSu2iw.js                8.69 kB │ gzip:   3.15 kB
+dist/assets/TroubleShootPage-BYVOTwI_.js                    8.95 kB │ gzip:   3.17 kB
+dist/assets/ImportWizard-Dnjj1SVQ.js                       10.26 kB │ gzip:   4.04 kB
+dist/assets/OperationsDashboardPage-BqA_DTJ1.js            10.71 kB │ gzip:   3.45 kB
+dist/assets/InventoryPage-C2dTxdHF.js                      11.07 kB │ gzip:   3.83 kB
+dist/assets/OceanInboundPage-Cu9NhWYP.js                   17.83 kB │ gzip:   7.41 kB
+dist/assets/WpsReviewPage-Cbxa6YB2.js                      19.26 kB │ gzip:   7.44 kB
+dist/assets/ThreePLPage-Bq2R9dhM.js                        19.57 kB │ gzip:   5.96 kB
+dist/assets/LoadsPage-Cd2Dadl6.js                          23.99 kB │ gzip:   8.50 kB
+dist/assets/FBAPage-BikLk5sL.js                            33.21 kB │ gzip:  10.29 kB
+dist/assets/UniBolPage-B0-VETFm.js                         36.81 kB │ gzip:  12.10 kB
+dist/assets/query-vendor-BhixrfMR.js                       36.94 kB │ gzip:  10.88 kB
+dist/assets/react-vendor-Cc_HSG_w.js                       38.16 kB │ gzip:  13.78 kB
+dist/assets/PdaPage-BChr7qvL.js                            40.87 kB │ gzip:  13.23 kB
+dist/assets/OutboundDispatchWorkbenchPage-C0v3gUKr.js      55.38 kB │ gzip:  17.44 kB
+dist/assets/index-D_6CbZ2I.js                             260.89 kB │ gzip:  85.63 kB
+dist/assets/antd-vendor-BNpHlizb.js                     1,238.31 kB │ gzip: 383.55 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.20s

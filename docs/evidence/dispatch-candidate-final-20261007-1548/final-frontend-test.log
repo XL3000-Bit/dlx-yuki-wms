@@ -1,0 +1,68 @@
+
+> dlx-yuki-wms-frontend@0.1.0 test
+> node --test auth-query-cache.test.cjs load-dispatch.test.cjs load-readiness.test.cjs outbound-allocation-source.test.cjs src/pages/wpsReviewDraft.test.mjs src/pages/oceanSpreadsheet.test.mjs src/pages/oceanReceivingPolicy.test.mjs src/components/pda/offlineQueuePolicy.test.mjs src/components/pda/cameraScanPolicy.test.mjs
+
+✔ logout and login discard permissions, scoped records and old mutations; refresh preserves the session (3.4365ms)
+✔ accepted evidence refreshes at expiry and revocation; expired response stops polling (1.5233ms)
+✔ domain checks reject mixed business, cross warehouse and missing customer (0.203ms)
+✔ dispatch always submits an explicit final plan revision and operation ID (0.9773ms)
+✔ server blockers retain UNKNOWN and missing evidence; PASS does not authorize dispatch (0.6724ms)
+✔ validation, conflict and network failures remain visible (0.2172ms)
+✔ refresh resumes the persisted open batch and never reopens completed batches (0.1437ms)
+✔ four distinct statuses and missing plan values (1.0935ms)
+✔ successful business gaps preserve the backend conclusion and evidence (0.276ms)
+✔ HTTP 401 is an access or technical error, never business UNKNOWN (0.13ms)
+✔ HTTP 403 is an access or technical error, never business UNKNOWN (0.0606ms)
+✔ HTTP 404 is an access or technical error, never business UNKNOWN (0.0741ms)
+✔ HTTP 503 is an access or technical error, never business UNKNOWN (0.1211ms)
+✔ refresh clears old data before a network failure (0.2447ms)
+✔ older object responses cannot replace the new result (0.2106ms)
+✔ stale failure and unmounted responses do not publish (0.2171ms)
+✔ a response for a different load is unavailable (0.1528ms)
+✔ API uses the existing client and only GET with cancellation (15.8131ms)
+✔ FBA allocation uses its inventory lot identity separately from reservation identity (1.6493ms)
+✔ private inventory allocation does not inherit an FBA reservation identity (0.1797ms)
+✔ camera decode is eligible for the shared scan submit path (0.759ms)
+✔ an accepted code is not submitted twice in the same step (0.1449ms)
+✔ NOT_FOUND and WRONG_LOCATION use the same failure presentation as manual input (0.1022ms)
+✔ camera state does not gate the manual submission policy (0.0859ms)
+✔ offline decode can enter the shared local queue path, but quantity decode never submits (0.1035ms)
+✔ offline enqueue persists the full audit record across repository reopen (11.6184ms)
+✔ replay is FIFO and completed records leave the active count (8.2157ms)
+✔ a local success callback cannot requeue a server-confirmed operation (1.4944ms)
+✔ manual and repeated online sync triggers share one worker (1.1071ms)
+✔ IndexedDB claim is atomic across two synchronizer instances (7.0619ms)
+✔ network and 5xx failures use finite exponential retry state (0.5931ms)
+▶ 401 and 403 block authentication without automatic retry
+  ✔ 401 (0.2852ms)
+  ✔ 403 (0.2661ms)
+✔ 401 and 403 block authentication without automatic retry (1.2007ms)
+✔ non-retryable 4xx is retained with its visible error (1.2708ms)
+✔ a network failure is persisted as retryable (1.0645ms)
+✔ an expired sending lease recovers after browser interruption (0.799ms)
+✔ an offline worker leaves persisted work pending (0.6566ms)
+✔ complete equal quantities are ready, including decimal representations (1.0019ms)
+✔ missing, invalid and unresolved locations block confirmation (0.2875ms)
+✔ zero receipt is a discrepancy and requires an explicit reason (0.1389ms)
+✔ read-only records cannot become ready; hold is not received (0.1319ms)
+✔ batch expected fill preserves actual counts, including zero and partial receipts (0.7996ms)
+✔ spreadsheet clipboard preserves blanks, quoted tabs, multiline text and escaped quotes (1.4692ms)
+✔ Ocean paste skips read-only columns and cannot write hidden fields (0.378ms)
+✔ malformed or oversized clipboard is rejected before editing (1.1142ms)
+✔ manual locations resolve only uniquely in the active warehouse (0.3969ms)
+✔ numeric values do not silently round, accept negatives, or turn blanks into zero (0.3403ms)
+✔ paste follows visible rows and editable columns, never skips a locked row or exceeds boundaries (0.2923ms)
+✔ round trip preserves both sheets, blank customer per record, warehouse (2.8982ms)
+✔ changed source customer, missing record, inactive customer are skipped (0.2807ms)
+✔ unavailable warehouse is cleared and explicitly reported (0.1543ms)
+✔ duplicate current identities cannot restore mappings (0.2508ms)
+✔ malformed drafts and duplicate entries are rejected (0.2559ms)
+✔ stale overrides cannot silently disappear during save (0.0997ms)
+ℹ tests 55
+ℹ suites 0
+ℹ pass 55
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 354.319

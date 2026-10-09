@@ -1,0 +1,26 @@
+from fastapi import APIRouter
+from app.api.v1.endpoints import auth, dashboard, documents, fba, inbound, imports, inventory, masters, users, outbound, picking_bol, container_tracking, search, loads, work_orders, operational_exceptions, notifications, company_profile, scan_execution, threepl
+api_router=APIRouter();api_router.include_router(auth.router);api_router.include_router(users.router);api_router.include_router(masters.router);api_router.include_router(inbound.files_router);api_router.include_router(inbound.router);api_router.include_router(imports.router);api_router.include_router(inventory.files_router);api_router.include_router(inventory.router);api_router.include_router(fba.files_router);api_router.include_router(fba.router)
+api_router.include_router(outbound.files_router);api_router.include_router(outbound.router)
+api_router.include_router(picking_bol.router)
+api_router.include_router(container_tracking.router)
+api_router.include_router(search.router)
+api_router.include_router(loads.router)
+api_router.include_router(work_orders.router)
+api_router.include_router(operational_exceptions.router)
+api_router.include_router(documents.router)
+api_router.include_router(dashboard.router)
+api_router.include_router(notifications.router)
+api_router.include_router(company_profile.router)
+api_router.include_router(scan_execution.router)
+api_router.include_router(threepl.router)
+from app.api.v1.endpoints import history_archive
+api_router.include_router(history_archive.router)
+from app.api.v1.endpoints import ocean_inbound
+api_router.include_router(ocean_inbound.router)
+from app.api.v1.endpoints import cargo_bols
+api_router.include_router(cargo_bols.router)
+from app.api.v1.endpoints import wps_review
+api_router.include_router(wps_review.router)
+from app.api.v1.endpoints import uni_bol
+api_router.include_router(uni_bol.router)

@@ -1,0 +1,35 @@
+.ocean-page { display: flex; flex-direction: column; gap: 16px; }
+.ocean-page .page-heading { margin-bottom: 0; gap: 16px; flex-wrap: wrap; }
+.ocean-page h4.ant-typography { margin: 0; }
+.ocean-subtle { color: #64748b; font-size: 12px; margin-top: 6px; }
+.ocean-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.ocean-stats .ant-statistic-content { font-size: 24px; }
+.ocean-toolbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ocean-page .ant-table-summary { font-weight: 600; background: #f0f5ff; }
+.ocean-documents { margin-bottom: 24px; }
+@media (max-width: 900px) { .ocean-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.ocean-stage-tabs .ant-tabs-nav { margin-bottom: 0; }
+.ocean-confirm-list { max-height: 320px; overflow: auto; }
+.ocean-row-discrepancy > td { border-bottom-color: #ffd591 !important; }
+
+.ocean-sheet-help { color: #526174; font-size: 12px; line-height: 1.8; padding: 10px 14px; background: #f0f5ff; border-radius: 6px; }
+.ocean-sheet .ant-table-cell { vertical-align: top; }
+.ocean-sheet-cell .ant-input { border-color: transparent; background: transparent; border-radius: 2px; }
+.ocean-sheet-cell .ant-input:hover { border-color: #91caff; }
+.ocean-sheet-cell .ant-input:focus { border-color: #1677ff; background: #fff; box-shadow: 0 0 0 2px #1677ff22; }
+.ocean-sheet-cell .ant-input-status-error { border-color: #ff4d4f; background: #fff2f0; }
+.ocean-cell-error { display: block; color: #cf1322; font-size: 11px; line-height: 1.4; margin-top: 3px; }
+.ocean-detail { font-family: Roboto, Arial, sans-serif; gap: 20px; }
+.ocean-shipment-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.ocean-shipment-reference { color: #212121; font-size: 20px; line-height: 30px; }
+.ocean-shipment-caption { color: #757575; font-size: 12px; line-height: 20px; }
+.ocean-detail h4.ant-typography { font-family: inherit; font-size: 18px; font-weight: 500; }
+.ocean-detail .ant-table { font-family: inherit; font-size: 14px; line-height: 21px; }
+.ocean-detail .ant-table-thead > tr > th { color: #757575; font-weight: 500; background: #fff; }
+.ocean-detail .ant-table-tbody > tr > td { padding: 16px 8px; border-bottom: 1px solid #e0e0e0; }
+.ocean-detail .ant-table-summary { background: #fff; font-weight: 500; }
+.ocean-cell-value { display: block; width: 100%; min-height: 32px; padding: 4px 11px; border: 0; border-radius: 3px; background: transparent; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.ocean-cell-value:hover, .ocean-cell-value:focus-visible { background: #f5f5f5; outline: 1px solid #bdbdbd; }
+.ocean-cell-value.has-error { outline: 1px solid #ff4d4f; }
+.ocean-pending-controls { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #805500; }

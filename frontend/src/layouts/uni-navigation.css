@@ -1,0 +1,16 @@
+/* Reference navigation palettes, scoped to the three verified UNI routes. */
+.is-uni-admin-nav .brand-sider { background: #243967 !important; }
+.is-uni-admin-nav .brand-sider .ant-menu-sub { background: #243967 !important; }
+.is-uni-admin-nav .brand-sider .ant-menu-item,
+.is-uni-admin-nav .brand-sider .ant-menu-submenu-title { color: #fff; }
+.is-uni-admin-nav .brand-sider .ant-menu .ant-menu-item-selected { background: #1365ff !important; color: #fff !important; }
+.is-uni-admin-nav .sider-footer { background: linear-gradient(180deg, transparent, #243967 28%); }
+.is-uni-warehouse-nav .brand-sider,
+.is-uni-warehouse-nav .brand-sider .ant-menu-sub { background: #fff !important; }
+.is-uni-warehouse-nav .brand-sider { border: 0; box-shadow: 0 0 10px rgba(0,0,0,.05); }
+.is-uni-warehouse-nav .brand-sider .ant-menu-item,
+.is-uni-warehouse-nav .brand-sider .ant-menu-submenu-title { color: #80889a; }
+.is-uni-warehouse-nav .brand-sider .ant-menu .ant-menu-item-selected { background: #f1f3f9 !important; color: #2e52c5 !important; border: 0; }
+.is-uni-warehouse-nav .brand-sider .ant-menu-item-selected::after { border: 0; }
+.is-uni-warehouse-nav .brand { color: #80889a; border-bottom-color: transparent; }
+.is-uni-warehouse-nav .sider-footer { background: linear-gradient(180deg, transparent, #fff 28%); }

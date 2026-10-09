@@ -1,0 +1,148 @@
+{
+  "recorded_at_utc": "2026-10-07T16:01:30.125107+00:00",
+  "status": "PARTIAL_ACCEPTANCE_TECHNICAL_AND_RESPONSE_CHECKS_PASS",
+  "production_ready": false,
+  "test_only": true,
+  "stage_acceptance_complete": false,
+  "changes": [
+    "Authenticated policy operator before persisted role and warehouse checks; removed actor-id credential bypass",
+    "Optional upload ownership declarations validated before file/database write",
+    "Real PostgreSQL partial-shipment concurrency, repeat and rollback coverage",
+    "Owned paired database/file restore and policy failure/revoke/recovery rehearsal tools"
+  ],
+  "current_run": {
+    "backend": {
+      "tests": 421,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 420,
+      "evidence": "backend-final.xml"
+    },
+    "readonly_precheck": {
+      "passed": 21,
+      "failed": 0,
+      "evidence": "readonly-regression-final.log"
+    },
+    "frontend": {
+      "passed": 51,
+      "failed": 0,
+      "parts": [
+        {
+          "passed": 35,
+          "evidence": "frontend-all-tests-final.log"
+        },
+        {
+          "passed": 16,
+          "evidence": "frontend-dispatch-final.log"
+        }
+      ]
+    },
+    "build": {
+      "status": "PASS",
+      "evidence": "frontend-build-final.log"
+    },
+    "postgresql": {
+      "passed": 47,
+      "failed": 0,
+      "fresh_migration": "PASS",
+      "representative_upgrade_0036_to_0039": "PASS",
+      "failed_0039_rollback_retry": "PASS",
+      "evidence": "postgresql-final.log"
+    },
+    "policy_authentication": {
+      "passed": 13,
+      "subset_of": "backend",
+      "evidence": "backend-final.xml"
+    },
+    "upload_claims": {
+      "passed": 10,
+      "subset_of": "backend",
+      "evidence": "document-claims.log"
+    },
+    "browser_responses": {
+      "passed": 40,
+      "failed": 0,
+      "raw_operation_count": 106,
+      "evidence": "browser-assertions.json",
+      "operations": "browser-results.json",
+      "screenshot": "browser-refresh.jpg",
+      "method": "Real browser File multipart and application APIs through temporary TEST_ONLY harness; native picker and full current UI UNVERIFIED"
+    },
+    "release_rehearsal": {
+      "passed": 16,
+      "failed": 0,
+      "evidence": "release-rehearsal.json"
+    }
+  },
+  "skipped": [
+    {
+      "test": "test_concurrent_partial_cannot_overdraw",
+      "environment": "SQLite full backend suite",
+      "reason": "Requires PostgreSQL row locks",
+      "actual_postgresql_corresponding_scenario": "PASS this run"
+    }
+  ],
+  "resolved_attempt_failures": [
+    {
+      "evidence": "backend-final-retry.log",
+      "reason": "Test startup configuration; final rerun passed"
+    },
+    {
+      "evidence": "browser-results.json",
+      "reason": "Includes early rejected attempts; final response assertions use corrected prerequisites"
+    }
+  ],
+  "current_final_failures": [],
+  "unverified": [
+    "Native file picker on current application pages",
+    "Complete current FBA/private UI end-to-end chain and actual error presentation",
+    "Production business rules and authorization",
+    "Production deployment/migration/release"
+  ],
+  "business_decisions": "../../DISPATCH_RELEASE_PREPARATION_2026-10-05.md#仅需业务集中确认的填写表",
+  "production_blockers": [
+    "Confirmed FBA/private document requirements and accepted states",
+    "Confirmed review/approval/exception roles and validity periods",
+    "Independent approver and canceled-exception treatment",
+    "Genuine approval references and six rule source groups",
+    "Controlled production execution authorization and complete UI acceptance"
+  ],
+  "cleanup_evidence": "cleanup.json",
+  "resource_evidence": "resources.json",
+  "history_not_counted": true,
+  "artifact_sha256": {
+    "backend-final-retry.log": "1b919a697a4f9451afe1cd64072a80d50953b3625b847a918795f290b3ad4e1c",
+    "backend-final.log": "595e354ad5da3d175c97b4db28b2b51e2667f5beac80185a8e75f61335615c0a",
+    "backend-final.xml": "d9c7a1f22b6c98f6a7cfdadd5c78ce1a3102c2ffee7d40d19544250160aafa55",
+    "backend-full.log": "f747a041bb3dcc421db8196ea7675058ad72985d09d679cbc873cacef7a3202c",
+    "browser-assertions.json": "824f03b8ee6a9a6c9168a9abca5c055b18c769713632ee2687a3e684b061ff8e",
+    "browser-harness-redacted.txt": "3e7bd5335b55f37f01017a31343ae310209a259f1634a2cb13f240271994dd53",
+    "browser-refresh.jpg": "37c65574b121102dd7a390bfb4822d585aa42cd5973b39a253c2b8deeb6fd767",
+    "browser-results.json": "4a3d45c3b482938894620d11942b3c333120080b8b0c960b584596c5b7d62e23",
+    "document-claims.log": "3a7595f1ed0b8ce91ff11c8a9ea43bcec9d3221574c06e918523636cb091325a",
+    "frontend-all-tests-final.log": "ffc6a8ef1f3bf9b3f863ec7328e58b00f277268a300e69299afe964b4e4c0c31",
+    "frontend-all-tests.log": "d9c25ee674271f8434f6fa81aa137fcba20d55ad879c6acbe91dd1c6900428d0",
+    "frontend-build-final.log": "cc53ead5f42ab9192299af8e7eb1eeaf21dc2e452f9cd2584f404e39930aec13",
+    "frontend-build.log": "91742f279c665a766ea1eee0f12664a2dff585220a5d8ae45df16afcfd6b5786",
+    "frontend-dispatch-final.log": "69e22192a2925df48e89abb9f00644b2ae8af75b8c61a7ef95d5523c4ebefdcb",
+    "frontend-final.log": "a02dd815af40901ceff69e7fc6375122c4dfaf5ee43b4a8ad08c9b8ddb067386",
+    "postgresql-final.log": "61532015b6289f9da2a71abebb21d29ba325e8c8eda5295f1d84a433f7c32960",
+    "postgresql.log": "bef9fc1a63031a94a85f88fc5b7a085297a262b56d386e22177dfb7ed38a4b52",
+    "readonly-final.log": "a0a9c94c3aa6a5c8144de200e346beee793f582a57e91d6761d5bec0c8884660",
+    "readonly-regression-final.log": "fe83bbc794463087580ec9a8603f62e1f78fddf39b013c0d07e7b74b86ac3b6a",
+    "release-rehearsal.json": "11ce7491e7dfb6f5a58462a15860b0e8fe44aa3df61a3b6e969934645cd81a9a",
+    "release-rehearsal.log": "1656f5c6d7dbdab1a7958c338b25bc1cabe15c769a03f348bf37d602e5e0ab0b",
+    "resources.json": "fd73cf08cfa6920a3df5a33d561f9c51296fa4b069c26f42d0e56a314936efde",
+    "service-logs/backend.log": "d1acf4ca78c1079d50f67851e49844f1e492f9e3cbf84fcc51d81068a71a63c1",
+    "service-logs/cluster.log": "a38760ddec0a6194ec730e7a267b991c4ad3e761e4452cea5db41e3972a12c09",
+    "service-logs/frontend.log": "a8facc592dffffffdb2320ccd1c6767a6b6aa2777c95ace7cad0221f9f07a563",
+    "service-logs/postgres.log": "ee1818097d8e34312b6cc60963be0e1d63f63394c029f65a311ea981a37d786c",
+    "service-logs/seed.log": "c1a3eed0ac9eb9c476f7d45a8cc393c409b9f3df85e10405a27cfbade8e47f56",
+    "cleanup.json": "1843da2288e56ce60316901f56c29c80f6e1c956c38bd1bfbcc43b8cb1050490"
+  },
+  "evidence_redactions": [
+    "Synthetic database passwords in four parametrized JUnit test names redacted; result counts unchanged",
+    "Service logs and browser harness synthetic credentials redacted"
+  ]
+}

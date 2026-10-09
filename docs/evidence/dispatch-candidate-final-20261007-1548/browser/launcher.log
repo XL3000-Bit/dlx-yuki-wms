@@ -1,0 +1,3 @@
+{"workspace": "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-browser-06rarr_v", "postgres_port": 50655, "frontend": "http://127.0.0.1:50657", "backend": "http://127.0.0.1:50656", "policy": "TEST ONLY mechanism validation; no production authorization", "phase": "STARTING"}
+{"workspace": "C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-browser-06rarr_v", "postgres_port": 50655, "frontend": "http://127.0.0.1:50657", "backend": "http://127.0.0.1:50656", "policy": "TEST ONLY mechanism validation; no production authorization"}
+Owned browser resources stopped; logs retained: C:\Users\XL\AppData\Local\Temp\yuki-dispatch-browser-06rarr_v

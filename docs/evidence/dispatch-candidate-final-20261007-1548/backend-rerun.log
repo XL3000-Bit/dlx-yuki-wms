@@ -1,0 +1,18 @@
+........................................................................ [ 17%]
+........................................................................ [ 34%]
+.................................................................s...... [ 51%]
+........................................................................ [ 68%]
+........................................................................ [ 85%]
+..............................................................           [100%]
+============================== warnings summary ===============================
+tests/test_safe_alembic.py: 11 warnings
+  C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\alembic\config.py:598: DeprecationWarning: No path_separator found in configuration; falling back to legacy splitting on spaces, commas, and colons for prepend_sys_path.  Consider adding path_separator=os to Alembic config.
+    util.warn_deprecated(
+
+.venv\Lib\site-packages\_pytest\cacheprovider.py:475
+  C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\_pytest\cacheprovider.py:475: PytestCacheWarning: cache could not write path C:\Users\XL\dlx-yuki-wms\backend\.pytest_cache\v\cache\nodeids: [Errno 13] Permission denied: 'C:\\Users\\XL\\dlx-yuki-wms\\backend\\.pytest_cache\\v\\cache\\nodeids'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: C:\Users\XL\dlx-yuki-wms\docs\evidence\dispatch-candidate-final-20261007-1548\backend-rerun-junit.xml -
+421 passed, 1 skipped, 12 warnings in 47.42s

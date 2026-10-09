@@ -1,0 +1,1134 @@
+INFO:     Started server process [39640]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:50656 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50663 - "GET /openapi.json HTTP/1.1" 200 OK
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Program Files\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+INFO:     127.0.0.1:39824 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39826 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35503 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35502 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35499 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35498 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35501 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35500 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3175 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25326 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25323 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25325 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25322 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25327 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25324 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36044 - "POST /api/v1/loads/1/allocations HTTP/1.1" 201 Created
+INFO:     127.0.0.1:10572 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10573 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35569 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10575 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10571 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10574 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28071 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38295 - "POST /api/v1/loads/1/plans HTTP/1.1" 201 Created
+INFO:     127.0.0.1:61924 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55929 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55930 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55931 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55927 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55928 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26368 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62235 - "PUT /api/v1/loads/1/plans/1/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1270 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1271 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1272 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1269 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1268 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1511 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63308 - "POST /api/v1/loads/1/plans/1/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39392 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29064 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39394 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39391 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39393 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39395 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4910 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39533 - "POST /api/v1/loads/1/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2030 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21463 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2029 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2028 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2031 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2032 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37345 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33437 - "POST /api/v1/loads/1/stage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58513 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58514 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58511 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58512 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58516 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58515 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17248 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13556 - "POST /api/v1/loads/1/stage HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:13877 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13878 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13879 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36172 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6325 - "POST /api/v1/loads/1/verify/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16826 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9631 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9632 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9630 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9629 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9633 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5993 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57730 - "POST /api/v1/loads/1/verify/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31370 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31371 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1896 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31369 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31373 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31372 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62494 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61087 - "POST /api/v1/loads/1/verify/complete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26649 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21176 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21175 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21174 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21177 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21178 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65043 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48126 - "POST /api/v1/documents HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:56351 - "POST /api/v1/documents HTTP/1.1" 413 Content Too Large
+INFO:     127.0.0.1:6981 - "POST /api/v1/documents HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\fastapi\routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\fastapi\routing.py", line 215, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\concurrency.py", line 38, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+  File "C:\Users\XL\dlx-yuki-wms\backend\app\api\v1\endpoints\documents.py", line 46, in upload
+    return upload_document(db, user, file, document_type, links, title, notes,
+                           claimed_warehouse_id=warehouse_id, claimed_customer_id=customer_id,
+                           claimed_business_type=dispatch_business_type)
+  File "C:\Users\XL\dlx-yuki-wms\backend\app\services\operational_document.py", line 99, in upload_document
+    storage = storage or LocalDocumentStorage(); key = f"{datetime.now(UTC):%Y/%m}/{uuid4().hex}{Path(filename).suffix.lower()}"
+                         ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\app\services\document_storage.py", line 19, in __init__
+    self.root.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\pathlib\_local.py", line 722, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileExistsError: [WinError 183] 当文件已存在时，无法创建该文件。: 'C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-browser-06rarr_v\\documents'
+INFO:     127.0.0.1:40812 - "POST /api/v1/documents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:51666 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51667 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52553 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31749 - "POST /api/v1/loads/1/evidence/documents/bol HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49975 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49974 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35518 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30365 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45374 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45373 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41905 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53825 - "POST /api/v1/loads/1/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:36425 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36426 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36427 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48657 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12593 - "POST /api/v1/documents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:58044 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58045 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5651 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42395 - "POST /api/v1/loads/1/evidence/exceptions/1/resolve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13540 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13539 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44202 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42810 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37692 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37691 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36823 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25256 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61746 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61745 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15648 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12964 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1745 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1744 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1946 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32842 - "POST /api/v1/documents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:27968 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27969 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37725 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45830 - "POST /api/v1/loads/1/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:60028 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60029 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60030 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3508 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30935 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30932 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30931 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30934 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52731 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30936 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30933 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17286 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17283 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17284 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17285 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54369 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17287 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30005 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53320 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53319 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57810 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47968 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46078 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46077 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21088 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29270 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27359 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27358 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26404 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28440 - "POST /api/v1/loads/1/plans HTTP/1.1" 201 Created
+INFO:     127.0.0.1:55907 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25396 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25398 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25399 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25397 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25395 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28518 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64461 - "PUT /api/v1/loads/1/plans/2/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53179 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45465 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53180 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53181 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53178 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53182 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53486 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1820 - "PUT /api/v1/loads/1/plans/2/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53626 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19382 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19384 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19383 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19381 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19380 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24674 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26105 - "POST /api/v1/loads/1/plans/2/finalize HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:57677 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57678 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57679 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47529 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14373 - "PUT /api/v1/loads/1/plans/2/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7366 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45177 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45178 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45179 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45176 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45180 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62382 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18090 - "POST /api/v1/loads/1/plans/2/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28375 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52069 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28376 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28377 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28374 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28378 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32196 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62893 - "POST /api/v1/loads/1/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:24881 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24882 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24883 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43564 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12938 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49976 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12937 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49975 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14236 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49974 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49977 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60393 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60394 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60395 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60396 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36434 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60397 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1088 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1090 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1089 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42242 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42245 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42246 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42241 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32368 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42243 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42244 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57134 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57135 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57136 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57137 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11194 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57138 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11675 - "POST /api/v1/loads/1/verify/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11732 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34018 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11731 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11733 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11730 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11734 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43384 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65342 - "POST /api/v1/loads/1/verify/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55874 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26342 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26343 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26344 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26341 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26345 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50520 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20884 - "POST /api/v1/loads/1/verify/complete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45473 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45471 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45474 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45472 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45475 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45476 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35608 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34316 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49136 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49135 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36819 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18222 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26718 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26717 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46319 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57007 - "POST /api/v1/loads/1/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63709 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63708 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58218 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22987 - "POST /api/v1/loads/1/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64478 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1057 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1059 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1058 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1056 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1060 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28576 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6620 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6619 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6616 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6615 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6618 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10583 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6617 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27372 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27369 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27371 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27370 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18279 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27373 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30257 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30259 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30258 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30260 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53568 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53569 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53564 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53567 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51306 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53565 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53566 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39637 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39634 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39635 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59645 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39638 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39636 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37441 - "GET /api/v1/documents?page=1&per_page=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37439 - "GET /api/v1/documents/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37440 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37442 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47138 - "GET /api/v1/documents/4/events HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59541 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59543 - "GET /api/v1/cargo-bols?remaining_only=true&page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59540 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59542 - "GET /api/v1/cargo-bols?remaining_only=false&page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5559 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5558 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34274 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59544 - "GET /api/v1/outbounds/workbench?page=1&per_page=20&sort_by=created_at&sort_order=desc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59545 - "GET /api/v1/outbounds/1/workbench-detail HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20770 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20772 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20771 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20773 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35079 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35074 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35075 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35077 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35076 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62353 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35078 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15010 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15011 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15012 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11194 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15014 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15013 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58289 - "POST /api/v1/loads/2/allocations HTTP/1.1" 201 Created
+INFO:     127.0.0.1:30639 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30641 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53166 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30642 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30640 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30643 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17282 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4452 - "POST /api/v1/loads/2/plans HTTP/1.1" 201 Created
+INFO:     127.0.0.1:13061 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13060 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45897 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13063 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13059 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13062 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62990 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53576 - "PUT /api/v1/loads/2/plans/3/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36545 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51657 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36544 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36547 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36548 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36546 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53046 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14343 - "POST /api/v1/loads/2/plans/3/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23845 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44469 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23843 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23846 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23844 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23847 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65171 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31581 - "POST /api/v1/loads/2/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20796 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20795 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32283 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20797 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20794 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20798 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8625 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17370 - "POST /api/v1/loads/2/stage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45106 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60603 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45105 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45108 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45107 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45109 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30779 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36425 - "POST /api/v1/loads/2/stage HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:9715 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9716 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9717 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37746 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50790 - "POST /api/v1/loads/2/verify/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61739 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61740 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61737 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61738 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61742 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61741 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3250 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12843 - "POST /api/v1/loads/2/verify/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58922 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58923 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41506 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58921 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58924 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58925 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41274 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23103 - "POST /api/v1/loads/2/verify/complete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34143 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34144 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65402 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34145 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34142 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34146 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51094 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56642 - "POST /api/v1/documents HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:57715 - "POST /api/v1/documents HTTP/1.1" 413 Content Too Large
+INFO:     127.0.0.1:1377 - "POST /api/v1/documents HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\fastapi\routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\fastapi\routing.py", line 215, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\starlette\concurrency.py", line 38, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+  File "C:\Users\XL\dlx-yuki-wms\backend\app\api\v1\endpoints\documents.py", line 46, in upload
+    return upload_document(db, user, file, document_type, links, title, notes,
+                           claimed_warehouse_id=warehouse_id, claimed_customer_id=customer_id,
+                           claimed_business_type=dispatch_business_type)
+  File "C:\Users\XL\dlx-yuki-wms\backend\app\services\operational_document.py", line 99, in upload_document
+    storage = storage or LocalDocumentStorage(); key = f"{datetime.now(UTC):%Y/%m}/{uuid4().hex}{Path(filename).suffix.lower()}"
+                         ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\XL\dlx-yuki-wms\backend\app\services\document_storage.py", line 19, in __init__
+    self.root.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\pathlib\_local.py", line 722, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileExistsError: [WinError 183] 当文件已存在时，无法创建该文件。: 'C:\\Users\\XL\\AppData\\Local\\Temp\\yuki-dispatch-browser-06rarr_v\\documents'
+INFO:     127.0.0.1:48033 - "POST /api/v1/documents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:5007 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5008 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29151 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46628 - "POST /api/v1/loads/2/evidence/documents/bol HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24080 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24079 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13097 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27750 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9941 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9940 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31776 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41154 - "POST /api/v1/loads/2/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:2410 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2411 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2412 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48309 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35908 - "POST /api/v1/documents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:41187 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41188 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18140 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38270 - "POST /api/v1/loads/2/evidence/exceptions/2/resolve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26598 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26597 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33660 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63652 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1672 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1671 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48133 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58200 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7601 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7600 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63166 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38766 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39495 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39494 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14885 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17274 - "POST /api/v1/documents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:39053 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39054 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25697 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40856 - "POST /api/v1/loads/2/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:44417 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44418 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44419 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23937 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15282 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15281 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15278 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15277 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15279 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48090 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15280 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42728 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42727 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42729 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42730 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24488 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42731 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27726 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6248 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6247 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18234 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38899 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64498 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64497 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63983 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21653 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44711 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44710 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63362 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53572 - "POST /api/v1/loads/2/plans HTTP/1.1" 201 Created
+INFO:     127.0.0.1:40006 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4533 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40005 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40004 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40007 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40008 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25740 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42188 - "PUT /api/v1/loads/2/plans/4/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42379 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42378 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50882 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42376 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42377 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42380 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28343 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33132 - "PUT /api/v1/loads/2/plans/4/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59148 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59149 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55311 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59150 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59147 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59151 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39228 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62873 - "POST /api/v1/loads/2/plans/4/finalize HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:65055 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65056 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65057 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39864 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18117 - "PUT /api/v1/loads/2/plans/4/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52328 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52329 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33096 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52331 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52327 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52330 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13011 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39884 - "POST /api/v1/loads/2/plans/4/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29707 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29708 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61939 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29709 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29706 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29710 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15753 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8510 - "POST /api/v1/loads/2/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:29903 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29904 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29905 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58593 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58190 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58187 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58186 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58189 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58188 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64217 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58191 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13736 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13737 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13738 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13739 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16811 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13740 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28603 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28611 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28610 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28612 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6056 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6054 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6049 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6052 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6051 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16961 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6050 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8768 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8767 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8769 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8770 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45670 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8771 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36855 - "POST /api/v1/loads/2/verify/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60744 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60745 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29162 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60746 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60743 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60747 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21947 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24498 - "POST /api/v1/loads/2/verify/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62884 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57282 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62882 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62885 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62883 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62886 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56368 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2171 - "POST /api/v1/loads/2/verify/complete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3248 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3249 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36894 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3247 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3250 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3251 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40532 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17666 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8137 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8136 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6440 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24891 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51376 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51375 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39528 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55789 - "POST /api/v1/loads/2/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64535 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64534 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59253 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48905 - "POST /api/v1/loads/2/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47483 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17902 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17903 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17904 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17901 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17905 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58707 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58706 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58703 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58702 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58705 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2421 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58704 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47698 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47695 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47696 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4388 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47697 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47699 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46175 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46177 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46176 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46178 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32171 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32172 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32167 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32170 - "GET /api/v1/loads/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32169 - "GET /api/v1/loads?page=1&per_page=20&business_type=FBA HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8519 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32168 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22411 - "GET /api/v1/documents?load_id=2&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22409 - "GET /api/v1/loads/2/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22408 - "GET /api/v1/loads/2/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22410 - "GET /api/v1/loads/2/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4353 - "GET /api/v1/loads/2/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22412 - "GET /api/v1/loads/2/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8292 - "GET /api/v1/documents/8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61683 - "GET /api/v1/documents?page=1&per_page=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22653 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22652 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61684 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60328 - "GET /api/v1/documents/8/events HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19581 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19580 - "GET /api/v1/master-data/amazon-fc-addresses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19577 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19579 - "GET /api/v1/master-data/customers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8503 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19578 - "GET /api/v1/fba/workbench?page=1&per_page=20&stage=all&only_old=false&sort_by=priority_rank&sort_order=desc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19576 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47540 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12856 - "GET /api/v1/fba/1/workbench-detail HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1103 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1105 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1104 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1106 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6055 - "GET /api/v1/documents?page=1&per_page=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6051 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6050 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6057 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6064 - "POST /api/v1/documents HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:6067 - "POST /api/v1/documents HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:7891 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7893 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7892 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7894 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57909 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57913 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57908 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57911 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57912 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57910 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60356 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60357 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60358 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60359 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60355 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60360 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22690 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22693 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48975 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22692 - "GET /api/v1/loads/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22694 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22691 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21122 - "GET /api/v1/documents?load_id=1&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21119 - "GET /api/v1/loads/1/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21120 - "GET /api/v1/loads/1/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21121 - "GET /api/v1/loads/1/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38937 - "GET /api/v1/loads/1/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21123 - "GET /api/v1/loads/1/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26139 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26141 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26140 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26142 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30847 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30844 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30843 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30845 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48230 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30848 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30846 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13124 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13127 - "GET /api/v1/documents?load_id=3&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21513 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13126 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13128 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13125 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46941 - "POST /api/v1/loads/3/allocations HTTP/1.1" 201 Created
+INFO:     127.0.0.1:8751 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7003 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8753 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8752 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8750 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8749 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35245 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42529 - "POST /api/v1/loads/3/plans HTTP/1.1" 201 Created
+INFO:     127.0.0.1:4595 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4596 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25180 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4593 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4594 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4597 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8819 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22813 - "PUT /api/v1/loads/3/plans/5/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65231 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65230 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43160 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65233 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65229 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65232 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59737 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7764 - "POST /api/v1/loads/3/plans/5/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20523 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20524 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35539 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20525 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20522 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20526 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18176 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41491 - "POST /api/v1/loads/3/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35541 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35542 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11866 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35543 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35540 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35544 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41116 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43451 - "POST /api/v1/loads/3/stage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9985 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9986 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1311 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9987 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9984 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9988 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39359 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20826 - "POST /api/v1/loads/3/stage HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:23179 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23181 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23180 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38497 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20475 - "POST /api/v1/loads/3/verify/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8294 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8293 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27120 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8295 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8291 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8296 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54296 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64222 - "POST /api/v1/loads/3/verify/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28144 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1789 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1792 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1791 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1790 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1788 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35018 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44147 - "POST /api/v1/loads/3/verify/complete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50906 - "GET /api/v1/loads/3/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13983 - "GET /api/v1/loads/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50908 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50905 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50909 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63090 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3586 - "POST /api/v1/loads/3/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:19364 - "GET /api/v1/loads/3/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19368 - "GET /api/v1/loads/3/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19367 - "GET /api/v1/loads/3/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2211 - "GET /api/v1/loads/3/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60762 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27774 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27776 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60760 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53809 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60759 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60761 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36017 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36020 - "GET /api/v1/documents?load_id=4&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14390 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36019 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36021 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36018 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37401 - "POST /api/v1/loads/4/allocations HTTP/1.1" 201 Created
+INFO:     127.0.0.1:49670 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37753 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37754 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37755 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37752 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37751 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44635 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47889 - "POST /api/v1/loads/4/plans HTTP/1.1" 201 Created
+INFO:     127.0.0.1:47541 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47540 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12172 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47543 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47539 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47542 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40616 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2627 - "PUT /api/v1/loads/4/plans/6/lines HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14275 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19873 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14276 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14278 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14274 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14277 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37312 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6405 - "POST /api/v1/loads/4/plans/6/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23792 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13468 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23793 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23794 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23791 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23795 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21889 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37458 - "POST /api/v1/loads/4/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36617 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9056 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36618 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36619 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36620 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36616 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14227 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57499 - "POST /api/v1/loads/4/stage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61915 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54560 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61916 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61917 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61918 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61914 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64430 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28695 - "POST /api/v1/loads/4/stage HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:15686 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15687 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15688 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38740 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29193 - "POST /api/v1/loads/4/verify/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33310 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33311 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18591 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33312 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33313 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33309 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22772 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16035 - "POST /api/v1/loads/4/verify/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40950 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40951 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40948 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40952 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40953 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40949 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11400 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55328 - "POST /api/v1/loads/4/verify/complete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58681 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6568 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6569 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6567 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6566 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6570 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48421 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27958 - "POST /api/v1/documents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:7030 - "GET /api/v1/documents?load_id=4&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7031 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45667 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41010 - "POST /api/v1/loads/4/evidence/documents/bol HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32536 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32535 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2299 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56321 - "POST /api/v1/loads/4/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10273 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10272 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1958 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2419 - "POST /api/v1/loads/4/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31259 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31258 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3577 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62820 - "POST /api/v1/loads/4/evidence/reviews HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65371 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65370 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55175 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42771 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31461 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10122 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10121 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10125 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10124 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63251 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10126 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10123 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18873 - "GET /api/v1/documents?load_id=4&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18871 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18870 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18872 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18869 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18874 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25343 - "POST /api/v1/loads/4/status HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:42067 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42068 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42069 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13903 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16196 - "GET /api/v1/master-data/warehouses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16193 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16192 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16195 - "GET /api/v1/loads/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49295 - "GET /api/v1/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16197 - "GET /api/v1/master-data/carriers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16194 - "GET /api/v1/loads?page=1&per_page=20&business_type=PRIVATE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34987 - "GET /api/v1/loads/4/allocations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34990 - "GET /api/v1/documents?load_id=4&per_page=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34988 - "GET /api/v1/loads/4/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53639 - "GET /api/v1/loads/4/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34989 - "GET /api/v1/loads/4/execution-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34991 - "GET /api/v1/loads/4/dispatch-readiness HTTP/1.1" 200 OK

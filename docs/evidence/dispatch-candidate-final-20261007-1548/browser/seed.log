@@ -1,0 +1,46 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 20260828_0001, phase 1 core master data
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0001 -> 20260828_0002, phase 2 inbound and import framework
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0002 -> 20260828_0003, phase 3 inventory
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0003 -> 20260828_0004, phase 4 fba
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0004 -> 20260828_0005, phase 5 outbound
+Revision ID: 20260828_0005
+Revises: 20260828_0004
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0005 -> 20260828_0006, phase 6 picking and BOL
+Revision ID: 20260828_0006
+Revises: 20260828_0005
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0006 -> e852423c687a, phase 7 schema alignment
+INFO  [alembic.runtime.migration] Running upgrade e852423c687a -> 20260828_0008, phase 8 real data import and large workbook support
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0008 -> 20260828_0009, phase 8 long real-world PO and FBA reference lists
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0009 -> 20260828_0010, phase 8 outbound PO list length
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0010 -> 20260828_0011, phase 9.4 container tracking
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0011 -> 20260828_0012, align container tracking indexes
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0012 -> 20260829_0013, phase 10.1 load management foundation
+INFO  [alembic.runtime.migration] Running upgrade 20260829_0013 -> 20260829_0014, phase 10.2 warehouse work order foundation
+INFO  [alembic.runtime.migration] Running upgrade 20260829_0014 -> 20260829_0015, phase 10.3 work order activity history
+INFO  [alembic.runtime.migration] Running upgrade 20260829_0015 -> 20260830_0016, add generic work order event audit fields
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0016 -> 20260830_0017, operational exception center foundation
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0017 -> 20260830_0018, scoped RBAC foundation
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0018 -> 20260830_0019, operational document and POD center
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0019 -> 20260830_0020, operational notification center
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0020 -> 20260901_0021, company profile singleton
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0020 -> 20260830_0021, Phase 10.9 RC schema alignment.
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0021 -> 20260830_0022, scan execution foundation
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0022 -> 20260830_0023, picking scan workflow
+INFO  [alembic.runtime.migration] Running upgrade 20260830_0023 -> 20260831_0024, staging load verification
+INFO  [alembic.runtime.migration] Running upgrade 20260831_0024, 20260901_0021 -> 20260902_0025, Merge staging/load verification and company profile heads.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0025 -> 20260902_0026, enforce company profile singleton
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0026 -> 20260909_0027, Add container tracking to the PostgreSQL import module enum.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0027 -> 20260909_0028, Preserve historical shipment references without truncation.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0028 -> 20260909_0029, Allow maintaining outbound transfer codes independently of redirects.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0029 -> 20260909_0030, Persist outbound booking quantity and related source references.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0030 -> 20260909_0031, Persistent cargo BOL identities and document snapshots.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0031 -> 20260909_0032, Link operational documents to inbound cargo.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0032 -> 20260909_0033, Give existing cargo stable BOL identities without changing inventory.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0033 -> 20260917_0034, Separate UNI FBA BOL business state from document state.
+INFO  [alembic.runtime.migration] Running upgrade 20260917_0034 -> 20260917_0035, Durable partial shipment and POD history for UNI BOL.
+INFO  [alembic.runtime.migration] Running upgrade 20260917_0035 -> 20260917_0036, Separate the displayed Dispatch OB from each BOL's inventory order.
+INFO  [alembic.runtime.migration] Running upgrade 20260917_0036 -> 20260925_0037, Add future allocation facts and immutable final dispatch plans; no backfill.
+INFO  [alembic.runtime.migration] Running upgrade 20260925_0037 -> 20261005_0038, Explicit dispatch domains and writer provenance; never infer legacy facts.
+INFO  [alembic.runtime.migration] Running upgrade 20261005_0038 -> 20261005_0039, Append-only evidence and dispatch source serialization. No business-rule seed/backfill.

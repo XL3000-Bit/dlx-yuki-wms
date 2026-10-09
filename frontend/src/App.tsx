@@ -1,0 +1,72 @@
+import { Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { AppLayout } from "./layouts/AppLayout";
+const WpsReviewPage = lazy(() => import("./pages/WpsReviewPage").then(m => ({ default: m.WpsReviewPage })));
+const OceanInboundPage = lazy(() => import("./pages/OceanInboundPage").then(m => ({ default: m.OceanInboundPage })));
+const InboundPage = lazy(() => import("./pages/InboundPage").then(m => ({ default: m.InboundPage })));
+const InventoryPage = lazy(() => import("./pages/InventoryPage").then(m => ({ default: m.InventoryPage })));
+const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage").then(m => ({ default: m.ImportHistoryPage })));
+const HistoryArchivePage = lazy(() => import("./pages/HistoryArchivePage").then(m => ({ default: m.HistoryArchivePage })));
+const AdminDataUploadPage = lazy(() => import("./pages/AdminDataUploadPage").then(m => ({ default: m.AdminDataUploadPage })));
+const FBAPage = lazy(() => import("./pages/FBAPage").then(m => ({ default: m.FBAPage })));
+const OutboundDispatchPage = lazy(() => import("./pages/OutboundDispatchWorkbenchPage").then(m => ({ default: m.OutboundDispatchWorkbenchPage })));
+const ContainerTrackingPage = lazy(() => import("./pages/ContainerTrackingPage").then(m => ({ default: m.ContainerTrackingPage })));
+const PickingPage = lazy(() => import("./pages/PickingPage").then(m => ({ default: m.PickingPage })));
+const UniBolPage = lazy(() => import("./pages/UniBolPage").then(m => ({ default: m.UniBolPage })));
+const OceanInboundListPage = lazy(() => import("./pages/OceanInboundListPage").then(m => ({ default: m.OceanInboundListPage })));
+const BOLPage = lazy(() => import("./pages/BOLPage").then(m => ({ default: m.BOLPage })));
+const LoadsPage = lazy(() => import("./pages/LoadsPage").then(m => ({ default: m.LoadsPage })));
+const WorkOrdersPage = lazy(() => import("./pages/WorkOrdersPage").then(m => ({ default: m.WorkOrdersPage })));
+const TroubleShootPage = lazy(() => import("./pages/TroubleShootPage").then(m => ({ default: m.TroubleShootPage })));
+const OperationsDashboardPage = lazy(() => import("./pages/OperationsDashboardPage").then(m => ({ default: m.OperationsDashboardPage })));
+const OperationsWallboardPage = lazy(() => import("./pages/OperationsWallboardPage").then(m => ({ default: m.OperationsWallboardPage })));
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage").then(m => ({ default: m.DocumentsPage })));
+const CompanySettingsPage = lazy(() => import("./pages/CompanySettingsPage").then(m => ({ default: m.CompanySettingsPage })));
+const ThreePLPage = lazy(() => import("./pages/ThreePLPage").then(m => ({ default: m.ThreePLPage })));
+const PdaPage = lazy(() => import("./pages/PdaPage").then(m => ({ default: m.PdaPage })));
+import { LoginPage } from "./pages/LoginPage";
+import { useAuthStore } from "./stores/auth";
+import "./inventory.css";
+import "./fba.css";
+import "./outbound.css";
+import "./threepl.css";
+export default function App() {
+  const token = useAuthStore((s) => s.accessToken);
+  if (!token) return <LoginPage />;
+  return (
+    <Suspense fallback={<div className="page-loading">Loading…</div>}><Routes>
+      <Route path="/wallboard" element={<OperationsWallboardPage />} />
+      <Route path="/pda" element={<PdaPage />} />
+      <Route element={<AppLayout />}>
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<OperationsDashboardPage />} />
+        <Route path="/3pl" element={<ThreePLPage />} />
+        <Route path="/inbound" element={<InboundPage />} />
+        <Route path="/inbound/ocean" element={<OceanInboundListPage />} />
+            <Route path="/inbound/ocean/:id" element={<OceanInboundPage />} />
+        <Route path="/container-tracking" element={<ContainerTrackingPage />} />
+        <Route path="/inventory" element={<InventoryPage />} />
+        <Route path="/fba" element={<FBAPage />} />
+        <Route path="/outbound/dispatch" element={<OutboundDispatchPage />} />
+        <Route path="/outbound/picking" element={<PickingPage />} />
+        <Route path="/outbound/picking-history" element={<PickingPage history />} />
+        <Route path="/outbound/bol" element={<UniBolPage />} />
+            <Route path="/outbound/bol/:id" element={<UniBolPage />} />
+            <Route path="/outbound/shipping-documents" element={<BOLPage />} />
+        <Route path="/loads" element={<LoadsPage key="PRIVATE" businessType="PRIVATE" />} />
+        <Route path="/loads/private" element={<LoadsPage key="PRIVATE" businessType="PRIVATE" />} />
+        <Route path="/loads/fba" element={<LoadsPage key="FBA" businessType="FBA" />} />
+        <Route path="/work-orders" element={<WorkOrdersPage />} />
+        <Route path="/trouble-shoot" element={<TroubleShootPage />} />
+        <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/import-history" element={<ImportHistoryPage />} />
+        <Route path="/wps-review" element={<WpsReviewPage />} />
+        <Route path="/history-archive" element={<HistoryArchivePage />} />
+        <Route path="/admin/data-upload" element={<AdminDataUploadPage />} />
+        <Route path="/settings/:slug" element={<CompanySettingsPage />} />
+        <Route path="/company/:slug" element={<CompanySettingsPage />} />
+        <Route path="*" element={<Navigate to="/inbound" replace />} />
+      </Route>
+    </Routes></Suspense>
+  );
+}

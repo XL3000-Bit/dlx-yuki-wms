@@ -1,0 +1,41 @@
+{
+  "warehouse_id": null,
+  "business_type": "PRIVATE",
+  "expected_version": null,
+  "provenance": {
+    "purpose": "PRODUCTION",
+    "confirmation_reference": null,
+    "rule_sources": {
+      "documents": null,
+      "document_review": null,
+      "approval": null,
+      "exception_review": null,
+      "independent_approver": null,
+      "allow_canceled_exceptions": null
+    }
+  },
+  "rules": {
+    "documents": [
+      {
+        "document_type": null,
+        "scope": null,
+        "allow_generated": null,
+        "bol_statuses": null
+      }
+    ],
+    "document_review": {
+      "roles": null,
+      "valid_seconds": null
+    },
+    "approval": {
+      "roles": null,
+      "valid_seconds": null
+    },
+    "exception_review": {
+      "roles": null,
+      "valid_seconds": null
+    },
+    "independent_approver": null,
+    "allow_canceled_exceptions": null
+  }
+}

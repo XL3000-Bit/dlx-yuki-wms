@@ -1,0 +1,21 @@
+2026-10-07 15:49:45.887 PDT [37500] LOG:  starting PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit
+2026-10-07 15:49:45.888 PDT [37500] LOG:  listening on IPv4 address "127.0.0.1", port 50655
+2026-10-07 15:49:45.924 PDT [25436] LOG:  database system was shut down at 2026-10-07 15:49:45 PDT
+2026-10-07 15:49:45.946 PDT [37500] LOG:  database system is ready to accept connections
+2026-10-07 15:51:11.394 PDT [39896] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-07 15:51:11.394 PDT [35252] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-07 15:51:11.394 PDT [38028] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-07 15:51:11.394 PDT [39344] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-07 15:51:11.394 PDT [39800] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-07 15:51:11.443 PDT [37500] LOG:  received fast shutdown request
+2026-10-07 15:51:11.445 PDT [37500] LOG:  aborting any active transactions
+2026-10-07 15:51:11.450 PDT [37500] LOG:  background worker "logical replication launcher" (PID 37692) exited with exit code 1
+2026-10-07 15:51:11.450 PDT [32048] LOG:  shutting down
+2026-10-07 15:51:11.451 PDT [32048] LOG:  checkpoint starting: shutdown immediate
+2026-10-07 15:51:11.638 PDT [32048] LOG:  checkpoint complete: wrote 858 buffers (5.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.025 s, sync=0.159 s, total=0.188 s; sync files=546, longest=0.002 s, average=0.001 s; distance=3653 kB, estimate=3653 kB; lsn=0/1905A68, redo lsn=0/1905A68
+2026-10-07 15:51:11.697 PDT [37500] LOG:  database system is shut down

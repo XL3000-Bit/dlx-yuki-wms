@@ -1,0 +1,42 @@
+{
+  "PRIVATE": {
+    "load_id": 1,
+    "order_id": 1,
+    "picking_item_id": 1,
+    "staging_location_id": 1,
+    "allocation_id": 1,
+    "load_no": "TEST-LOAD-PRIVATE",
+    "ob_no": "TEST-OB-PRIVATE",
+    "fba_id": null
+  },
+  "FBA": {
+    "load_id": 2,
+    "order_id": 2,
+    "picking_item_id": 2,
+    "staging_location_id": 1,
+    "allocation_id": 2,
+    "load_no": "TEST-LOAD-FBA",
+    "ob_no": "TEST-OB-FBA",
+    "fba_id": 1
+  },
+  "UNCONFIGURED": {
+    "load_id": 3,
+    "order_id": 3,
+    "picking_item_id": 3,
+    "staging_location_id": 2,
+    "allocation_id": 3,
+    "load_no": "TEST-LOAD-UNCONFIGURED",
+    "ob_no": "TEST-OB-UNCONFIGURED",
+    "fba_id": null
+  },
+  "EXPIRING": {
+    "load_id": 4,
+    "order_id": 4,
+    "picking_item_id": 4,
+    "staging_location_id": 3,
+    "allocation_id": 4,
+    "load_no": "TEST-LOAD-EXPIRING",
+    "ob_no": "TEST-OB-EXPIRING",
+    "fba_id": null
+  }
+}

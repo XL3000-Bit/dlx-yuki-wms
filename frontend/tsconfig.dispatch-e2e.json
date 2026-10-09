@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler",
+    "strict": true, "noCheck": false, "noEmit": true, "skipLibCheck": true,
+    "esModuleInterop": true, "types": ["node"]
+  },
+  "include": ["e2e/dispatch.spec.ts", "playwright.dispatch.config.ts"]
+}

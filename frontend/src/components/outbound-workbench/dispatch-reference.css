@@ -1,0 +1,85 @@
+.dispatch-workbench{height:100%;min-height:0;overflow:auto!important;background:#f4f5f9;padding:16px 20px;color:#082650;display:flex!important;flex-direction:column}
+.dispatch-workbench .dispatch-left-workspace>.dispatch-command{flex-shrink:0}
+.dispatch-workbench>.outbound-split-layout{flex:1;min-height:650px}
+.dispatch-workbench .dispatch-left-workspace{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden}
+.dispatch-workbench .dispatch-command{background:transparent;border:0;border-radius:0;padding:0;margin-bottom:14px}
+.dispatch-workbench .dispatch-command-top{margin-bottom:20px;min-height:42px}
+.dispatch-workbench .dispatch-crumb{font-size:14px;color:#8b94a3;font-weight:400}
+.dispatch-workbench .dispatch-crumb span{color:#8b94a3}
+.dispatch-workbench .ant-btn{border-radius:1px;box-shadow:none}
+.dispatch-workbench .dispatch-command-actions .ant-btn{height:42px;min-width:92px;color:#1760ff;border-color:#1760ff}
+.dispatch-workbench .dispatch-command-actions .ant-btn-primary,.dispatch-workbench .ant-btn-primary{background:#1760ff;color:white}
+.dispatch-workbench .dispatch-command-actions .ant-btn:disabled{color:#919bad;border-color:#c7cfdf;background:transparent}
+.dispatch-workbench .dispatch-unicang-filters{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px 30px}
+.dispatch-workbench .dispatch-unicang-filters label{font-size:13px;font-weight:400;color:#082650;gap:6px}
+.dispatch-workbench .dispatch-unicang-filters input{height:42px;border:1px solid #c4c7cf;border-radius:0;background:white;color:#082650;outline-color:#1760ff}
+.dispatch-workbench .dispatch-unicang-filters .ant-select{height:42px}
+.dispatch-workbench .dispatch-unicang-filters .ant-select-selector{border-radius:0!important;border-color:#c4c7cf!important}
+.dispatch-workbench .dispatch-filter-actions .ant-btn{height:42px;min-width:98px}
+.dispatch-workbench .dispatch-window-controls{margin-top:20px;gap:0}
+.dispatch-workbench .dispatch-window-controls .ant-btn{height:26px;font-size:11px;color:#1760ff;border-color:#1760ff}
+.dispatch-workbench .dispatch-orders{display:flex!important;flex-direction:column;min-height:0;flex:1!important;border:0;border-radius:0;overflow:hidden!important;background:white}
+.dispatch-workbench .dispatch-orders-table-host{height:0!important;min-height:0;overflow:hidden!important;flex:1!important}
+.dispatch-workbench .dispatch-summary,.dispatch-workbench .dispatch-actions{flex-shrink:0}
+.dispatch-workbench .outbound-split-right .ant-table-tbody>tr>td{padding:8px 10px!important}
+.dispatch-workbench .outbound-split-right .ant-table-thead>tr>th{padding:10px!important}
+.dispatch-workbench .ant-table{font-size:12px;color:#082650;border-radius:0}
+.dispatch-workbench .ant-table-thead>tr>th{background:#fbfcff!important;color:#8a95a6;font-weight:400;line-height:1.2;padding:16px 12px!important;border-right:1px solid #f0f2f7}
+.dispatch-workbench .ant-table-tbody>tr>td{padding:22px 12px!important;border-right:1px solid #f0f2f7;border-bottom:1px solid #f0f2f7;background:white}
+.dispatch-workbench .ant-table-tbody>tr.ant-table-row-selected>td{background:#e9efff!important}
+.dispatch-workbench .ant-table-tbody>tr.ant-table-row-selected>td:first-child{box-shadow:inset 4px 0 #1760ff}
+.dispatch-workbench .ant-table-tbody>tr.ant-table-expanded-row>td{padding:14px 16px!important;border-left:5px solid #1760ff;background:white!important}
+.dispatch-workbench .ant-btn-link{height:auto;padding:0;color:#1760ff;font-size:inherit}
+.dispatch-workbench .dispatch-summary{background:white;padding:12px 16px;border-top:1px solid #edf0f6;font-size:12px}
+.dispatch-workbench .dispatch-actions{margin:0 0 12px;position:static;flex-wrap:wrap;gap:12px}
+.reference-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.reference-detail{min-width:0;background:white}
+.reference-detail .ant-tabs-nav{margin:0!important}
+.reference-detail .ant-tabs-tab{padding:14px 24px!important;margin:0!important;background:#f4f5f9;color:#8a95a6;font-weight:600;font-size:13px}
+.reference-detail .ant-tabs-tab-active{background:white}
+.reference-detail .ant-tabs-ink-bar{display:none}
+.reference-detail .ant-tabs-extra-content .ant-btn{min-width:104px;height:26px;font-size:11px}
+.reference-detail .ant-table-summary td{font-weight:700;padding:16px 12px!important}
+.reference-detail-note{font-size:12px;color:#8290a2;padding:12px 0}
+.reference-unavailable{color:#a6afbd;cursor:not-allowed}
+.reference-tab-empty{padding:32px 20px;color:#8290a2}
+.is-dispatch-reference .topbar{height:76px;background:white}
+.is-dispatch-reference .global-search{width:min(764px,55vw)}
+.is-dispatch-reference .global-search .ant-input-affix-wrapper{border-radius:0;background:#f4f5f9;border:1px solid #c4c7cf;min-height:42px}
+@media(max-width:1100px){.dispatch-workbench .dispatch-unicang-filters{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 18px}.dispatch-workbench .dispatch-command-top{align-items:flex-start;flex-wrap:wrap}}
+@media(max-width:640px){.dispatch-workbench{padding:12px}.dispatch-workbench .dispatch-unicang-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.dispatch-workbench .dispatch-command-actions .ant-btn{min-width:72px}.reference-detail .ant-tabs-tab{padding:12px!important}}
+
+.dispatch-workbench .dispatch-left-workspace{container-type:inline-size}
+.dispatch-workbench .dispatch-command-top{gap:8px;flex-wrap:wrap;margin-bottom:14px;min-height:34px}
+.dispatch-workbench .dispatch-command-actions{margin-left:auto;gap:3px!important}
+.dispatch-workbench .dispatch-command-actions .ant-btn{height:34px;min-width:64px;padding:0 10px;font-size:11px}
+.dispatch-workbench .dispatch-crumb{font-size:12px;white-space:nowrap}
+.dispatch-workbench .dispatch-unicang-filters{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px 16px}
+.dispatch-workbench .dispatch-unicang-filters label{font-size:11px;gap:4px;overflow:hidden}
+.dispatch-workbench .dispatch-unicang-filters input,.dispatch-workbench .dispatch-unicang-filters .ant-select{height:34px;min-width:0;font-size:11px}
+.dispatch-workbench .dispatch-unicang-filters .ant-select-selector{font-size:11px}
+.dispatch-workbench .dispatch-filter-actions{flex-wrap:wrap}
+.dispatch-workbench .dispatch-filter-actions .ant-btn{height:34px;min-width:0;padding:0 10px;font-size:11px}
+.dispatch-workbench .dispatch-window-controls{margin-top:16px}
+.dispatch-workbench .dispatch-command{margin-bottom:12px}
+@container(max-width:600px){.dispatch-workbench .dispatch-unicang-filters{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 12px}}
+
+.dispatch-workbench .dispatch-filter-actions{grid-column:span 2}
+.dispatch-execution-drawer .ant-drawer-body { padding: 0 20px 20px; overflow: hidden; background: #f4f5f9; }
+.dispatch-execution-drawer .ant-tabs { height: 100%; }
+.dispatch-execution-drawer .ant-tabs-content-holder { min-height: 0; overflow: auto; }
+.dispatch-execution-drawer .ant-tabs-content,
+.dispatch-execution-drawer .ant-tabs-tabpane { height: 100%; }
+.dispatch-detail-columns { display: grid; grid-template-columns: minmax(520px, 1fr) minmax(290px, 34%); gap: 16px; height: 100%; min-height: 610px; }
+.dispatch-detail-workflow { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 12px; }
+.dispatch-detail-actions { padding: 14px; background: white; border: 1px solid #e8ecf3; }
+.dispatch-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.dispatch-detail-actions p { margin: 10px 0 0; color: #8b6415; }
+.dispatch-detail-tables { flex: 1; min-height: 0; }
+.dispatch-general-information { overflow: auto; padding: 16px; background: white; border: 1px solid #e8ecf3; }
+.dispatch-general-information h3 { margin: 0 0 20px; color: #17345c; }
+.dispatch-general-information dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; margin: 0; }
+.dispatch-general-information dt { color: #7f8da3; font-size: 12px; margin-bottom: 6px; }
+.dispatch-general-information dd { margin: 0; min-height: 32px; padding: 6px 8px; background: #f8f9fc; overflow-wrap: anywhere; }
+.dispatch-detail-empty { padding: 32px; color: #7f8da3; background: white; }
+.dispatch-execution-drawer .ant-btn { border-radius: 0; }

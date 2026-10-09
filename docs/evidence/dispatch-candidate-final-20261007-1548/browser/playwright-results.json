@@ -1,0 +1,258 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\XL\\dlx-yuki-wms\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config=playwright.dispatch.config.ts"
+    ],
+    "configFile": "C:\\Users\\XL\\dlx-yuki-wms\\frontend\\playwright.dispatch.config.ts",
+    "rootDir": "C:/Users/XL/dlx-yuki-wms/frontend/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/XL/dlx-yuki-wms/docs/evidence/dispatch-candidate-final-20261007-1548/browser/browser-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/XL/dlx-yuki-wms/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "dispatch.spec.ts"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\XL\\dlx-yuki-wms\\docs\\evidence\\dispatch-candidate-final-20261007-1548\\browser\\playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "dispatch.spec.ts",
+      "file": "dispatch.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "PRIVATE formal page lifecycle and upload errors",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 21736,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "PRIVATE-login-allocation-plan-stage-loading",
+                      "duration": 3708
+                    },
+                    {
+                      "title": "PRIVATE-file-input-cancel-empty-oversize-outage-upload",
+                      "duration": 1773
+                    },
+                    {
+                      "title": "PRIVATE-reject-correct-rereview-reapprove",
+                      "duration": 2319
+                    },
+                    {
+                      "title": "PRIVATE-document-change-old-approval-invalid-block-refresh-renew",
+                      "duration": 2326
+                    },
+                    {
+                      "title": "PRIVATE-plan-content-version-invalidates-approval",
+                      "duration": 5584
+                    },
+                    {
+                      "title": "PRIVATE-renewed-plan-dispatch-history-downstream",
+                      "duration": 5317
+                    }
+                  ],
+                  "startTime": "2026-10-07T22:49:50.988Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44ce6bc104ceddc3ecac-e33ef044762a1324d09a",
+          "file": "dispatch.spec.ts",
+          "line": 106,
+          "column": 3
+        },
+        {
+          "title": "FBA formal page lifecycle and upload errors",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 21820,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "FBA-login-allocation-plan-stage-loading",
+                      "duration": 3936
+                    },
+                    {
+                      "title": "FBA-file-input-cancel-empty-oversize-outage-upload",
+                      "duration": 1690
+                    },
+                    {
+                      "title": "FBA-reject-correct-rereview-reapprove",
+                      "duration": 2083
+                    },
+                    {
+                      "title": "FBA-document-change-old-approval-invalid-block-refresh-renew",
+                      "duration": 2309
+                    },
+                    {
+                      "title": "FBA-plan-content-version-invalidates-approval",
+                      "duration": 5966
+                    },
+                    {
+                      "title": "FBA-renewed-plan-dispatch-history-downstream",
+                      "duration": 5244
+                    }
+                  ],
+                  "startTime": "2026-10-07T22:50:12.818Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44ce6bc104ceddc3ecac-4a1199a5b238d0df4310",
+          "file": "dispatch.spec.ts",
+          "line": 106,
+          "column": 3
+        },
+        {
+          "title": "formal page ownership permission expiry and unconfigured policy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 36139,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "ownership-upload-server-rejection",
+                      "duration": 2356
+                    },
+                    {
+                      "title": "real-permission-revocation-server-403-and-account-switch",
+                      "duration": 4418
+                    },
+                    {
+                      "title": "unconfigured-policy-page-and-dispatch-block",
+                      "duration": 4065
+                    },
+                    {
+                      "title": "expired-evidence-server-and-page-block",
+                      "duration": 24888
+                    }
+                  ],
+                  "startTime": "2026-10-07T22:50:34.647Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44ce6bc104ceddc3ecac-64535b04d222be31edb6",
+          "file": "dispatch.spec.ts",
+          "line": 238,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-07T22:49:50.678Z",
+    "duration": 80172.31300000001,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

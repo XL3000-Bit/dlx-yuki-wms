@@ -1,0 +1,120 @@
+{
+  "recorded_at": "2026-10-07T23:03:25.058131+00:00",
+  "candidate": {
+    "head": "413b6dfd3f08089fe8dd87d2beb1cc232ea40fb9",
+    "source_sha256": "f026e632f0b36dbf8b13994678b171e97385222a6cc1c26582309f2f85262513",
+    "file": "candidate.json"
+  },
+  "final_checks": [
+    {
+      "name": "full_backend",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "final-backend.log",
+      "passed": 421,
+      "failed": 0,
+      "skipped": [
+        {
+          "test": "tests.test_migration_safety::test_concurrent_partial_cannot_overdraw",
+          "reason": "Requires real PostgreSQL row locks",
+          "postgresql_coverage": "final-postgres.log"
+        }
+      ],
+      "warnings": 11,
+      "junit": "final-backend-junit.xml"
+    },
+    {
+      "name": "independent_readonly_precheck",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "final-readonly.log",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "full_frontend",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "final-frontend-test.log",
+      "passed": 55,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "full_frontend_strict_typecheck",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "final-frontend-typecheck.log",
+      "remaining_errors": 0,
+      "scope": "src, e2e, root TypeScript files; strict enabled"
+    },
+    {
+      "name": "e2e_typecheck",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "final-frontend-typecheck-e2e-dispatch.log"
+    },
+    {
+      "name": "frontend_build",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "final-frontend-build.log",
+      "warnings": [
+        "bundle size exceeds 500 kB"
+      ]
+    },
+    {
+      "name": "isolated_postgresql",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "final-postgres.log",
+      "passed_scenarios": 47,
+      "fresh_migration": "PASS",
+      "representative_upgrade_0037_0039": "PASS",
+      "failed_migration_rollback_and_retry": "PASS",
+      "preupgrade_backup_restore": "PASS"
+    },
+    {
+      "name": "formal_page_e2e",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "browser-run.log",
+      "passed_tests": 3,
+      "passed_page_steps": 16,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "started_at": "2026-10-07T22:49:44.289933+00:00",
+      "finished_at": "2026-10-07T22:51:17.817669+00:00",
+      "results": "browser/results.json",
+      "page_and_network": "browser/page-results.json",
+      "playwright": "browser/playwright-results.json",
+      "policy": "TEST ONLY isolated mechanism validation; not approved production rules",
+      "browser_version": "153.0.8010.12"
+    }
+  ],
+  "initial_failures_retained": [
+    {
+      "log": "backend.log",
+      "reason": "shared pytest temporary directory WinError 5; corrected to exclusive basetemp"
+    },
+    {
+      "log": "npm-entry-failure-browser-run.log",
+      "reason": "Windows relative executable entry; Node launcher corrected"
+    },
+    {
+      "log": "verification-command-failure.log",
+      "reason": "validation shell command log redirection; corrected command rerun"
+    }
+  ],
+  "not_rerun": [
+    "unchanged historical controlled-policy publish and file-storage restoration drills; not counted as current passes"
+  ],
+  "not_verified": [
+    "OS native file picker",
+    "existing Chrome L extension upload; previous generic failure, cause unknown, not retried"
+  ],
+  "mechanism_acceptance_complete": false,
+  "production_ready": false
+}

@@ -1,0 +1,14 @@
+........................................................................ [ 17%]
+........................................................................ [ 34%]
+.................................................................s...... [ 51%]
+........................................................................ [ 68%]
+........................................................................ [ 85%]
+..............................................................           [100%]
+============================== warnings summary ===============================
+tests/test_safe_alembic.py: 11 warnings
+  C:\Users\XL\dlx-yuki-wms\backend\.venv\Lib\site-packages\alembic\config.py:598: DeprecationWarning: No path_separator found in configuration; falling back to legacy splitting on spaces, commas, and colons for prepend_sys_path.  Consider adding path_separator=os to Alembic config.
+    util.warn_deprecated(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: C:\Users\XL\dlx-yuki-wms\docs\evidence\dispatch-candidate-final-20261007-1548\final-backend-junit.xml -
+421 passed, 1 skipped, 11 warnings in 58.82s

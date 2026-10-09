@@ -1,0 +1,13 @@
+
+> dlx-yuki-wms-frontend@0.1.0 build
+> tsc -b && vite build +build+.log
+
+vite v7.3.6 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 6ms
+error during build:
+Could not resolve entry module "+build+.log/index.html".
+    at getRollupError (file:///C:/Users/XL/dlx-yuki-wms/frontend/node_modules/rollup/dist/es/shared/parseAst.js:317:41)
+    at error (file:///C:/Users/XL/dlx-yuki-wms/frontend/node_modules/rollup/dist/es/shared/parseAst.js:313:42)
+    at ModuleLoader.loadEntryModule (file:///C:/Users/XL/dlx-yuki-wms/frontend/node_modules/rollup/dist/es/shared/node-entry.js:22078:20)
+    at async Promise.all (index 0)
