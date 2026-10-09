@@ -23,7 +23,7 @@ import { useCurrentUser } from "../hooks/usePermissions";
 import { GlobalSearch } from "../components/GlobalSearch";
 import { NotificationCenter } from "../components/NotificationCenter";
 import { CompanyMenu } from "../components/CompanyMenu";
-import dlxLogo from "../assets/dlx-logo.svg";
+import yukiAvatar from "../assets/yuki-avatar.png";
 import "./uni-navigation.css";
 
 const { Header, Sider, Content } = Layout;
@@ -62,10 +62,10 @@ export function AppLayout() {
       <Layout className={`app-layout ${collapsed ? "is-sider-collapsed" : ""} ${isUni ? "is-uni-reference" : ""} ${loc.pathname === "/outbound/dispatch" ? "is-dispatch-reference" : ""} ${loc.pathname.startsWith("/inbound/ocean") ? "is-uni-warehouse-nav" : loc.pathname.startsWith("/outbound/bol") || loc.pathname === "/outbound/dispatch" ? "is-uni-admin-nav" : ""}`}>
       <Sider width={loc.pathname.startsWith('/inbound/ocean') ? 240 : 220} collapsedWidth={isUni ? 0 : 64} collapsed={collapsed} collapsible trigger={null} className="brand-sider">
         <div className="brand">
-          <img className="brand-logo" src={dlxLogo} alt="Warehouse Management System" />
+          <img className="brand-logo" src={yukiAvatar} alt="YUKI 像素侧脸头像" />
           {!collapsed && (
             <span>
-              WMS
+              YUKI WMS
               <small>WAREHOUSE SYSTEM</small>
             </span>
           )}
